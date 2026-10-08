@@ -1,0 +1,37 @@
+# .env files
+.env
+.env.local
+
+# Build artifacts
+/bin/
+/obj/
+/Debug/
+/Release/
+
+# Visual Studio files
+.vs/
+*.vcproj
+*.vcxproj
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Node modules (if using any frontend build tools)
+node_modules/
+
+# Logs
+*.log
+
+# Runtime data
+*.pid
+*.swp
+*.load
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Rider and Driver specific folders that might contain uploads
+/wwwroot/uploads/

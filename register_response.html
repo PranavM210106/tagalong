@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Tagalong</title>
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+    <header b-oef5cutfyk>
+        <nav b-oef5cutfyk class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div b-oef5cutfyk class="container-fluid">
+                <a class="navbar-brand" href="/">Tagalong</a>
+                <button b-oef5cutfyk class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedControl"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span b-oef5cutfyk class="navbar-toggler-icon"></span>
+                </button>
+                <div b-oef5cutfyk class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul b-oef5cutfyk class="navbar-nav flex-grow-1">
+                        <li b-oef5cutfyk class="nav-item">
+                            <a class="nav-link text-dark" href="/">Home</a>
+                        </li>
+                        <li b-oef5cutfyk class="nav-item">
+                            <a class="nav-link text-dark" href="/Rides/Offer">Offer a Ride</a>
+                        </li>
+                        <li b-oef5cutfyk class="nav-item">
+                            <a class="nav-link text-dark" href="/Rides/Find">Find a Ride</a>
+                        </li>
+                    </ul>
+                    
+<ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="/Account/Register">Register</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="/Account/Login">Login</a>
+        </li>
+</ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div b-oef5cutfyk class="container">
+        <main b-oef5cutfyk role="main" class="pb-3">
+            
+<h2>Register</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post" action="/Account/Register">
+    
+            
+            <div class="form-group">
+                <label class="control-label" for="FullName">Full Name</label>
+                <input class="form-control" type="text" data-val="true" data-val-maxlength="The field Full Name must be a string or array type with a maximum length of &#x27;100&#x27;." data-val-maxlength-max="100" data-val-required="The Full Name field is required." id="FullName" maxlength="100" name="FullName" value="" />
+                <span class="text-danger field-validation-valid" data-valmsg-for="FullName" data-valmsg-replace="true"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="Email">Email</label>
+                <input class="form-control" type="email" data-val="true" data-val-email="The Email field is not a valid e-mail address." data-val-required="The Email field is required." id="Email" name="Email" value="" />
+                <span class="text-danger field-validation-valid" data-valmsg-for="Email" data-valmsg-replace="true"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="PhoneNumber">Phone Number</label>
+                <input class="form-control" type="tel" data-val="true" data-val-phone="The Phone Number field is not a valid phone number." data-val-required="The Phone Number field is required." id="PhoneNumber" name="PhoneNumber" value="" />
+                <span class="text-danger field-validation-valid" data-valmsg-for="PhoneNumber" data-valmsg-replace="true"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="Password">Password</label>
+                <input class="form-control" type="password" data-val="true" data-val-minlength="The field Password must be a string or array type with a minimum length of &#x27;6&#x27;." data-val-minlength-min="6" data-val-required="The Password field is required." id="Password" name="Password" />
+                <span class="text-danger field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="ConfirmPassword">Confirm Password</label>
+                <input class="form-control" type="password" data-val="true" data-val-equalto="The password and confirmation password do not match." data-val-equalto-other="*.Password" data-val-required="The Confirm Password field is required." id="ConfirmPassword" name="ConfirmPassword" />
+                <span class="text-danger field-validation-valid" data-valmsg-for="ConfirmPassword" data-valmsg-replace="true"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="Role">Role</label>
+                <select class="form-control" data-val="true" data-val-required="The Role field is required." id="Role" name="Role">
+                    <option value="">-- Select Role --</option>
+                    <option value="Driver">Driver</option>
+                    <option value="Rider">Rider</option>
+                </select>
+                <span class="text-danger field-validation-valid" data-valmsg-for="Role" data-valmsg-replace="true"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Register" class="btn btn-primary" />
+            </div>
+        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8GBGCbeUKuRDrqMR5eJiJFnNOunxNqBz2Xgqfcix1cgN4cbqpceBzYQFsVZ0Jj88_JJRgJavbMPp5IozMmM382RhCv4KsV46CFyq1Vgk7Fe0Xyx3yNUgBKaNap9ZQf9eJRtXAy2UjNyW31_CQg_UXdo" /></form>
+    </div>
+</div>
+
+<div>
+    <a href="/Account/Login">Already have an account? Login here</a>
+</div>
+
+
+        </main>
+    </div>
+
+    <footer b-oef5cutfyk class="border-top footer text-muted">
+        <div b-oef5cutfyk class="container">
+            &copy; 2026 - Tagalong - <a href="/Home/Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/site.js?v=hRQyftXiu1lLX2P9Ly9xa4gHJgLeR1uGN5qegUobtGo"></script>
+
+    
+<script src="/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+
+</body>
+</html>

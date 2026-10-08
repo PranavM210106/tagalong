@@ -1,0 +1,72 @@
+@model Tagalong.Models.Entities.Rating
+@{
+    ViewData["Title"] = "Submit Rating";
+    var bookingId = ViewData["BookingId"] as int?;
+}
+
+<h2>Submit Rating for Your Ride</h2>
+
+@if (bookingId.HasValue)
+{
+    <form asp-action="SubmitRating" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="BookingId" value="@bookingId" />
+        <div class="form-group">
+            <label asp-for="RatedUserId" class="control-label"></label>
+            <input asp-for="RatedUserId" class="form-control" readonly />
+            <span asp-validation-for="RatedUserId" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Stars" class="control-label"></label>
+            <div class="rating-stars">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <input type="radio" id="star@i" name="Stars" value="@i" class="star-input" />
+                    <label for="star@i" class="star-label">&#9733;</label>
+                }
+            </div>
+            <span asp-validation-for="Stars" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Comment" class="control-label"></label>
+            <textarea asp-for="Comment" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Comment" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Submit Rating" class="btn btn-primary" />
+            <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-link">Cancel</a>
+        </div>
+    </form>
+    
+    <style>
+        .rating-stars {
+            direction: rtl;
+            unicode-bidi: bidi-override;
+        }
+        .star-input {
+            display: none;
+        }
+        .star-label {
+            font-size: 2rem;
+            color: #ddd;
+            padding: 0;
+            cursor: pointer;
+        }
+        .star-label:hover,
+        .star-label:hover ~ .star-label,
+        .star-input:checked ~ .star-label {
+            color: #ffcc00;
+        }
+    </style>
+}
+else
+{
+    <div class="alert alert-danger">
+        Invalid booking reference. Please go back to your rides and try again.
+    </div>
+    <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-link">Back to My Rides</a>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,55 @@
+@model IEnumerable<Tagalong.Models.ViewModels.RideResultViewModel>
+@{
+    ViewData["Title"] = "Matching Rides";
+}
+
+<h2>Matching Rides</h2>
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var rideResult in Model)
+        {
+            var ride = rideResult.Ride;
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@ride.StartLocation → @ride.EndLocation</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            @ride.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
+                        </h6>
+                        <div class="mb-2">
+                            <span class="badge bg-info">Match Quality: @rideResult.MatchQuality</span>
+                            <span class="badge bg-secondary ms-2">Distance: @rideResult.Distance.ToString("0.##") km</span>
+                        </div>
+                        <p class="card-text">
+                            <strong>Seats available:</strong> @ride.SeatsAvailable<br />
+                            <strong>Price per seat:</strong> $@ride.PricePerSeat<br />
+                            <strong>Vehicle:</strong> @ride.Vehicle.Model (@ride.Vehicle.VehicleType)<br />
+                            <strong>Driver:</strong> @ride.Driver.FullName
+                        </p>
+                        @if (ride.SeatsAvailable > 0)
+                        {
+                            <form asp-controller="Rides" asp-action="RequestToJoin" method="post">
+                                <input type="hidden" name="rideId" value="@ride.RideId" />
+                                <button type="submit" class="btn btn-success btn-sm">Request to Join</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Full</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No matching rides found. Try adjusting your search criteria.</div>
+}
+
+<div class="mt-4">
+    <a asp-controller="Rides" asp-action="Find" class="btn btn-link">Back to Search</a>
+</div>

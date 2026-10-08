@@ -1,0 +1,170 @@
+@model Tagalong.Models.ViewModels.AdminAnalyticsViewModel
+@{
+    ViewData["Title"] = "Analytics Dashboard";
+}
+
+<h2>Analytics Dashboard</h2>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Rides</h5>
+                <p class="card-text display-4">@Model.TotalRides</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Completed Rides</h5>
+                <p class="card-text display-4">@Model.CompletedRides</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Cancelled Rides</h5>
+                <p class="card-text display-4">@Model.CancelledRides</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Active Rides</h5>
+                <p class="card-text display-4">@Model.ActiveRides</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Users</h5>
+                <p class="card-text display-4">@Model.TotalUsers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Drivers</h5>
+                <p class="card-text display-4">@Model.TotalDrivers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Riders</h5>
+                <p class="card-text display-4">@Model.TotalRiders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-dark mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Open Complaints</h5>
+                <p class="card-text display-4">@Model.OpenComplaints</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Top Routes (Completed Rides)</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.TopRoutes.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Start Location</th>
+                                    <th>End Location</th>
+                                    <th>Number of Rides</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var route in Model.TopRoutes)
+                                {
+                                    <tr>
+                                        <td>@route.StartLocation</td>
+                                        <td>@route.EndLocation</td>
+                                        <td>@route.Count</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">No completed rides yet to show route statistics.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Complaint Resolution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="complaintChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('complaintChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Open Complaints', 'Resolved Complaints'],
+                    datasets: [{
+                        label: 'Complaint Status',
+                        data: [@Model.OpenComplaints, @Model.ResolvedComplaints],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Complaint Resolution Status'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,64 @@
+@model IEnumerable<Tagalong.Models.Entities.Ride>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to Tagalong</h1>
+    <p>Share rides, save money, and reduce your carbon footprint.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <h2>Offer a Ride</h2>
+        <p>Have extra seats in your vehicle? Offer a ride and earn money while helping others.</p>
+        <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary">Offer a Ride</a>
+    </div>
+    <div class="col-md-6">
+        <h2>Find a Ride</h2>
+        <p>Looking for a ride? Find available rides heading your way.</p>
+        <a asp-controller="Rides" asp-action="Find" class="btn btn-outline-primary">Find a Ride</a>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h2>Available Rides Near You</h2>
+        @if (Model.Any())
+        {
+            <div class="row">
+                @foreach (var ride in Model.Take(6)) // Show up to 6 rides
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">@ride.StartLocation → @ride.EndLocation</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    @ride.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
+                                </h6>
+                                <p class="card-text">
+                                    <strong>Seats available:</strong> @ride.SeatsAvailable<br />
+                                    <strong>Price per seat:</strong> $@ride.PricePerSeat<br />
+                                    <strong>Vehicle:</strong> @ride.Vehicle.Model (@ride.Vehicle.VehicleType)<br />
+                                    <strong>Driver:</strong> @ride.Driver.FullName
+                                </p>
+                                @if (ride.SeatsAvailable > 0)
+                                {
+                                    <a asp-controller="Rides" asp-action="RequestToJoin" asp-route-rideId="@ride.RideId" class="btn btn-success btn-sm">Request to Join</a>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Full</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">No active rides available at the moment. Be the first to offer a ride!</div>
+        }
+    </div>
+</div>

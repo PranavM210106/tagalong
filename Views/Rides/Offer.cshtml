@@ -1,0 +1,104 @@
+@model Tagalong.Models.ViewModels.OfferRideViewModel
+
+@{
+    ViewData["Title"] = "Offer a Ride";
+}
+
+<h2>Offer a Ride</h2>
+
+<form asp-action="Offer" method="post">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="StartLocation" class="control-label"></label>
+                <input asp-for="StartLocation" class="form-control" />
+                <span asp-validation-for="StartLocation" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="EndLocation" class="control-label"></label>
+                <input asp-for="EndLocation" class="form-control" />
+                <span asp-validation-for="EndLocation" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="StartLat" class="control-label"></label>
+                <input asp-for="StartLat" class="form-control" />
+                <span asp-validation-for="StartLat" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="StartLng" class="control-label"></label>
+                <input asp-for="StartLng" class="form-control" />
+                <span asp-validation-for="StartLng" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="EndLat" class="control-label"></label>
+                <input asp-for="EndLat" class="form-control" />
+                <span asp-validation-for="EndLat" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="EndLng" class="control-label"></label>
+                <input asp-for="EndLng" class="form-control" />
+                <span asp-validation-for="EndLng" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="DepartureTime" class="control-label"></label>
+                <input asp-for="DepartureTime" class="form-control" />
+                <span asp-validation-for="DepartureTime" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="SeatsAvailable" class="control-label"></label>
+                <input asp-for="SeatsAvailable" class="form-control" />
+                <span asp-validation-for="SeatsAvailable" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="PricePerSeat" class="control-label"></label>
+                <input asp-for="PricePerSeat" class="form-control" />
+                <span asp-validation-for="PricePerSeat" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label asp-for="VehicleId" class="control-label"></label>
+                <select asp-for="VehicleId" asp-items="Model.Vehicles" class="form-control">
+                    <option value="">-- Select a Vehicle --</option>
+                </select>
+                <span asp-validation-for="VehicleId" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <input type="submit" value="Offer Ride" class="btn btn-primary" />
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
