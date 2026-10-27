@@ -1,0 +1,23 @@
+﻿services:
+  - type: web
+    name: tagalong
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: tagalong-db
+          property: connectionString
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+
+databases:
+  - name: tagalong-db
+    databaseName: tagalong
+    user: tagalong
+    plan: free
+    region: oregon
