@@ -1,7 +1,6 @@
 # .NET
 **/bin/
 **/obj/
-**/*.csproj
 **/*.sln
 
 # Visual Studio
