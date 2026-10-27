@@ -12,12 +12,54 @@ builder.Services.AddControllersWithViews();
 
 // Add DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-// On Linux (Render), ALWAYS use PostgreSQL. On Windows, use SQL Server only for LocalDB.
+// On Linux (Render), ALWAYS use PostgreSQL. On Windows, use SQL Server only for local LocalDB.
 var isLinux = OperatingSystem.IsLinux();
 var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
     (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
+
+// On Linux, validate connection string is PostgreSQL format; if not, try to build from Render PG env vars
+if (isLinux && !string.IsNullOrEmpty(connectionString))
+{
+    // Check if it's a valid PostgreSQL connection string
+    var isPostgres = connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
+                     connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
+                     connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase) ||
+                     connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+                     connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase);
+
+    if (!isPostgres)
+    {
+        // Try to build from Render's individual PG environment variables
+        var pgHost = Environment.GetEnvironmentVariable("PGHOST");
+        var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
+        var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE");
+        var pgUser = Environment.GetEnvironmentVariable("PGUSER");
+        var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD");
+
+        if (!string.IsNullOrEmpty(pgHost) && !string.IsNullOrEmpty(pgDatabase) &&
+            !string.IsNullOrEmpty(pgUser) && !string.IsNullOrEmpty(pgPassword))
+        {
+            connectionString = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};SSL Mode=Require;Trust Server Certificate=true";
+        }
+        else
+        {
+            // Fallback: try DATABASE_URL (Render sometimes uses this)
+            var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+            if (!string.IsNullOrEmpty(databaseUrl))
+            {
+                connectionString = databaseUrl;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "PostgreSQL connection string not configured. " +
+                    "Set ConnectionStrings__DefaultConnection or ensure Render PostgreSQL env vars (PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD) are available.");
+            }
+        }
+    }
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
