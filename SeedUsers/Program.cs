@@ -8,10 +8,11 @@ using Tagalong.Models.Entities;
 var builder = Host.CreateApplicationBuilder(args);
 
 // On Render, Blueprint with fromDatabase injects connection string as env var
-// Try multiple sources in order of precedence
-var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"]
-    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-    ?? Environment.GetEnvironmentVariable("DATABASE_URL"); // Render also uses this sometimes
+// Try multiple sources in order of precedence - ENV VARS FIRST on Linux to override appsettings.json
+var isLinux = OperatingSystem.IsLinux();
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? (isLinux ? null : builder.Configuration["ConnectionStrings:DefaultConnection"]);
 
 // On Linux (Render), ALWAYS use PostgreSQL. On Windows, use SQL Server only for local LocalDB.
 var isLinux = OperatingSystem.IsLinux();
