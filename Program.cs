@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
 using Tagalong.Data;
 using Tagalong.Models.Entities;
 using Tagalong.Services;
@@ -226,6 +227,14 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+// Trust Vercel's X-Forwarded-Proto header for HTTPS detection
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
+    KnownNetworks = { },
+    KnownProxies = { }
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
