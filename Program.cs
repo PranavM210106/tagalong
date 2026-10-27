@@ -109,10 +109,18 @@ builder.Services.AddScoped<IDistanceService, DistanceService>();
 
 var app = builder.Build();
 
-// Seed roles
+// One-time database initialization (migrations + seed) on first startup
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var services = scope.ServiceProvider;
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var dbContext = services.GetRequiredService<ApplicationDbContext>();
+
+    // Run migrations
+    await dbContext.Database.MigrateAsync();
+
+    // Seed roles
     string[] roleNames = { "Admin", "Driver", "Rider" };
     foreach (var roleName in roleNames)
     {
@@ -120,6 +128,58 @@ using (var scope = app.Services.CreateScope())
         if (!roleExist)
         {
             await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
+
+    // Seed test users from environment variables (optional, defaults for dev)
+    var testUsers = new[]
+    {
+        new {
+            Email = Environment.GetEnvironmentVariable("SEED_RIDER_EMAIL") ?? "rider@test.com",
+            Password = Environment.GetEnvironmentVariable("SEED_RIDER_PASSWORD") ?? "Test123!",
+            FullName = "Test Rider", Role = "Rider"
+        },
+        new {
+            Email = Environment.GetEnvironmentVariable("SEED_DRIVER_EMAIL") ?? "driver@test.com",
+            Password = Environment.GetEnvironmentVariable("SEED_DRIVER_PASSWORD") ?? "Test123!",
+            FullName = "Test Driver", Role = "Driver"
+        },
+        new {
+            Email = Environment.GetEnvironmentVariable("SEED_ADMIN_EMAIL") ?? "admin@test.com",
+            Password = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD") ?? "Test123!",
+            FullName = "Test Admin", Role = "Admin"
+        }
+    };
+
+    foreach (var u in testUsers)
+    {
+        var existing = await userManager.FindByEmailAsync(u.Email);
+        if (existing == null)
+        {
+            var user = new ApplicationUser
+            {
+                UserName = u.Email,
+                Email = u.Email,
+                FullName = u.FullName,
+                PhoneNumber = "+1234567890",
+                ProfilePicture = "",
+                IsVerified = true,
+                EmailConfirmed = true
+            };
+            var result = await userManager.CreateAsync(user, u.Password);
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(user, u.Role);
+            }
+        }
+        else
+        {
+            // Update password for existing user
+            var removeResult = await userManager.RemovePasswordAsync(existing);
+            if (removeResult.Succeeded)
+            {
+                await userManager.AddPasswordAsync(existing, u.Password);
+            }
         }
     }
 }
