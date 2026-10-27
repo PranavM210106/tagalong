@@ -14,9 +14,12 @@ var isLocalDb = !string.IsNullOrEmpty(connectionString) &&
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
 
+// Also default to PostgreSQL when running on Linux (Render containers)
+var isLinux = OperatingSystem.IsLinux();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (isLocalDb)
+    if (isLocalDb && !isLinux)
     {
         options.UseSqlServer(connectionString);
     }

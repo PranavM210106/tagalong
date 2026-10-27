@@ -12,15 +12,18 @@ builder.Services.AddControllersWithViews();
 
 // Add DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-// Default to PostgreSQL for production (Render), use SQL Server only for local LocalDB
+// Default to PostgreSQL for production (Render/Linux), use SQL Server only for local LocalDB
 var isLocalDb = !string.IsNullOrEmpty(connectionString) &&
     (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
 
+// Also default to PostgreSQL when running on Linux (Render containers)
+var isLinux = OperatingSystem.IsLinux();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (isLocalDb)
+    if (isLocalDb && !isLinux)
     {
         options.UseSqlServer(connectionString);
     }
