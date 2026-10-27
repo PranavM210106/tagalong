@@ -1,0 +1,245 @@
+@model Tagalong.Models.ViewModels.FileComplaintViewModel
+@{
+    ViewData["Title"] = "File a Complaint";
+}
+
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-8);
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+        .complaint-page {
+            padding: var(--space-8) 0 var(--space-16);
+        }
+        .complaint-form-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .form-section {
+            margin-bottom: var(--space-6);
+        }
+        .form-label {
+            display: block;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-2);
+        }
+        .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-base);
+            width: 100%;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-disabled);
+        }
+        .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+            color: var(--color-text-primary);
+            outline: none;
+        }
+        .form-control.is-invalid {
+            border-color: var(--color-danger);
+        }
+        .form-control.is-invalid:focus {
+            box-shadow: 0 0 0 3px var(--color-danger-light);
+        }
+        .form-error {
+            display: block;
+            color: var(--color-danger);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .form-hint {
+            display: block;
+            color: var(--color-text-disabled);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .validation-summary {
+            background: var(--color-danger-light);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            color: var(--color-danger);
+            margin-bottom: var(--space-6);
+        }
+        .booking-info-badge {
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-sm);
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .booking-info-badge i {
+            width: 18px;
+            height: 18px;
+        }
+        .form-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            margin-top: var(--space-8);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--color-border-default);
+        }
+        @@media (min-width: 640px) {
+            .form-actions {
+                flex-direction: row;
+                justify-content: flex-end;
+            }
+        }
+        .btn-primary {
+            border-radius: var(--radius-lg);
+            background: var(--gradient-primary);
+            border: none;
+            padding: var(--space-3) var(--space-6);
+            font-weight: var(--font-weight-semibold);
+            transition: all var(--transition-base);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        .btn-outline-secondary {
+            border-radius: var(--radius-lg);
+            border-color: var(--color-border-strong);
+            color: var(--color-text-secondary);
+            padding: var(--space-3) var(--space-6);
+            font-weight: var(--font-weight-medium);
+        }
+        .btn-outline-secondary:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-emphasis);
+            color: var(--color-text-primary);
+        }
+        textarea.form-control {
+            min-height: 140px;
+            resize: vertical;
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<header class="page-header">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="breadcrumb mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Home" asp-action="Index" class="text-muted">
+                        <i data-lucide="home" class="me-1" style="width:16px;height:16px;"></i>Home
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="Profile" asp-action="Index" class="text-muted">Profile</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">File Complaint</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-0 fw-semibold">File a Complaint</h1>
+        <p class="text-muted mt-1">Report an issue with a ride or driver</p>
+    </div>
+</header>
+
+<!-- Complaint Page -->
+<main class="complaint-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        @if (ViewData["BookingInfo"] != null)
+        {
+            <div class="booking-info-badge">
+                <i data-lucide="info" aria-hidden="true"></i>
+                <span>@ViewData["BookingInfo"]</span>
+            </div>
+        }
+
+        <div class="complaint-form-card">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="validation-summary" role="alert">
+                    <i data-lucide="alert-circle" class="me-2" style="width:18px;height:18px;"></i>
+                    <strong>Please fix the following errors:</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form method="post" novalidate>
+                <div class="form-section">
+                    <label class="form-label" for="Subject">Subject <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="Subject" name="Subject" placeholder="Brief description of the issue" required value="@Model.Subject" />
+                    <span asp-validation-for="Subject" class="form-error"></span>
+                </div>
+
+                <div class="form-section">
+                    <label class="form-label" for="Description">Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="Description" name="Description" placeholder="Describe the issue in detail (what happened, when, who was involved, etc.)" required>@Model.Description</textarea>
+                    <span class="form-hint">Please be as specific as possible. Include dates, times, and any relevant details.</span>
+                    <span asp-validation-for="Description" class="form-error"></span>
+                </div>
+
+                @if (Model.BookingId.HasValue)
+                {
+                    <input type="hidden" name="BookingId" value="@Model.BookingId.Value" />
+                }
+
+                <div class="form-actions">
+                    <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary">
+                        <i data-lucide="x" class="me-2" aria-hidden="true"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="send" class="me-2" aria-hidden="true"></i>Submit Complaint
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+}

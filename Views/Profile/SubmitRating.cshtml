@@ -4,69 +4,520 @@
     var bookingId = ViewData["BookingId"] as int?;
 }
 
-<h2>Submit Rating for Your Ride</h2>
-
-@if (bookingId.HasValue)
+@if (!bookingId.HasValue)
 {
-    <form asp-action="SubmitRating" method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <input type="hidden" asp-for="BookingId" value="@bookingId" />
-        <div class="form-group">
-            <label asp-for="RatedUserId" class="control-label"></label>
-            <input asp-for="RatedUserId" class="form-control" readonly />
-            <span asp-validation-for="RatedUserId" class="text-danger"></span>
+    <section class="page-header" aria-labelledby="page-title">
+        <div class="container-fluid px-md-4 px-lg-5">
+            <nav aria-label="Breadcrumb" class="mb-4">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Bookings" asp-action="MyRides" class="text-muted">My Rides</a></li>
+                    <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Submit Rating</li>
+                </ol>
+            </nav>
+            <header>
+                <h1 id="page-title" class="display-5 fw-bold mb-1">Submit Rating</h1>
+                <p class="lead text-muted mb-0">Rate your ride experience</p>
+            </header>
         </div>
-        <div class="form-group">
-            <label asp-for="Stars" class="control-label"></label>
-            <div class="rating-stars">
-                @for (int i = 1; i <= 5; i++)
-                {
-                    <input type="radio" id="star@i" name="Stars" value="@i" class="star-input" />
-                    <label for="star@i" class="star-label">&#9733;</label>
-                }
+    </section>
+
+    <section class="form-page">
+        <div class="container-fluid px-md-4 px-lg-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-xl-5">
+                    <div class="error-state text-center py-5" role="alert">
+                        <div class="error-icon mb-4">
+                            <i data-lucide="alert-circle" class="mx-auto text-danger" style="width: 80px; height: 80px;" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="h4 fw-bold mb-2">Invalid Booking Reference</h3>
+                        <p class="text-muted mb-4">Unable to find the booking to rate. Please go back to your rides and try again.</p>
+                        <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-primary">
+                            <i data-lucide="arrow-left" class="me-2" aria-hidden="true"></i>
+                            Back to My Rides
+                        </a>
+                    </div>
+                </div>
             </div>
-            <span asp-validation-for="Stars" class="text-danger"></span>
         </div>
-        <div class="form-group">
-            <label asp-for="Comment" class="control-label"></label>
-            <textarea asp-for="Comment" class="form-control" rows="4"></textarea>
-            <span asp-validation-for="Comment" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <input type="submit" value="Submit Rating" class="btn btn-primary" />
-            <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-link">Cancel</a>
-        </div>
-    </form>
-    
-    <style>
-        .rating-stars {
-            direction: rtl;
-            unicode-bidi: bidi-override;
-        }
-        .star-input {
-            display: none;
-        }
-        .star-label {
-            font-size: 2rem;
-            color: #ddd;
-            padding: 0;
-            cursor: pointer;
-        }
-        .star-label:hover,
-        .star-label:hover ~ .star-label,
-        .star-input:checked ~ .star-label {
-            color: #ffcc00;
-        }
-    </style>
+    </section>
 }
 else
 {
-    <div class="alert alert-danger">
-        Invalid booking reference. Please go back to your rides and try again.
-    </div>
-    <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-link">Back to My Rides</a>
+    <section class="page-header" aria-labelledby="page-title">
+        <div class="container-fluid px-md-4 px-lg-5">
+            <nav aria-label="Breadcrumb" class="mb-4">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Bookings" asp-action="MyRides" class="text-muted">My Rides</a></li>
+                    <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Submit Rating</li>
+                </ol>
+            </nav>
+            <header>
+                <h1 id="page-title" class="display-5 fw-bold mb-1">Submit Rating</h1>
+                <p class="lead text-muted mb-0">How was your ride with <strong>@ViewData["RatedUserName"]</strong>?</p>
+            </header>
+        </div>
+    </section>
+
+    <section class="form-page">
+        <div class="container-fluid px-md-4 px-lg-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-xl-6">
+                    <!-- Ride Context Card -->
+                    <div class="context-card mb-5">
+                        <div class="context-header">
+                            <i data-lucide="car" class="text-gold" aria-hidden="true" style="width: 32px; height: 32px;"></i>
+                        </div>
+                        <div class="context-body">
+                            <h3 class="h5 fw-bold mb-2">@ViewData["RideStart"] → @ViewData["RideEnd"]</h3>
+                            <div class="context-meta d-flex flex-wrap gap-3 text-sm text-muted">
+                                <span><i data-lucide="calendar" class="me-1" aria-hidden="true"></i>@ViewData["RideDate"]</span>
+                                <span><i data-lucide="user" class="me-1" aria-hidden="true"></i>@ViewData["RatedUserName"]</span>
+                                <span><i data-lucide="shield-check" class="me-1" aria-hidden="true"></i>@ViewData["UserRole"]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rating Form -->
+                    <form asp-action="SubmitRating" method="post" class="ride-form" novalidate>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="BookingId" value="@bookingId" />
+                        <input type="hidden" name="RatedUserId" value="@ViewData["RatedUserId"]" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger validation-summary mb-4" role="alert" aria-live="polite"></div>
+
+                        <!-- Stars Rating -->
+                        <fieldset class="form-section mb-5">
+                            <legend class="section-title">
+                                <i data-lucide="star" class="me-2" aria-hidden="true"></i>
+                                Your Rating
+                            </legend>
+                            <div class="rating-input-group" role="radiogroup" aria-label="Select rating" aria-required="true">
+                                @for (int i = 5; i >= 1; i--)
+                                {
+                                    <label class="star-option" for="star-@i" title="@i star@(i > 1 ? "s" : "")">
+                                        <input type="radio" id="star-@i" name="Stars" value="@i" class="star-input" @(Model.Stars == i ? "checked" : "") required />
+                                        <span class="star-label" aria-hidden="true">
+                                            <i data-lucide="star" class="@(i <= (Model.Stars > 0 ? Model.Stars : 0) ? "fill" : "") star-icon" aria-hidden="true"></i>
+                                        </span>
+                                    </label>
+                                }
+                            </div>
+                            <div class="rating-feedback text-center mt-3" aria-live="polite">
+                                <p class="mb-0 text-muted" id="ratingText">Tap a star to rate</p>
+                            </div>
+                            <span asp-validation-for="Stars" class="form-error"></span>
+                        </fieldset>
+
+                        <!-- Comment -->
+                        <fieldset class="form-section mb-5">
+                            <legend class="section-title">
+                                <i data-lucide="message-square" class="me-2" aria-hidden="true"></i>
+                                Your Feedback (Optional)
+                            </legend>
+                            <div class="form-group">
+                                <label asp-for="Comment" class="form-label">Share your experience</label>
+                                <textarea asp-for="Comment" class="form-control" rows="4" placeholder="What did you like? Anything that could be improved?" aria-describedby="comment-hint"></textarea>
+                                <div class="form-hint" id="comment-hint">Your feedback helps the community. Be honest and constructive.</div>
+                                <span asp-validation-for="Comment" class="form-error"></span>
+                            </div>
+                        </fieldset>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions sticky-bottom d-flex flex-column flex-md-row gap-3 justify-content-end">
+                            <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-outline-secondary btn-lg py-3 px-5 order-md-1 order-2">
+                                <i data-lucide="x" class="me-2" aria-hidden="true"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg py-3 px-5 order-md-2 order-1 auth-submit" data-loading-text="Submitting...">
+                                <span class="btn-text">
+                                    <i data-lucide="send" class="me-2" aria-hidden="true"></i>
+                                    Submit Rating
+                                </span>
+                                <span class="btn-loader d-none">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    Submitting...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-8);
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+        .form-page {
+            padding: var(--space-8) 0 var(--space-16);
+        }
+        .ride-form {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+        }
+        .form-section {
+            padding-bottom: var(--space-5);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .form-section:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .section-title {
+            display: inline-flex;
+            align-items: center;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-3);
+            border-bottom: 2px solid var(--color-brand-primary);
+        }
+        .section-title i {
+            width: 20px;
+            height: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-2);
+        }
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-wrapper .form-control {
+            padding-left: 3rem;
+        }
+        .input-wrapper .input-prefix {
+            position: absolute;
+            left: 1rem;
+            color: var(--color-text-disabled);
+            font-weight: var(--font-weight-medium);
+            z-index: 2;
+        }
+        .input-wrapper .input-prefix + .form-control {
+            padding-left: 2.5rem;
+        }
+        .input-icon {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            pointer-events: none;
+            transition: color var(--transition-fast);
+            z-index: 2;
+        }
+        .input-wrapper:has(.input-prefix) .input-icon {
+            left: calc(var(--space-4) + 1.25rem);
+        }
+        .form-control:focus + .input-icon,
+        .form-control:focus ~ .input-icon {
+            color: var(--color-brand-primary);
+        }
+        .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-base);
+            height: auto;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-disabled);
+        }
+        .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+            color: var(--color-text-primary);
+        }
+        .form-control.is-invalid,
+        .form-control:invalid {
+            border-color: var(--color-danger);
+        }
+        .form-control.is-invalid:focus,
+        .form-control:invalid:focus {
+            box-shadow: 0 0 0 3px var(--color-danger-light);
+        }
+        .form-error {
+            display: block;
+            color: var(--color-danger);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .validation-summary {
+            background: var(--color-danger-light);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            color: var(--color-danger);
+        }
+        .form-hint {
+            display: block;
+            color: var(--color-text-disabled);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+
+        /* Form Actions */
+        .form-actions {
+            padding-top: var(--space-5);
+            margin-top: var(--space-5);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .form-actions.sticky-bottom {
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(to top, var(--color-bg-card), transparent);
+            z-index: 10;
+        }
+        .auth-submit {
+            border-radius: var(--radius-lg);
+            background: var(--gradient-primary);
+            border: none;
+            transition: all var(--transition-base);
+            min-width: 200px;
+        }
+        .auth-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        .auth-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .auth-submit:disabled {
+            opacity: 0.7;
+        }
+        .btn-outline-secondary {
+            border-radius: var(--radius-lg);
+            border-color: var(--color-border-strong);
+            color: var(--color-text-secondary);
+            min-width: 200px;
+        }
+        .btn-outline-secondary:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-emphasis);
+            color: var(--color-text-primary);
+        }
+        .btn-outline-secondary i {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Context Card */
+        .context-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+        }
+        .context-header {
+            padding: var(--space-5);
+            background: var(--color-brand-primary-light);
+        }
+        .context-body {
+            padding: var(--space-5);
+        }
+        .context-meta i {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Star Rating */
+        .rating-input-group {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-2);
+            direction: rtl;
+            unicode-bidi: bidi-override;
+        }
+        .star-option {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .star-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .star-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            transition: transform var(--transition-base);
+        }
+        .star-icon {
+            width: 32px;
+            height: 32px;
+            color: var(--color-text-disabled);
+            transition: all var(--transition-base);
+        }
+        .star-icon.fill {
+            color: var(--color-brand-primary);
+        }
+        .star-option:hover .star-icon {
+            transform: scale(1.2);
+        }
+        .star-option:hover .star-icon:not(.fill) {
+            color: var(--color-brand-primary);
+        }
+        .star-input:checked ~ .star-label .star-icon {
+            color: var(--color-brand-primary);
+        }
+        .star-input:focus-visible + .star-label {
+            outline: 2px solid var(--color-brand-primary);
+            outline-offset: 4px;
+            border-radius: var(--radius-md);
+        }
+
+        /* Rating Feedback Text */
+        .rating-feedback #ratingText {
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-medium);
+            transition: color var(--transition-base);
+        }
+
+        /* Error State */
+        .error-state {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+        }
+        .error-icon i {
+            color: var(--color-danger);
+        }
+        .error-state h3 {
+            color: var(--color-text-primary);
+        }
+        .error-state p {
+            color: var(--color-text-muted);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+    </style>
 }
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Star rating interaction
+            const starInputs = document.querySelectorAll('.star-input');
+            const ratingText = document.getElementById('ratingText');
+
+            const ratingTexts = {
+                1: 'Terrible experience',
+                2: 'Poor experience',
+                3: 'Okay experience',
+                4: 'Good experience',
+                5: 'Excellent experience!'
+            };
+
+            starInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const value = parseInt(this.value);
+                    if (ratingText) {
+                        ratingText.textContent = ratingTexts[value] || 'Tap a star to rate';
+                        ratingText.style.color = value >= 4 ? 'var(--color-success)' : value === 3 ? 'var(--color-warning)' : 'var(--color-danger)';
+                    }
+
+                    // Update visual state for all stars
+                    starInputs.forEach(i => {
+                        const label = i.nextElementSibling;
+                        const icon = label?.querySelector('.star-icon');
+                        if (icon) {
+                            if (parseInt(i.value) <= value) {
+                                icon.classList.add('fill');
+                            } else {
+                                icon.classList.remove('fill');
+                            }
+                        }
+                    });
+                });
+
+                // Hover preview
+                input.addEventListener('mouseenter', function() {
+                    const value = parseInt(this.value);
+                    starInputs.forEach(i => {
+                        const label = i.nextElementSibling;
+                        const icon = label?.querySelector('.star-icon');
+                        if (icon && parseInt(i.value) <= value) {
+                            icon.classList.add('fill');
+                        }
+                    });
+                });
+
+                input.addEventListener('mouseleave', function() {
+                    const checkedValue = parseInt(document.querySelector('.star-input:checked')?.value || '0');
+                    starInputs.forEach(i => {
+                        const label = i.nextElementSibling;
+                        const icon = label?.querySelector('.star-icon');
+                        if (icon && parseInt(i.value) > checkedValue) {
+                            icon.classList.remove('fill');
+                        }
+                    });
+                });
+            });
+
+            // Form submission loading state
+            const form = document.querySelector('.ride-form');
+            const submitBtn = document.querySelector('.auth-submit');
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function() {
+                    if (form.checkValidity()) {
+                        submitBtn.disabled = true;
+                        submitBtn.querySelector('.btn-text').classList.add('d-none');
+                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                    }
+                });
+            }
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 }

@@ -29,9 +29,22 @@ namespace Tagalong.Controllers
         }
 
         // GET: Rides/Offer
-        [Authorize(Roles = "Driver")]
+        // Allow any authenticated user to access; we handle role-based logic inside
+        [Authorize]
         public async Task<IActionResult> Offer()
         {
+            // Check if user is a Driver
+            if (!User.IsInRole("Driver"))
+            {
+                // If user is a Rider, redirect to BecomeDriver page
+                if (User.IsInRole("Rider"))
+                {
+                    return RedirectToAction(nameof(BecomeDriver));
+                }
+                // For other roles (Admin, etc.), redirect to home
+                return RedirectToAction("Index", "Home");
+            }
+
             var userId = _userManager.GetUserId(User);
             var vehicles = await _context.Vehicles
                 .Where(v => v.UserId == userId)
@@ -39,14 +52,17 @@ namespace Tagalong.Controllers
 
             var model = new OfferRideViewModel
             {
-                Vehicles = vehicles.Select(v => new SelectListItem
-                {
-                    Value = v.VehicleId.ToString(),
-                    Text = $"{v.Model} ({v.RegistrationNumber})"
-                }).ToList()
+                Vehicles = vehicles
             };
 
             return View(model);
+        }
+
+        // GET: Rides/BecomeDriver - Friendly page for riders who want to become drivers
+        [Authorize(Roles = "Rider")]
+        public IActionResult BecomeDriver()
+        {
+            return View();
         }
 
         // POST: Rides/Offer
@@ -84,11 +100,6 @@ namespace Tagalong.Controllers
             var userId2 = _userManager.GetUserId(User);
             model.Vehicles = await _context.Vehicles
                 .Where(v => v.UserId == userId2)
-                .Select(v => new SelectListItem
-                {
-                    Value = v.VehicleId.ToString(),
-                    Text = $"{v.Model} ({v.RegistrationNumber})"
-                })
                 .ToListAsync();
 
             return View(model);

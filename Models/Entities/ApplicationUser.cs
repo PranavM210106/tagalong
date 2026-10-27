@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace Tagalong.Models.Entities
 {
@@ -24,5 +25,12 @@ namespace Tagalong.Models.Entities
         public ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
         public ICollection<Message> SentMessages { get; set; } = new List<Message>();
         public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
+
+        // Computed properties
+        public double? AverageRating => RatingsReceived?.Any() == true ? RatingsReceived.Average(r => (double)r.Stars) : (double?)null;
+        public int RatingCount => RatingsReceived?.Count ?? 0;
+
+        // Track when user was created
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

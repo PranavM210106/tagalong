@@ -110,7 +110,7 @@ namespace Tagalong.Controllers
         [Authorize(Roles = "Driver")]
         public IActionResult AddVehicle()
         {
-            return View();
+            return View(new Vehicle());
         }
 
         // POST: Profile/AddVehicle
@@ -147,6 +147,82 @@ namespace Tagalong.Controllers
             }
 
             return View(model);
+        }
+
+        // GET: Profile/FileComplaint
+        public async Task<IActionResult> FileComplaint(int? bookingId)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            // If bookingId provided, verify it belongs to the user
+            Booking booking = null;
+            if (bookingId.HasValue)
+            {
+                booking = await _context.Bookings
+                    .Include(b => b.Ride)
+                        .ThenInclude(r => r.Driver)
+                    .FirstOrDefaultAsync(b => b.BookingId == bookingId.Value && b.RiderId == userId);
+
+                if (booking == null)
+                {
+                    return NotFound();
+                }
+            }
+
+            var model = new FileComplaintViewModel
+            {
+                BookingId = bookingId
+            };
+
+            if (booking != null)
+            {
+                ViewData["BookingInfo"] = $"{booking.Ride.StartLocation} → {booking.Ride.EndLocation} on {booking.Ride.DepartureTime:MMM dd, yyyy}";
+            }
+
+            return View(model);
+        }
+
+        // POST: Profile/FileComplaint
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> FileComplaint(FileComplaintViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var userId = _userManager.GetUserId(User);
+
+                var complaint = new Complaint
+                {
+                    UserId = userId,
+                    BookingId = model.BookingId,
+                    Subject = model.Subject,
+                    Description = model.Description,
+                    Status = "Open",
+                    CreatedOn = DateTime.Now
+                };
+
+                _context.Complaints.Add(complaint);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Your complaint has been filed successfully. Our team will review it shortly.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(model);
+        }
+
+        // GET: Profile/MyComplaints
+        public async Task<IActionResult> MyComplaints()
+        {
+            var userId = _userManager.GetUserId(User);
+            var complaints = await _context.Complaints
+                .Include(c => c.Booking)
+                    .ThenInclude(b => b.Ride)
+                .Where(c => c.UserId == userId)
+                .OrderByDescending(c => c.CreatedOn)
+                .ToListAsync();
+
+            return View(complaints);
         }
     }
 }

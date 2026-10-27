@@ -25,6 +25,8 @@ namespace Tagalong.Models.Entities
         [MaxLength(500)]
         public string Comment { get; set; }
 
+        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+
         // Navigation properties
         [ForeignKey("BookingId")]
         public Booking Booking { get; set; }

@@ -3,36 +3,437 @@
     ViewData["Title"] = "Add Vehicle";
 }
 
-<h2>Add Vehicle</h2>
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Profile" asp-action="Index" class="text-muted">Profile</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Add Vehicle</li>
+            </ol>
+        </nav>
+        <header>
+            <h1 id="page-title" class="display-5 fw-bold mb-1">Add a Vehicle</h1>
+            <p class="lead text-muted mb-0">Register your vehicle to start offering rides</p>
+        </header>
+    </div>
+</section>
 
-<form asp-action="AddVehicle" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="form-group">
-        <label asp-for="VehicleType" class="control-label"></label>
-        <input asp-for="VehicleType" class="form-control" />
-        <span asp-validation-for="VehicleType" class="text-danger"></span>
+<section class="form-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-7">
+                <form asp-action="AddVehicle" method="post" class="ride-form" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger validation-summary mb-4" role="alert" aria-live="polite"></div>
+
+                    <!-- Vehicle Type Selection -->
+                    <fieldset class="form-section mb-5">
+                        <legend class="section-title">
+                            <i data-lucide="car" class="me-2" aria-hidden="true"></i>
+                            Vehicle Type
+                        </legend>
+                        <div class="vehicle-type-options" role="radiogroup" aria-label="Select vehicle type">
+                            @{
+                                var types = new[] {
+                                    new { Value = "Car", Icon = "car", Label = "Car", Desc = "Standard sedan or hatchback" },
+                                    new { Value = "SUV", Icon = "truck", Label = "SUV", Desc = "Sport utility vehicle" },
+                                    new { Value = "Van", Icon = "bus", Label = "Van", Desc = "Minivan or passenger van" },
+                                    new { Value = "Motorcycle", Icon = "bike", Label = "Motorcycle", Desc = "Two-wheeled vehicle" }
+                                };
+                            }
+                            @foreach (var type in types)
+                            {
+                                <label class="vehicle-type-option" for="type-@type.Value.ToLower()">
+                                    <input type="radio" id="type-@type.Value.ToLower()" name="VehicleType" value="@type.Value" @((Model.VehicleType ?? "") == type.Value ? "checked" : "") class="vehicle-type-input" />
+                                    <div class="vehicle-type-card">
+                                        <div class="vehicle-type-icon">
+                                            <i data-lucide="@type.Icon" aria-hidden="true"></i>
+                                        </div>
+                                        <div class="vehicle-type-info">
+                                            <div class="vehicle-type-label fw-medium">@type.Label</div>
+                                            <div class="vehicle-type-desc text-sm text-muted">@type.Desc</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                        <span asp-validation-for="VehicleType" class="form-error"></span>
+                    </fieldset>
+
+                    <!-- Vehicle Details -->
+                    <fieldset class="form-section mb-5">
+                        <legend class="section-title">
+                            <i data-lucide="info" class="me-2" aria-hidden="true"></i>
+                            Vehicle Details
+                        </legend>
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label asp-for="Model" class="form-label">Model <span class="text-danger" aria-hidden="true">*</span></label>
+                                    <div class="input-wrapper">
+                                        <input asp-for="Model" class="form-control" placeholder="e.g., Toyota Camry, Honda CR-V" autocomplete="off" aria-describedby="model-error" />
+                                        <i data-lucide="tag" class="input-icon" aria-hidden="true"></i>
+                                    </div>
+                                    <span asp-validation-for="Model" class="form-error" id="model-error"></span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="RegistrationNumber" class="form-label">Registration Number <span class="text-danger" aria-hidden="true">*</span></label>
+                                    <div class="input-wrapper">
+                                        <input asp-for="RegistrationNumber" class="form-control" placeholder="e.g., ABC-1234" autocomplete="off" aria-describedby="reg-error" />
+                                        <i data-lucide="id-card" class="input-icon" aria-hidden="true"></i>
+                                    </div>
+                                    <span asp-validation-for="RegistrationNumber" class="form-error" id="reg-error"></span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="SeatCapacity" class="form-label">Seat Capacity <span class="text-danger" aria-hidden="true">*</span></label>
+                                    <div class="input-wrapper">
+                                        <input asp-for="SeatCapacity" class="form-control" type="number" min="1" max="8" aria-describedby="seats-error" />
+                                        <i data-lucide="users" class="input-icon" aria-hidden="true"></i>
+                                    </div>
+                                    <span asp-validation-for="SeatCapacity" class="form-error" id="seats-error"></span>
+                                    <div class="form-hint">Including driver (1-8 seats)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions sticky-bottom d-flex flex-column flex-md-row gap-3 justify-content-end">
+                        <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary btn-lg py-3 px-5 order-md-1 order-2">
+                            <i data-lucide="x" class="me-2" aria-hidden="true"></i>
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg py-3 px-5 order-md-2 order-1 auth-submit" data-loading-text="Adding vehicle...">
+                            <span class="btn-text">
+                                <i data-lucide="plus" class="me-2" aria-hidden="true"></i>
+                                Add Vehicle
+                            </span>
+                            <span class="btn-loader d-none">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Adding...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Requirements Note -->
+                <div class="requirements-note mt-5 p-4 rounded-3" style="background: var(--color-brand-primary-light); border: 1px solid var(--color-brand-primary);">
+                    <h3 class="h6 fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i data-lucide="clipboard-list" class="text-gold" aria-hidden="true"></i>
+                        Vehicle Requirements
+                    </h3>
+                    <ul class="mb-0 text-sm text-muted">
+                        <li class="mb-2 d-flex align-items-start gap-2">
+                            <i data-lucide="check-circle" class="text-success flex-shrink-0 mt-0.5" style="width: 18px; height: 18px;" aria-hidden="true"></i>
+                            <span>Vehicle must be registered in your name</span>
+                        </li>
+                        <li class="mb-2 d-flex align-items-start gap-2">
+                            <i data-lucide="check-circle" class="text-success flex-shrink-0 mt-0.5" style="width: 18px; height: 18px;" aria-hidden="true"></i>
+                            <span>Valid insurance and registration required</span>
+                        </li>
+                        <li class="mb-2 d-flex align-items-start gap-2">
+                            <i data-lucide="check-circle" class="text-success flex-shrink-0 mt-0.5" style="width: 18px; height: 18px;" aria-hidden="true"></i>
+                            <span>Vehicle must pass safety inspection</span>
+                        </li>
+                        <li class="d-flex align-items-start gap-2">
+                            <i data-lucide="check-circle" class="text-success flex-shrink-0 mt-0.5" style="width: 18px; height: 18px;" aria-hidden="true"></i>
+                            <span>Maximum 8 seats including driver</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-        <label asp-for="Model" class="control-label"></label>
-        <input asp-for="Model" class="form-control" />
-        <span asp-validation-for="Model" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="RegistrationNumber" class="control-label"></label>
-        <input asp-for="RegistrationNumber" class="form-control" />
-        <span asp-validation-for="RegistrationNumber" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="SeatCapacity" class="control-label"></label>
-        <input asp-for="SeatCapacity" class="form-control" />
-        <span asp-validation-for="SeatCapacity" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <input type="submit" value="Add Vehicle" class="btn btn-primary" />
-        <a asp-action="Index" class="btn btn-link">Cancel</a>
-    </div>
-</form>
+</section>
+
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-8);
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+        .form-page {
+            padding: var(--space-8) 0 var(--space-16);
+        }
+        .ride-form {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+        }
+        .form-section {
+            padding-bottom: var(--space-5);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .form-section:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .section-title {
+            display: inline-flex;
+            align-items: center;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-3);
+            border-bottom: 2px solid var(--color-brand-primary);
+        }
+        .section-title i {
+            width: 20px;
+            height: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-2);
+        }
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-wrapper .form-control {
+            padding-left: 3rem;
+        }
+        .input-wrapper .input-prefix {
+            position: absolute;
+            left: 1rem;
+            color: var(--color-text-disabled);
+            font-weight: var(--font-weight-medium);
+            z-index: 2;
+        }
+        .input-wrapper .input-prefix + .form-control {
+            padding-left: 2.5rem;
+        }
+        .input-icon {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            pointer-events: none;
+            transition: color var(--transition-fast);
+            z-index: 2;
+        }
+        .input-wrapper:has(.input-prefix) .input-icon {
+            left: calc(var(--space-4) + 1.25rem);
+        }
+        .form-control:focus + .input-icon,
+        .form-control:focus ~ .input-icon {
+            color: var(--color-brand-primary);
+        }
+        .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-base);
+            height: auto;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-disabled);
+        }
+        .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+            color: var(--color-text-primary);
+        }
+        .form-control.is-invalid,
+        .form-control:invalid {
+            border-color: var(--color-danger);
+        }
+        .form-control.is-invalid:focus,
+        .form-control:invalid:focus {
+            box-shadow: 0 0 0 3px var(--color-danger-light);
+        }
+        .form-error {
+            display: block;
+            color: var(--color-danger);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .validation-summary {
+            background: var(--color-danger-light);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            color: var(--color-danger);
+        }
+        .form-hint {
+            display: block;
+            color: var(--color-text-disabled);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+
+        /* Vehicle Type Options */
+        .vehicle-type-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: var(--space-4);
+        }
+        .vehicle-type-option {
+            display: block;
+            cursor: pointer;
+        }
+        .vehicle-type-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .vehicle-type-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: var(--space-5) var(--space-4);
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-xl);
+            transition: all var(--transition-base);
+        }
+        .vehicle-type-option:hover .vehicle-type-card {
+            border-color: var(--color-brand-primary);
+        }
+        .vehicle-type-input:checked + .vehicle-type-card {
+            border-color: var(--color-brand-primary);
+            background: var(--color-brand-primary-light);
+        }
+        .vehicle-type-input:focus-visible + .vehicle-type-card {
+            outline: 2px solid var(--color-brand-primary);
+            outline-offset: 2px;
+        }
+        .vehicle-type-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-3);
+        }
+        .vehicle-type-icon i {
+            width: 28px;
+            height: 28px;
+            color: var(--color-text-inverse);
+        }
+        .vehicle-type-label {
+            color: var(--color-text-primary);
+            font-size: var(--font-size-base);
+        }
+        .vehicle-type-desc {
+            font-size: var(--font-size-xs);
+        }
+
+        /* Form Actions */
+        .form-actions {
+            padding-top: var(--space-5);
+            margin-top: var(--space-5);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .form-actions.sticky-bottom {
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(to top, var(--color-bg-card), transparent);
+            z-index: 10;
+        }
+        .auth-submit {
+            border-radius: var(--radius-lg);
+            background: var(--gradient-primary);
+            border: none;
+            transition: all var(--transition-base);
+            min-width: 200px;
+        }
+        .auth-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        .auth-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .auth-submit:disabled {
+            opacity: 0.7;
+        }
+        .btn-outline-secondary {
+            border-radius: var(--radius-lg);
+            border-color: var(--color-border-strong);
+            color: var(--color-text-secondary);
+            min-width: 200px;
+        }
+        .btn-outline-secondary:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-emphasis);
+            color: var(--color-text-primary);
+        }
+        .btn-outline-secondary i {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Requirements Note */
+        .requirements-note li::marker {
+            color: var(--color-brand-primary);
+        }
+        .text-sm {
+            font-size: var(--font-size-sm);
+        }
+    </style>
+}
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form submission loading state
+            const form = document.querySelector('.ride-form');
+            const submitBtn = document.querySelector('.auth-submit');
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function() {
+                    if (form.checkValidity()) {
+                        submitBtn.disabled = true;
+                        submitBtn.querySelector('.btn-text').classList.add('d-none');
+                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                    }
+                });
+            }
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 }

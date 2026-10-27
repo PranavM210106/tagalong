@@ -1,98 +1,595 @@
-@using Tagalong.Models.Entities
-@model dynamic
+@model Tagalong.Models.ViewModels.ChatThreadViewModel
 @{
     ViewData["Title"] = "Chat";
-    var booking = Model.Booking;
-    var messages = Model.Messages;
-    var userId = Context.User.Identity.Name; // This will be the email, but we need to get the actual user id
-    // In a real app, we'd pass the current user id to the view or get it from User.Claims
+    var currentUserId = ViewData["CurrentUserId"] as string;
+    var otherUserName = ViewData["OtherUserName"] as string;
+    var rideId = ViewData["RideId"] as int?;
 }
 
-<h2>Chat with Ride Partner</h2>
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Profile" asp-action="Index" class="text-muted">Profile</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Chat with @otherUserName</li>
+            </ol>
+        </nav>
+        <header>
+            <h1 id="page-title" class="display-5 fw-bold mb-1">Messages</h1>
+            <p class="lead text-muted mb-0">@otherUserName @(rideId.HasValue ? "• Ride #" + rideId : "")</p>
+        </header>
+    </div>
+</section>
 
-<div>
-    <div class="mb-3">
-        <strong>Ride:</strong> @booking.StartLocation → @booking.EndLocation
-    </div>
-    <div class="mb-3">
-        <strong>Departure:</strong> @booking.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
-    </div>
-    <div class="mb-3">
-        <strong>Your Role:</strong> @(User.IsInRole("Driver") ? "Driver" : "Rider")
-    </div>
-</div>
+<section class="chat-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="chat-container">
+                    <!-- Messages Area -->
+                    <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Conversation">
+                        @if (Model.Messages != null && Model.Messages.Any())
+                        {
+                            foreach (var message in Model.Messages)
+                            {
+                                var isOwn = message.SenderId == currentUserId;
+                                <article class="message @(isOwn ? "message-own" : "message-other")" data-message-id="@message.Id" data-timestamp="@message.SentAt.ToString("o")">
+                                    @if (!isOwn)
+                                    {
+                                        <div class="message-avatar">
+                                            <div class="avatar-circle">
+                                                <span>@(otherUserName?.Length > 0 ? otherUserName[0].ToString().ToUpper() : "U")</span>
+                                            </div>
+                                        </div>
+                                    }
+                                    <div class="message-bubble-wrapper">
+                                        <div class="message-bubble">
+                                            <p class="message-text">@message.Content</p>
+                                            <time class="message-time" datetime="@message.SentAt.ToString("o")">
+                                                @message.SentAt.ToString("h:mm tt")
+                                            </time>
+                                            @if (isOwn)
+                                            {
+                                                <span class="message-status" data-status="@message.Status">
+                                                    <i data-lucide="@(message.Status == "Read" ? "check-check" : "check")" aria-hidden="true"></i>
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                </article>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-chat text-center py-5" role="status">
+                                <i data-lucide="message-circle" class="mx-auto text-muted mb-3" style="width: 64px; height: 64px;" aria-hidden="true"></i>
+                                <h3 class="h5 fw-bold mb-2">No messages yet</h3>
+                                <p class="text-muted mb-0">Start the conversation!</p>
+                            </div>
+                        }
+                        <div id="messagesEnd" aria-hidden="true"></div>
+                    </div>
 
-<div id="chat-container" style="border: 1px solid #ddd; height: 400px; overflow-y: auto; padding: 10px; margin-bottom: 20px; border-radius: 4px;">
-    @foreach (var message in messages)
-    {
-        var isCurrentUser = message.SenderId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        <div class="mb-2 p-2" style="background-color: @(isCurrentUser ? "#e3f2fd" : "#f5f5f5"); border-radius: 4px; max-width: 80%; margin-left: @(isCurrentUser ? "auto" : 0); margin-right: @(!isCurrentUser ? "auto" : 0); clear: both;">
-            <div>
-                <strong>@message.SenderName:</strong> @message.Content
-            </div>
-            <div class="text-muted small" style="text-align: @(isCurrentUser ? "right" : "left");">
-                @message.Timestamp.ToString("hh:mm tt")
+                    <!-- Message Input -->
+                    <form asp-action="SendMessage" method="post" class="chat-input-form" id="chatForm" novalidate>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="RideId" value="@rideId" />
+                        <input type="hidden" name="RecipientId" value="@ViewData["OtherUserId"]" />
+                        <div class="input-row">
+                            <div class="input-wrapper flex-grow-1">
+                                <input type="text" name="Content" class="form-control" placeholder="Type a message..." autocomplete="off" aria-label="Message" required maxlength="2000" />
+                                <i data-lucide="send" class="input-icon" aria-hidden="true"></i>
+                            </div>
+                            <button type="submit" class="btn btn-primary send-btn" aria-label="Send message" disabled>
+                                <i data-lucide="send" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="input-hints">
+                            <span class="char-count"><span id="charCount">0</span>/2000</span>
+                            <span class="input-shortcut">Press <kbd>Enter</kbd> to send, <kbd>Shift</kbd>+<kbd>Enter</kbd> for new line</span>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    }
-</div>
-
-<form id="chat-form">
-    <div class="input-group">
-        <input type="text" id="messageInput" class="form-control" placeholder="Type a message..." />
-        <button class="btn btn-primary" type="submit">Send</button>
     </div>
-    <input type="hidden" id="bookingId" value="@booking.BookingId" />
-</form>
+</section>
 
-<div class="mt-3">
-    <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-link">Back to My Rides</a>
-</div>
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: 0;
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+
+        .chat-page {
+            padding: var(--space-6) 0 var(--space-12);
+            min-height: calc(100vh - 200px);
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 280px);
+            min-height: 500px;
+            max-height: 800px;
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-6);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--color-border-strong);
+            border-radius: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--color-border-emphasis);
+        }
+
+        .message {
+            display: flex;
+            gap: var(--space-3);
+            max-width: 85%;
+            animation: messageIn 0.3s ease-out;
+        }
+        @@keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message-own {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .message-other {
+            align-self: flex-start;
+        }
+
+        .message-avatar {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+        }
+        .message-own .message-avatar {
+            display: none;
+        }
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-full);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text-inverse);
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+        }
+
+        .message-bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .message-bubble {
+            position: relative;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-2xl);
+            max-width: 100%;
+        }
+        .message-other .message-bubble {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-default);
+            border-bottom-left-radius: var(--radius-sm);
+        }
+        .message-own .message-bubble {
+            background: var(--gradient-primary);
+            border: none;
+            border-bottom-right-radius: var(--radius-sm);
+        }
+
+        .message-text {
+            margin: 0;
+            color: var(--color-text-secondary);
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .message-own .message-text {
+            color: var(--color-text-inverse);
+        }
+
+        .message-time {
+            display: block;
+            font-size: var(--font-size-xs);
+            color: var(--color-text-disabled);
+            margin-top: var(--space-1);
+            text-align: right;
+        }
+        .message-own .message-time {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .message-status {
+            position: absolute;
+            bottom: var(--space-1);
+            right: var(--space-2);
+            display: flex;
+            align-items: center;
+            font-size: 0.625rem;
+            color: rgba(255,255,255,0.5);
+        }
+        .message-status i {
+            width: 14px;
+            height: 14px;
+        }
+        .message-status[data-status="Read"] i {
+            color: var(--color-brand-primary);
+        }
+        .message-status[data-status="Delivered"] i {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .empty-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Chat Input Form */
+        .chat-input-form {
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--color-border-default);
+            background: rgba(var(--color-bg-tertiary-rgb), 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: var(--space-3);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-wrapper .form-control {
+            padding-left: var(--space-4);
+            padding-right: 3rem;
+        }
+        .input-icon {
+            position: absolute;
+            right: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            pointer-events: none;
+            transition: color var(--transition-fast);
+            z-index: 2;
+        }
+        .form-control:focus + .input-icon,
+        .form-control:focus ~ .input-icon {
+            color: var(--color-brand-primary);
+        }
+
+        .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-full);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--font-size-sm);
+            transition: all var(--transition-base);
+            height: auto;
+            min-height: 48px;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-disabled);
+        }
+        .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+            color: var(--color-text-primary);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-full);
+            background: var(--gradient-primary);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-base);
+            flex-shrink: 0;
+        }
+        .send-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-glow);
+        }
+        .send-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .send-btn i {
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-inverse);
+        }
+
+        .input-hints {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--space-2);
+            font-size: var(--font-size-xs);
+            color: var(--color-text-disabled);
+        }
+        .char-count {
+            font-variant-numeric: tabular-nums;
+        }
+        .input-shortcut kbd {
+            background: var(--color-bg-tertiary);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-xs);
+            font-family: inherit;
+        }
+
+        /* Responsive */
+        @@media (max-width: 767px) {
+            .chat-container {
+                height: calc(100vh - 200px);
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+            .message {
+                max-width: 90%;
+            }
+            .page-header {
+                padding: var(--space-8) 0 var(--space-6);
+            }
+        }
+    </style>
+}
 
 @section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        document.getElementById('chat-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const messageInput = document.getElementById('messageInput');
-            const bookingId = document.getElementById('bookingId').value;
-            const messageText = messageInput.value.trim();
-            
-            if (messageText) {
-                fetch('@Url.Action("SendMessage", "Chat")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: new URLSearchParams({
-                        'bookingId': bookingId,
-                        'messageText': messageText
-                    })
-                })
-                .then(response => response.ok ? response.text() : Promise.reject(response))
-                .then(html => {
-                    // Simple approach: reload the page to show new message
-                    // In a real app, you'd use SignalR or AJAX to append the message
-                    document.getElementById('chat-container').innerHTML += `
-                        <div class="mb-2 p-2" style="background-color: #e3f2fd; border-radius: 4px; max-width: 80%; margin-left: auto;">
-                            <div>
-                                <strong>You:</strong> ${messageText}
-                            </div>
-                            <div class="text-muted small" style="text-align: right;">
-                                ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            </div>
-                        </div>
-                    `;
-                    messageInput.value = '';
-                    // Scroll to bottom
-                    const chatContainer = document.getElementById('chat-container');
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                })
-                .catch(err => {
-                    console.error('Error sending message:', err);
-                    alert('Failed to send message. Please try again.');
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('chatForm');
+            const input = form?.querySelector('input[name="Content"]');
+            const sendBtn = form?.querySelector('.send-btn');
+            const charCount = document.getElementById('charCount');
+            const messagesContainer = document.getElementById('chatMessages');
+            const messagesEnd = document.getElementById('messagesEnd');
+
+            // Auto-scroll to bottom
+            function scrollToBottom() {
+                if (messagesEnd) {
+                    messagesEnd.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+
+            // Character count
+            if (input && charCount) {
+                input.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
+                    if (sendBtn) {
+                        sendBtn.disabled = this.value.trim().length === 0;
+                    }
                 });
+            }
+
+            // Send on Enter, newline on Shift+Enter
+            if (input) {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (this.value.trim() && sendBtn && !sendBtn.disabled) {
+                            form.dispatchEvent(new Event('submit'));
+                        }
+                    }
+                });
+            }
+
+            // Form submission
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const content = input.value.trim();
+                    if (!content) return;
+
+                    const formData = new FormData(this);
+                    const submitBtn = this.querySelector('.send-btn');
+
+                    // Optimistic UI update
+                    const tempId = 'temp-' + Date.now();
+                    appendMessage(content, true, tempId);
+                    input.value = '';
+                    if (charCount) charCount.textContent = '0';
+                    if (sendBtn) sendBtn.disabled = true;
+                    scrollToBottom();
+
+                    try {
+                        const response = await fetch(this.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'RequestVerificationToken': formData.get('__RequestVerificationToken')
+                            }
+                        });
+
+                        if (response.ok) {
+                            // Replace temp message with server response
+                            const result = await response.json();
+                            if (result.message) {
+                                replaceTempMessage(tempId, result.message);
+                            }
+                        } else {
+                            // Show error, keep message for retry
+                            showError('Failed to send message');
+                        }
+                    } catch (err) {
+                        showError('Network error. Please try again.');
+                    }
+                });
+            }
+
+            function appendMessage(content, isOwn, tempId) {
+                if (!messagesContainer) return;
+
+                const emptyChat = messagesContainer.querySelector('.empty-chat');
+                if (emptyChat) emptyChat.remove();
+
+                const article = document.createElement('article');
+                article.className = `message ${isOwn ? 'message-own' : 'message-other'}`;
+                article.dataset.messageId = tempId;
+
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                article.innerHTML = `
+                    ${!isOwn ? `
+                    <div class="message-avatar">
+                        <div class="avatar-circle">
+                            <span>@(otherUserName?.Length > 0 ? otherUserName[0].ToString().ToUpper() : "U")</span>
+                        </div>
+                    </div>` : ''}
+                    <div class="message-bubble-wrapper">
+                        <div class="message-bubble">
+                            <p class="message-text">${escapeHtml(content)}</p>
+                            <time class="message-time" datetime="${now.toISOString()}">${timeStr}</time>
+                            ${isOwn ? '<span class="message-status" data-status="Sending"><i data-lucide="clock" aria-hidden="true"></i></span>' : ''}
+                        </div>
+                    </div>
+                `;
+
+                messagesContainer.appendChild(article);
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ nodes: article.querySelectorAll('[data-lucide]') });
+                }
+            }
+
+            function replaceTempMessage(tempId, serverMessage) {
+                const tempEl = messagesContainer?.querySelector(`[data-message-id="${tempId}"]`);
+                if (!tempEl) return;
+
+                const isOwn = serverMessage.isOwn || tempEl.classList.contains('message-own');
+                const timeStr = new Date(serverMessage.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                tempEl.dataset.messageId = serverMessage.id;
+                tempEl.innerHTML = `
+                    ${!isOwn ? `
+                    <div class="message-avatar">
+                        <div class="avatar-circle">
+                            <span>@(otherUserName?.Length > 0 ? otherUserName[0].ToString().ToUpper() : "U")</span>
+                        </div>
+                    </div>` : ''}
+                    <div class="message-bubble-wrapper">
+                        <div class="message-bubble">
+                            <p class="message-text">${escapeHtml(serverMessage.content)}</p>
+                            <time class="message-time" datetime="${serverMessage.sentAt}">${timeStr}</time>
+                            ${isOwn ? `<span class="message-status" data-status="${serverMessage.status}"><i data-lucide="${serverMessage.status === 'Read' ? 'check-check' : 'check'}" aria-hidden="true"></i></span>` : ''}
+                        </div>
+                    </div>
+                `;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ nodes: tempEl.querySelectorAll('[data-lucide]') });
+                }
+            }
+
+            function showError(message) {
+                const toast = document.createElement('div');
+                toast.className = 'toast-alert';
+                toast.setAttribute('role', 'alert');
+                toast.innerHTML = `<i data-lucide="alert-circle" class="me-2" aria-hidden="true"></i>${escapeHtml(message)}`;
+                document.body.appendChild(toast);
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ nodes: toast.querySelectorAll('[data-lucide]') });
+                }
+                setTimeout(() => toast.remove(), 4000);
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Initial scroll to bottom
+            scrollToBottom();
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
             }
         });
     </script>
+    <style>
+        .toast-alert {
+            position: fixed;
+            bottom: var(--space-8);
+            right: var(--space-8);
+            background: var(--color-danger);
+            color: var(--color-text-inverse);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        @@keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .toast-alert i { width: 20px; height: 20px; }
+    </style>
 }

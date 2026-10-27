@@ -20,9 +20,14 @@ namespace Tagalong.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult Register()
+        public IActionResult Register(string role)
         {
-            return View();
+            var model = new RegisterViewModel { Role = "Rider" };
+            if (!string.IsNullOrEmpty(role) && (role == "Driver" || role == "Rider"))
+            {
+                model.Role = role;
+            }
+            return View(model);
         }
 
         [HttpPost]

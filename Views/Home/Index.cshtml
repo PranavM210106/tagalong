@@ -3,62 +3,415 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome to Tagalong</h1>
-    <p>Share rides, save money, and reduce your carbon footprint.</p>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <h2>Offer a Ride</h2>
-        <p>Have extra seats in your vehicle? Offer a ride and earn money while helping others.</p>
-        <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary">Offer a Ride</a>
+<!-- Hero Section -->
+<section class="hero-section" aria-labelledby="hero-title">
+    <div class="hero-bg" aria-hidden="true">
+        <div class="hero-gradient"></div>
+        <div class="hero-pattern"></div>
     </div>
-    <div class="col-md-6">
-        <h2>Find a Ride</h2>
-        <p>Looking for a ride? Find available rides heading your way.</p>
-        <a asp-controller="Rides" asp-action="Find" class="btn btn-outline-primary">Find a Ride</a>
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row min-vh-100 align-items-center justify-content-center">
+            <div class="col-12 col-lg-10 col-xl-8 text-center">
+                <h1 id="hero-title" class="display-2 fw-bold mb-4 hero-title">Share Rides. Save Money. Reduce Your Footprint.</h1>
+                <p class="lead mb-5 hero-subtitle">Connect with drivers and riders heading your way. Simple, safe, and sustainable.</p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center hero-cta">
+                    <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary btn-lg px-5 py-3">
+                        <i data-lucide="car" class="me-2" aria-hidden="true"></i>
+                        Offer a Ride
+                    </a>
+                    <a asp-controller="Rides" asp-action="Find" class="btn btn-outline-light btn-lg px-5 py-3">
+                        <i data-lucide="search" class="me-2" aria-hidden="true"></i>
+                        Find a Ride
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator" aria-hidden="true">
+            <i data-lucide="chevron-down" class="scroll-icon"></i>
+        </div>
     </div>
-</div>
+</section>
 
-<div class="row mt-5">
-    <div class="col-12">
-        <h2>Available Rides Near You</h2>
-        @if (Model.Any())
+<!-- Features Section -->
+<section class="features-section" aria-labelledby="features-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <header class="text-center mb-5">
+            <h2 id="features-title" class="display-5 fw-bold mb-3">Why Choose Tagalong?</h2>
+            <p class="lead text-muted">Built for modern commuters who value convenience, safety, and sustainability.</p>
+        </header>
+        <div class="row g-4">
+            <div class="col-12 col-md-4">
+                <article class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i data-lucide="map-pin" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Matching</h3>
+                    <p class="feature-description">Haversine-powered location matching finds rides that perfectly align with your route and schedule.</p>
+                </article>
+            </div>
+            <div class="col-12 col-md-4">
+                <article class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i data-lucide="shield-check" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="feature-title">Verified Drivers</h3>
+                    <p class="feature-description">Background checks, ratings, and reviews ensure every ride is safe and reliable.</p>
+                </article>
+            </div>
+            <div class="col-12 col-md-4">
+                <article class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i data-lucide="message-circle" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="feature-title">In-App Chat</h3>
+                    <p class="feature-description">Coordinate seamlessly with your ride partner through secure, real-time messaging.</p>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Live Rides Section -->
+<section class="rides-section" aria-labelledby="rides-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <header class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-5">
+            <div>
+                <h2 id="rides-title" class="display-5 fw-bold mb-1">Rides Near You</h2>
+                <p class="text-muted mb-0">Available rides updated in real-time</p>
+            </div>
+            <a asp-controller="Rides" asp-action="Find" class="btn btn-outline-primary">
+                <i data-lucide="grid" class="me-2" aria-hidden="true"></i>
+                View All Rides
+            </a>
+        </header>
+
+        @if (Model != null && Model.Any())
         {
-            <div class="row">
-                @foreach (var ride in Model.Take(6)) // Show up to 6 rides
+            <div class="row g-4" role="list">
+                @foreach (var ride in Model.Take(6))
                 {
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">@ride.StartLocation → @ride.EndLocation</h5>
-                                <h6 class="card-subtitle mb-2 text-muted">
+                    <div class="col-12 col-md-6 col-lg-4" role="listitem">
+                        <article class="ride-card h-100">
+                            <div class="ride-card-header">
+                                <div class="route-badge">
+                                    <i data-lucide="navigation" class="me-1" aria-hidden="true"></i>
+                                    <span>@ride.StartLocation → @ride.EndLocation</span>
+                                </div>
+                                <time class="departure-time" datetime="@ride.DepartureTime.ToString("yyyy-MM-ddTHH:mm")">
+                                    <i data-lucide="clock" class="me-1" aria-hidden="true"></i>
                                     @ride.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
-                                </h6>
-                                <p class="card-text">
-                                    <strong>Seats available:</strong> @ride.SeatsAvailable<br />
-                                    <strong>Price per seat:</strong> $@ride.PricePerSeat<br />
-                                    <strong>Vehicle:</strong> @ride.Vehicle.Model (@ride.Vehicle.VehicleType)<br />
-                                    <strong>Driver:</strong> @ride.Driver.FullName
-                                </p>
+                                </time>
+                            </div>
+                            <div class="ride-card-body">
+                                <div class="ride-meta">
+                                    <div class="meta-item">
+                                        <i data-lucide="users" class="meta-icon" aria-hidden="true"></i>
+                                        <span><strong>@ride.SeatsAvailable</strong> seats available</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i data-lucide="dollar-sign" class="meta-icon" aria-hidden="true"></i>
+                                        <span>$@ride.PricePerSeat <small class="text-muted">/ seat</small></span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i data-lucide="truck" class="meta-icon" aria-hidden="true"></i>
+                                        <span>@ride.Vehicle.Model (@ride.Vehicle.VehicleType)</span>
+                                    </div>
+                                </div>
+                                <div class="driver-info d-flex align-items-center gap-3">
+                                    <div class="driver-avatar">
+                                        @if (!string.IsNullOrEmpty(ride.Driver.ProfilePicture))
+                                        {
+                                            <img src="@ride.Driver.ProfilePicture" alt="@ride.Driver.FullName" class="rounded-circle" />
+                                        }
+                                        else
+                                        {
+                                            <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
+                                                <i data-lucide="user" class="avatar-icon" aria-hidden="true"></i>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div>
+                                        <div class="driver-name fw-medium">@ride.Driver.FullName</div>
+                                        <div class="driver-rating d-flex align-items-center gap-1 text-warning small">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i data-lucide="star" class="@(i <= (int)Math.Round(ride.Driver.AverageRating ?? 0) ? "fill" : "")" aria-hidden="true"></i>
+                                            }
+                                            <span class="text-muted">@ride.Driver.AverageRating?.ToString("0.0")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ride-card-footer">
                                 @if (ride.SeatsAvailable > 0)
                                 {
-                                    <a asp-controller="Rides" asp-action="RequestToJoin" asp-route-rideId="@ride.RideId" class="btn btn-success btn-sm">Request to Join</a>
+                                    <form asp-controller="Rides" asp-action="RequestToJoin" method="post" class="w-100">
+                                        <input type="hidden" name="rideId" value="@ride.RideId" />
+                                        <button type="submit" class="btn btn-primary w-100 py-3 fw-medium">
+                                            <i data-lucide="user-plus" class="me-2" aria-hidden="true"></i>
+                                            Request to Join
+                                        </button>
+                                    </form>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger">Full</span>
+                                    <span class="badge bg-danger w-100 py-3 fw-medium fs-6">Full</span>
                                 }
                             </div>
-                        </div>
+                        </article>
                     </div>
                 }
             </div>
         }
         else
         {
-            <div class="alert alert-info">No active rides available at the moment. Be the first to offer a ride!</div>
+            <div class="empty-state text-center py-5" role="status">
+                <div class="empty-icon mb-4">
+                    <i data-lucide="car" class="mx-auto" style="width: 80px; height: 80px;" aria-hidden="true"></i>
+                </div>
+                <h3 class="h4 fw-bold mb-2">No rides available right now</h3>
+                <p class="text-muted mb-4">Be the first to offer a ride and help others on their journey.</p>
+                <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary">
+                    <i data-lucide="plus" class="me-2" aria-hidden="true"></i>
+                    Offer a Ride
+                </a>
+            </div>
         }
     </div>
-</div>
+</section>
+
+@section Styles {
+    <style>
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+        .hero-gradient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(234, 179, 8, 0.15) 0%, transparent 70%),
+                        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(250, 204, 21, 0.08) 0%, transparent 60%),
+                        var(--color-bg-primary);
+        }
+        .hero-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23eab308' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: patternMove 30s linear infinite;
+        }
+        @@media (prefers-reduced-motion: reduce) {
+            .hero-pattern {
+                animation: none;
+            }
+        }
+        @@keyframes patternMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-brand-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: clamp(1.125rem, 2vw, 1.25rem);
+            color: var(--color-text-muted);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-cta .btn {
+            min-width: 200px;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @@media (prefers-reduced-motion: reduce) {
+            .scroll-indicator {
+                animation: none;
+            }
+        }
+        @@keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+        .scroll-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--color-text-disabled);
+        }
+        .features-section {
+            padding: var(--space-20) 0;
+        }
+        .feature-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-6);
+            transition: all var(--transition-base);
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--color-brand-primary);
+        }
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+        }
+        .feature-icon i {
+            width: 28px;
+            height: 28px;
+            color: var(--color-text-inverse);
+        }
+        .feature-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--space-3);
+            color: var(--color-text-primary);
+        }
+        .feature-description {
+            color: var(--color-text-muted);
+            line-height: 1.6;
+        }
+        .rides-section {
+            padding: var(--space-20) 0;
+        }
+        .ride-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            transition: all var(--transition-base);
+            display: flex;
+            flex-direction: column;
+        }
+        .ride-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--color-brand-primary);
+        }
+        .ride-card-header {
+            padding: var(--space-5);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .route-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            margin-bottom: var(--space-3);
+        }
+        .route-badge i {
+            width: 14px;
+            height: 14px;
+        }
+        .departure-time {
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+        }
+        .departure-time i {
+            width: 14px;
+            height: 14px;
+        }
+        .ride-card-body {
+            padding: var(--space-5);
+            flex: 1;
+        }
+        .ride-meta {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            margin-bottom: var(--space-5);
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-base);
+        }
+        .meta-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            flex-shrink: 0;
+        }
+        .driver-info {
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .driver-avatar {
+            width: 48px;
+            height: 48px;
+            overflow: hidden;
+        }
+        .driver-avatar img,
+        .driver-avatar .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+        }
+        .driver-avatar .avatar-placeholder {
+            background: var(--color-bg-tertiary);
+        }
+        .driver-avatar .avatar-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--color-text-disabled);
+        }
+        .driver-name {
+            color: var(--color-text-primary);
+        }
+        .driver-rating i {
+            width: 14px;
+            height: 14px;
+        }
+        .driver-rating .fill {
+            color: var(--color-brand-primary);
+        }
+        .ride-card-footer {
+            padding: var(--space-5);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .ride-card-footer .btn {
+            border-radius: var(--radius-lg);
+        }
+        .empty-state {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+        }
+        .empty-icon i {
+            color: var(--color-text-disabled);
+        }
+        .empty-state h3 {
+            color: var(--color-text-primary);
+        }
+        .empty-state p {
+            color: var(--color-text-muted);
+        }
+    </style>
+}

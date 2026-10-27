@@ -3,144 +3,580 @@
     ViewData["Title"] = "Profile";
 }
 
-<h2>Profile</h2>
-
-<div class="row">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                @if (!string.IsNullOrEmpty(Model.ProfilePicture))
-                {
-                    <img src="@Model.ProfilePicture" alt="Profile Picture" class="rounded-circle mb-3" width="150" height="150">
-                }
-                else
-                {
-                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-3" width="150" height="150">
-                        <i class="bi bi-person-circle display-4 text-secondary"></i>
-                    </div>
-                }
-                <h4 class="card-title">@Model.FullName</h4>
-                <p class="card-text text-muted">
-                    @Model.Email<br />
-                    @if (Model.IsVerified)
-                    {
-                        <span class="badge bg-success">Verified</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">Not Verified</span>
-                    }
-                </p>
-                @if (User.IsInRole("Driver"))
-                {
-                    <a asp-action="AddVehicle" class="btn btn-outline-primary">Add Vehicle</a>
-                }
-            </div>
-        </div>
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Profile</li>
+            </ol>
+        </nav>
+        <header>
+            <h1 id="page-title" class="display-5 fw-bold mb-1">My Profile</h1>
+            <p class="lead text-muted mb-0">Manage your account, vehicles, and view your activity</p>
+        </header>
     </div>
-    
-    <div class="col-md-8">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5>Account Information</h5>
+</section>
+
+<section class="profile-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row g-4">
+            <!-- Sidebar -->
+            <aside class="col-12 col-lg-3 col-xl-3 profile-sidebar">
+                <div class="profile-card h-100 sticky-top" style="top: 90px;">
+                    <div class="profile-header text-center p-4">
+                        @if (!string.IsNullOrEmpty(Model.ProfilePicture))
+                        {
+                            <img src="@Model.ProfilePicture" alt="@Model.FullName" class="profile-avatar mb-3" />
+                        }
+                        else
+                        {
+                            <div class="avatar-placeholder profile-avatar mb-3 mx-auto d-flex align-items-center justify-content-center">
+                                <i data-lucide="user" class="avatar-icon-large" aria-hidden="true"></i>
+                            </div>
+                        }
+                        <h3 class="fw-bold mb-1">@Model.FullName</h3>
+                        <p class="text-muted small mb-2">@Model.Email</p>
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            @if (Model.IsVerified)
+                            {
+                                <span class="badge bg-success px-3 py-2">
+                                    <i data-lucide="shield-check" class="me-1" aria-hidden="true" style="width: 14px; height: 14px;"></i>
+                                    Verified
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary px-3 py-2">
+                                    <i data-lucide="shield-alert" class="me-1" aria-hidden="true" style="width: 14px; height: 14px;"></i>
+                                    Not Verified
+                                </span>
+                            }
+                            @if (User.IsInRole("Driver"))
+                            {
+                                <span class="badge bg-primary px-3 py-2">
+                                    <i data-lucide="steering-wheel" class="me-1" aria-hidden="true" style="width: 14px; height: 14px;"></i>
+                                    Driver
+                                </span>
+                            }
+                            @if (User.IsInRole("Rider"))
+                            {
+                                <span class="badge bg-info px-3 py-2">
+                                    <i data-lucide="user" class="me-1" aria-hidden="true" style="width: 14px; height: 14px;"></i>
+                                    Rider
+                                </span>
+                            }
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p><strong>Full Name:</strong> @Model.FullName</p>
-                        <p><strong>Email:</strong> @Model.Email</p>
-                        <p><strong>Phone Number:</strong> @Model.PhoneNumber</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5>Rating Statistics</h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <h2 display="4">@Model.AverageRating.ToString("0.0")</h2>
-                        <p class="text-muted">Average Rating</p>
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar" role="progressbar" style="width: @((Model.AverageRating/5)*100)%;" aria-valuenow="@Model.AverageRating" aria-valuemin="0" aria-valuemax="5">
-                                @Model.AverageRating.ToString("0.0")/5
+                    <div class="profile-stats p-4 border-top" style="border-color: var(--color-border-default) !important;">
+                        <div class="row g-3 text-center">
+                            <div class="col-4">
+                                <div class="stat-value fw-bold fs-4">@Model.RatingCount</div>
+                                <div class="stat-label text-muted small">Ratings</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-value fw-bold fs-4 text-gold">@Model.AverageRating.ToString("0.0")</div>
+                                <div class="stat-label text-muted small">Average</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-value fw-bold fs-4">@Model.Vehicles.Count</div>
+                                <div class="stat-label text-muted small">Vehicles</div>
                             </div>
                         </div>
-                        <p class="mt-2"><small>@Model.RatingCount ratings</small></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        @if (Model.Vehicles.Any())
-        {
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5>My Vehicles (@Model.Vehicles.Count)</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Model</th>
-                                    <th>Registration</th>
-                                    <th>Seats</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var vehicle in Model.Vehicles)
-                                {
-                                    <tr>
-                                        <td>@vehicle.VehicleType</td>
-                                        <td>@vehicle.Model</td>
-                                        <td>@vehicle.RegistrationNumber</td>
-                                        <td>@vehicle.SeatCapacity</td>
-                                        <td>
-                                            <!-- In a real app, you'd have edit/delete functionality -->
-                                            <button class="btn btn-sm btn-outline-secondary">Edit</button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        }
-        
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5>Recent Ratings Received</h5>
-            </div>
-            <div class="card-body">
-                @if (Model.RecentRatings.Any())
-                {
-                    <div class="list-group">
-                        @foreach (var rating in Model.RecentRatings)
+                        @if (Model.AverageRating > 0)
                         {
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">@rating.Stars stars</h5>
-                                    <small class="text-muted">@rating.Booking.BookedOn.ToString("MMM dd, yyyy")</small>
+                            <div class="rating-bar mt-3">
+                                <div class="progress" style="height: 8px;" role="progressbar" aria-valuenow="@Model.AverageRating" aria-valuemin="0" aria-valuemax="5" aria-label="Rating progress">
+                                    <div class="progress-bar bg-gold" style="width: @((Model.AverageRating/5)*100)%;"></div>
                                 </div>
-                                <p class="mb-1">@rating.Comment</p>
                             </div>
                         }
                     </div>
+                    <div class="profile-actions p-4 border-top" style="border-color: var(--color-border-default) !important;">
+                        <div class="d-grid gap-2">
+                            @if (User.IsInRole("Driver"))
+                            {
+                                <a asp-action="AddVehicle" class="btn btn-primary">
+                                    <i data-lucide="plus" class="me-2" aria-hidden="true"></i>
+                                    Add Vehicle
+                                </a>
+                            }
+                            <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-outline-secondary">
+                                <i data-lucide="calendar" class="me-2" aria-hidden="true"></i>
+                                My Rides
+                            </a>
+                            @if (User.IsInRole("Rider"))
+                            {
+                                <a asp-action="FileComplaint" class="btn btn-outline-warning">
+                                    <i data-lucide="alert-triangle" class="me-2" aria-hidden="true"></i>
+                                    File a Complaint
+                                </a>
+                                <a asp-action="MyComplaints" class="btn btn-outline-secondary">
+                                    <i data-lucide="file-text" class="me-2" aria-hidden="true"></i>
+                                    My Complaints
+                                </a>
+                            }
+                            <a asp-controller="Account" asp-action="Manage" class="btn btn-outline-secondary">
+                                <i data-lucide="settings" class="me-2" aria-hidden="true"></i>
+                                Account Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="col-12 col-lg-9 col-xl-9 profile-main">
+                <!-- Vehicles Section -->
+                @if (Model.Vehicles != null && Model.Vehicles.Any())
+                {
+                    <section class="profile-section mb-5" aria-labelledby="vehicles-title">
+                        <header class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                            <div>
+                                <h2 id="vehicles-title" class="h3 fw-bold mb-1">My Vehicles</h2>
+                                <p class="text-muted mb-0">@Model.Vehicles.Count vehicle@(Model.Vehicles.Count == 1 ? "" : "s") registered</p>
+                            </div>
+                            <a asp-action="AddVehicle" class="btn btn-primary">
+                                <i data-lucide="plus" class="me-2" aria-hidden="true"></i>
+                                Add Vehicle
+                            </a>
+                        </header>
+                        <div class="row g-4" role="list">
+                            @foreach (var vehicle in Model.Vehicles)
+                            {
+                                <div class="col-12 col-md-6 col-lg-4" role="listitem">
+                                    <article class="vehicle-card h-100">
+                                        <div class="vehicle-card-header">
+                                            <div class="vehicle-type-badge">
+                                                <i data-lucide="@GetVehicleIcon(vehicle.VehicleType)" aria-hidden="true"></i>
+                                                <span class="text-capitalize">@vehicle.VehicleType.ToLower()</span>
+                                            </div>
+                                        </div>
+                                        <div class="vehicle-card-body">
+                                            <h3 class="vehicle-model fw-bold mb-2">@vehicle.Model</h3>
+                                            <div class="vehicle-details d-flex flex-wrap gap-3 text-sm text-muted mb-3">
+                                                <span><i data-lucide="tag" class="me-1" aria-hidden="true"></i>@vehicle.RegistrationNumber</span>
+                                                <span><i data-lucide="users" class="me-1" aria-hidden="true"></i>@vehicle.SeatCapacity seats</span>
+                                            </div>
+                                            <div class="vehicle-meta">
+                                                <span class="meta-item text-sm text-muted">
+                                                    <i data-lucide="calendar" class="me-1" aria-hidden="true"></i>
+                                                    Added @vehicle.CreatedOn.ToString("MMM yyyy")
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="vehicle-card-footer">
+                                            <div class="btn-group w-100" role="group">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editVehicleModal" data-vehicle-id="@vehicle.VehicleId">
+                                                    <i data-lucide="edit" class="me-1" aria-hidden="true"></i>
+                                                    Edit
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteVehicleModal" data-vehicle-id="@vehicle.VehicleId">
+                                                    <i data-lucide="trash-2" class="me-1" aria-hidden="true"></i>
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </article>
+                                </div>
+                            }
+                        </div>
+                    </section>
                 }
                 else
                 {
-                    <p class="text-muted">No ratings received yet.</p>
+                    <section class="profile-section mb-5" aria-labelledby="vehicles-title">
+                        <div class="empty-state text-center py-5" role="status">
+                            <div class="empty-icon mb-4">
+                                <i data-lucide="car" class="mx-auto" style="width: 80px; height: 80px;" aria-hidden="true"></i>
+                            </div>
+                            <h3 class="h4 fw-bold mb-2">No vehicles registered</h3>
+                            <p class="text-muted mb-4">Add a vehicle to start offering rides.</p>
+                            @if (User.IsInRole("Driver"))
+                            {
+                                <a asp-action="AddVehicle" class="btn btn-primary">
+                                    <i data-lucide="plus" class="me-2" aria-hidden="true"></i>
+                                    Add Your First Vehicle
+                                </a>
+                            }
+                        </div>
+                    </section>
                 }
+
+                <!-- Recent Ratings Section -->
+                <section class="profile-section mb-5" aria-labelledby="ratings-title">
+                    <header class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+                        <div>
+                            <h2 id="ratings-title" class="h3 fw-bold mb-1">Recent Ratings Received</h2>
+                            <p class="text-muted mb-0">@Model.RecentRatings.Count rating@(Model.RecentRatings.Count == 1 ? "" : "s") in total</p>
+                        </div>
+                    </header>
+                    @if (Model.RecentRatings != null && Model.RecentRatings.Any())
+                    {
+                        <div class="ratings-list" role="list">
+                            @foreach (var rating in Model.RecentRatings.Take(5))
+                            {
+                                <article class="rating-card" role="listitem">
+                                    <div class="rating-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                                        <div class="rating-stars text-gold">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i data-lucide="star" class="@(i <= rating.Stars ? "fill" : "")" aria-hidden="true" style="width: 18px; height: 18px;"></i>
+                                            }
+                                        </div>
+                                        <time class="text-muted small" datetime="@rating.CreatedOn.ToString("yyyy-MM-dd")">
+                                            @rating.CreatedOn.ToString("MMM dd, yyyy")
+                                        </time>
+                                    </div>
+                                    <div class="rating-comment mt-2">
+                                        <p class="mb-0">"@rating.Comment"</p>
+                                    </div>
+                                    <div class="rating-meta mt-3 pt-3 border-top d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2" style="border-color: var(--color-border-default) !important;">
+                                        <div class="rating-from text-sm text-muted">
+                                            From <strong>@rating.Rater?.FullName</strong>
+                                        </div>
+                                        <div class="rating-ride text-sm text-muted">
+                                            Ride: <strong>@rating.Booking?.Ride?.StartLocation → @rating.Booking?.Ride?.EndLocation</strong>
+                                        </div>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                        <div class="text-center mt-4">
+                            <a asp-controller="Profile" asp-action="AllRatings" class="btn btn-outline-primary">
+                                View All Ratings
+                                <i data-lucide="chevron-right" class="ms-2" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state text-center py-5" role="status">
+                            <div class="empty-icon mb-4">
+                                <i data-lucide="star" class="mx-auto" style="width: 80px; height: 80px;" aria-hidden="true"></i>
+                            </div>
+                            <h3 class="h4 fw-bold mb-2">No ratings yet</h3>
+                            <p class="text-muted mb-4">Complete rides and get rated by your passengers.</p>
+                        </div>
+                    }
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+
+<!-- Edit Vehicle Modal -->
+<div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--color-bg-card); border-color: var(--color-border-default); border-radius: var(--radius-2xl);">
+            <div class="modal-header" style="border-color: var(--color-border-default); padding: var(--space-5);">
+                <h5 class="modal-title fw-bold" id="editVehicleModalLabel">Edit Vehicle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form asp-action="EditVehicle" method="post" class="vehicle-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="VehicleId" id="editVehicleId" />
+                <div class="modal-body p-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Vehicle Type</label>
+                        <select name="VehicleType" class="form-control" required>
+                            <option value="Car">Car</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Van">Van</option>
+                            <option value="Motorcycle">Motorcycle</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Model</label>
+                        <input type="text" name="Model" class="form-control" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Registration Number</label>
+                        <input type="text" name="RegistrationNumber" class="form-control" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Seat Capacity</label>
+                        <input type="number" name="SeatCapacity" class="form-control" min="1" max="8" required />
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-color: var(--color-border-default); padding: var(--space-4) var(--space-5);">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<div class="mt-3">
-    <a asp-controller="Home" asp-action="Index" class="btn btn-link">Back to Home</a>
+<!-- Delete Vehicle Modal -->
+<div class="modal fade" id="deleteVehicleModal" tabindex="-1" aria-labelledby="deleteVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--color-bg-card); border-color: var(--color-border-default); border-radius: var(--radius-2xl);">
+            <div class="modal-header" style="border-color: var(--color-border-default); padding: var(--space-5);">
+                <h5 class="modal-title fw-bold" id="deleteVehicleModalLabel">Delete Vehicle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="DeleteVehicle" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="VehicleId" id="deleteVehicleId" />
+                <div class="modal-body p-4 text-center">
+                    <i data-lucide="alert-triangle" class="text-gold mb-3" style="width: 48px; height: 48px;" aria-hidden="true"></i>
+                    <h5 class="mb-2">Are you sure?</h5>
+                    <p class="text-muted">This action cannot be undone. The vehicle will be permanently removed.</p>
+                </div>
+                <div class="modal-footer" style="border-color: var(--color-border-default); padding: var(--space-4) var(--space-5);">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Vehicle</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-8);
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+        .profile-page {
+            padding: var(--space-8) 0 var(--space-16);
+        }
+
+        /* Profile Sidebar Card */
+        .profile-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--color-brand-primary-light);
+        }
+        .avatar-placeholder.profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: var(--color-bg-tertiary);
+            border: 3px solid var(--color-brand-primary-light);
+        }
+        .avatar-icon-large {
+            width: 40px;
+            height: 40px;
+            color: var(--color-text-disabled);
+        }
+        .stat-value {
+            color: var(--color-text-primary);
+        }
+        .progress {
+            background: var(--color-bg-tertiary);
+            border-radius: var(--radius-full);
+        }
+        .profile-actions .btn {
+            border-radius: var(--radius-lg);
+            justify-content: center;
+        }
+
+        /* Profile Main */
+        .profile-section h2 {
+            color: var(--color-text-primary);
+        }
+        .profile-section p {
+            color: var(--color-text-muted);
+        }
+
+        /* Vehicle Cards */
+        .vehicle-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            transition: all var(--transition-base);
+            display: flex;
+            flex-direction: column;
+        }
+        .vehicle-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--color-brand-primary);
+        }
+        .vehicle-card-header {
+            padding: var(--space-5);
+            background: var(--color-brand-primary-light);
+        }
+        .vehicle-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-semibold);
+            text-transform: uppercase;
+        }
+        .vehicle-type-badge i {
+            width: 16px;
+            height: 16px;
+        }
+        .vehicle-card-body {
+            padding: var(--space-5);
+            flex: 1;
+        }
+        .vehicle-model {
+            color: var(--color-text-primary);
+            font-size: var(--font-size-lg);
+        }
+        .vehicle-details i {
+            width: 16px;
+            height: 16px;
+        }
+        .vehicle-meta {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        .vehicle-card-footer {
+            padding: var(--space-5);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .vehicle-card-footer .btn {
+            border-radius: var(--radius-lg);
+            flex: 1;
+        }
+
+        /* Rating Cards */
+        .rating-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+            margin-bottom: var(--space-4);
+            transition: all var(--transition-fast);
+        }
+        .rating-card:hover {
+            border-color: var(--color-brand-primary);
+        }
+        .rating-stars i {
+            width: 18px;
+            height: 18px;
+        }
+        .rating-stars .fill {
+            color: var(--color-brand-primary);
+        }
+        .rating-comment p {
+            color: var(--color-text-secondary);
+            font-style: italic;
+        }
+
+        /* Empty State */
+        .empty-state {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+        }
+        .empty-icon i {
+            color: var(--color-text-disabled);
+        }
+        .empty-state h3 {
+            color: var(--color-text-primary);
+        }
+        .empty-state p {
+            color: var(--color-text-muted);
+        }
+
+        /* Modal */
+        .modal-content .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4);
+        }
+        .modal-content .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+        }
+        .modal-content .form-label {
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-semibold);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-2);
+        }
+        .modal-content .btn {
+            border-radius: var(--radius-lg);
+        }
+
+        /* Form Styles (for vehicle form in modal) */
+        .vehicle-form .form-group {
+            margin-bottom: var(--space-4);
+        }
+    </style>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle edit vehicle modal
+            const editModal = document.getElementById('editVehicleModal');
+            if (editModal) {
+                editModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const vehicleId = button.getAttribute('data-vehicle-id');
+                    document.getElementById('editVehicleId').value = vehicleId;
+                });
+            }
+
+            // Handle delete vehicle modal
+            const deleteModal = document.getElementById('deleteVehicleModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const vehicleId = button.getAttribute('data-vehicle-id');
+                    document.getElementById('deleteVehicleId').value = vehicleId;
+                });
+            }
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+        @functions {
+            string GetVehicleIcon(string vehicleType) {
+                return vehicleType?.ToLower() switch {
+                    "car" => "car",
+                    "suv" => "truck",
+                    "van" => "bus",
+                    "motorcycle" => "bike",
+                    _ => "car"
+                };
+            }
+        }
+    </script>
+}

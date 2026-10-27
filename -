@@ -1,0 +1,284 @@
+﻿CREATE TABLE [AspNetRoles] (
+    [Id] nvarchar(450) NOT NULL,
+    [Name] nvarchar(256) NULL,
+    [NormalizedName] nvarchar(256) NULL,
+    [ConcurrencyStamp] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetRoles] PRIMARY KEY ([Id])
+);
+GO
+
+
+CREATE TABLE [AspNetUsers] (
+    [Id] nvarchar(450) NOT NULL,
+    [FullName] nvarchar(100) NOT NULL,
+    [ProfilePicture] nvarchar(200) NULL,
+    [IsVerified] bit NOT NULL DEFAULT CAST(0 AS bit),
+    [UserName] nvarchar(256) NULL,
+    [NormalizedUserName] nvarchar(256) NULL,
+    [Email] nvarchar(256) NULL,
+    [NormalizedEmail] nvarchar(256) NULL,
+    [EmailConfirmed] bit NOT NULL,
+    [PasswordHash] nvarchar(max) NULL,
+    [SecurityStamp] nvarchar(max) NULL,
+    [ConcurrencyStamp] nvarchar(max) NULL,
+    [PhoneNumber] nvarchar(15) NULL,
+    [PhoneNumberConfirmed] bit NOT NULL,
+    [TwoFactorEnabled] bit NOT NULL,
+    [LockoutEnd] datetimeoffset NULL,
+    [LockoutEnabled] bit NOT NULL,
+    [AccessFailedCount] int NOT NULL,
+    CONSTRAINT [PK_AspNetUsers] PRIMARY KEY ([Id])
+);
+GO
+
+
+CREATE TABLE [AspNetRoleClaims] (
+    [Id] int NOT NULL IDENTITY,
+    [RoleId] nvarchar(450) NOT NULL,
+    [ClaimType] nvarchar(max) NULL,
+    [ClaimValue] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetRoleClaims] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [AspNetRoles] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [AspNetUserClaims] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] nvarchar(450) NOT NULL,
+    [ClaimType] nvarchar(max) NULL,
+    [ClaimValue] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetUserClaims] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_AspNetUserClaims_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [AspNetUserLogins] (
+    [LoginProvider] nvarchar(450) NOT NULL,
+    [ProviderKey] nvarchar(450) NOT NULL,
+    [ProviderDisplayName] nvarchar(max) NULL,
+    [UserId] nvarchar(450) NOT NULL,
+    CONSTRAINT [PK_AspNetUserLogins] PRIMARY KEY ([LoginProvider], [ProviderKey]),
+    CONSTRAINT [FK_AspNetUserLogins_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [AspNetUserRoles] (
+    [UserId] nvarchar(450) NOT NULL,
+    [RoleId] nvarchar(450) NOT NULL,
+    CONSTRAINT [PK_AspNetUserRoles] PRIMARY KEY ([UserId], [RoleId]),
+    CONSTRAINT [FK_AspNetUserRoles_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [AspNetRoles] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_AspNetUserRoles_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [AspNetUserTokens] (
+    [UserId] nvarchar(450) NOT NULL,
+    [LoginProvider] nvarchar(450) NOT NULL,
+    [Name] nvarchar(450) NOT NULL,
+    [Value] nvarchar(max) NULL,
+    CONSTRAINT [PK_AspNetUserTokens] PRIMARY KEY ([UserId], [LoginProvider], [Name]),
+    CONSTRAINT [FK_AspNetUserTokens_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [RideRequests] (
+    [RequestId] int NOT NULL IDENTITY,
+    [RiderId] nvarchar(450) NOT NULL,
+    [PickupLocation] nvarchar(200) NOT NULL,
+    [PickupLat] float NOT NULL,
+    [PickupLng] float NOT NULL,
+    [DropLocation] nvarchar(200) NOT NULL,
+    [DropLat] float NOT NULL,
+    [DropLng] float NOT NULL,
+    [PreferredTime] datetime2 NOT NULL,
+    [Status] nvarchar(20) NOT NULL,
+    CONSTRAINT [PK_RideRequests] PRIMARY KEY ([RequestId]),
+    CONSTRAINT [FK_RideRequests_AspNetUsers_RiderId] FOREIGN KEY ([RiderId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [Vehicles] (
+    [VehicleId] int NOT NULL IDENTITY,
+    [UserId] nvarchar(450) NOT NULL,
+    [VehicleType] nvarchar(50) NOT NULL,
+    [RegistrationNumber] nvarchar(20) NOT NULL,
+    [SeatCapacity] int NOT NULL,
+    [Model] nvarchar(50) NOT NULL,
+    [CreatedOn] datetime2 NOT NULL,
+    CONSTRAINT [PK_Vehicles] PRIMARY KEY ([VehicleId]),
+    CONSTRAINT [FK_Vehicles_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [Rides] (
+    [RideId] int NOT NULL IDENTITY,
+    [DriverId] nvarchar(450) NOT NULL,
+    [VehicleId] int NOT NULL,
+    [StartLocation] nvarchar(200) NOT NULL,
+    [StartLat] float NOT NULL,
+    [StartLng] float NOT NULL,
+    [EndLocation] nvarchar(200) NOT NULL,
+    [EndLat] float NOT NULL,
+    [EndLng] float NOT NULL,
+    [DepartureTime] datetime2 NOT NULL,
+    [SeatsAvailable] int NOT NULL,
+    [PricePerSeat] decimal(18,2) NOT NULL,
+    [Status] nvarchar(20) NOT NULL,
+    CONSTRAINT [PK_Rides] PRIMARY KEY ([RideId]),
+    CONSTRAINT [FK_Rides_AspNetUsers_DriverId] FOREIGN KEY ([DriverId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Rides_Vehicles_VehicleId] FOREIGN KEY ([VehicleId]) REFERENCES [Vehicles] ([VehicleId]) ON DELETE NO ACTION
+);
+GO
+
+
+CREATE TABLE [Bookings] (
+    [BookingId] int NOT NULL IDENTITY,
+    [RideId] int NOT NULL,
+    [RiderId] nvarchar(450) NOT NULL,
+    [SeatsBooked] int NOT NULL,
+    [BookingStatus] nvarchar(20) NOT NULL,
+    [BookedOn] datetime2 NOT NULL,
+    CONSTRAINT [PK_Bookings] PRIMARY KEY ([BookingId]),
+    CONSTRAINT [FK_Bookings_AspNetUsers_RiderId] FOREIGN KEY ([RiderId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_Bookings_Rides_RideId] FOREIGN KEY ([RideId]) REFERENCES [Rides] ([RideId]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [Complaints] (
+    [ComplaintId] int NOT NULL IDENTITY,
+    [UserId] nvarchar(450) NOT NULL,
+    [BookingId] int NULL,
+    [Subject] nvarchar(200) NOT NULL,
+    [Description] nvarchar(1000) NOT NULL,
+    [Status] nvarchar(20) NOT NULL,
+    [CreatedOn] datetime2 NOT NULL,
+    CONSTRAINT [PK_Complaints] PRIMARY KEY ([ComplaintId]),
+    CONSTRAINT [FK_Complaints_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_Complaints_Bookings_BookingId] FOREIGN KEY ([BookingId]) REFERENCES [Bookings] ([BookingId]) ON DELETE NO ACTION
+);
+GO
+
+
+CREATE TABLE [Messages] (
+    [MessageId] int NOT NULL IDENTITY,
+    [SenderId] nvarchar(450) NOT NULL,
+    [ReceiverId] nvarchar(450) NOT NULL,
+    [Content] nvarchar(max) NOT NULL,
+    [Timestamp] datetime2 NOT NULL DEFAULT (GETDATE()),
+    [BookingId] int NOT NULL,
+    CONSTRAINT [PK_Messages] PRIMARY KEY ([MessageId]),
+    CONSTRAINT [FK_Messages_AspNetUsers_ReceiverId] FOREIGN KEY ([ReceiverId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Messages_AspNetUsers_SenderId] FOREIGN KEY ([SenderId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Messages_Bookings_BookingId] FOREIGN KEY ([BookingId]) REFERENCES [Bookings] ([BookingId]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE TABLE [Ratings] (
+    [RatingId] int NOT NULL IDENTITY,
+    [BookingId] int NOT NULL,
+    [RatedBy] nvarchar(450) NOT NULL,
+    [RatedUserId] nvarchar(450) NOT NULL,
+    [Stars] decimal(2,1) NOT NULL,
+    [Comment] nvarchar(500) NOT NULL,
+    [CreatedOn] datetime2 NOT NULL,
+    CONSTRAINT [PK_Ratings] PRIMARY KEY ([RatingId]),
+    CONSTRAINT [FK_Ratings_AspNetUsers_RatedBy] FOREIGN KEY ([RatedBy]) REFERENCES [AspNetUsers] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Ratings_AspNetUsers_RatedUserId] FOREIGN KEY ([RatedUserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_Ratings_Bookings_BookingId] FOREIGN KEY ([BookingId]) REFERENCES [Bookings] ([BookingId]) ON DELETE CASCADE
+);
+GO
+
+
+CREATE INDEX [IX_AspNetRoleClaims_RoleId] ON [AspNetRoleClaims] ([RoleId]);
+GO
+
+
+CREATE UNIQUE INDEX [RoleNameIndex] ON [AspNetRoles] ([NormalizedName]) WHERE [NormalizedName] IS NOT NULL;
+GO
+
+
+CREATE INDEX [IX_AspNetUserClaims_UserId] ON [AspNetUserClaims] ([UserId]);
+GO
+
+
+CREATE INDEX [IX_AspNetUserLogins_UserId] ON [AspNetUserLogins] ([UserId]);
+GO
+
+
+CREATE INDEX [IX_AspNetUserRoles_RoleId] ON [AspNetUserRoles] ([RoleId]);
+GO
+
+
+CREATE INDEX [EmailIndex] ON [AspNetUsers] ([NormalizedEmail]);
+GO
+
+
+CREATE UNIQUE INDEX [UserNameIndex] ON [AspNetUsers] ([NormalizedUserName]) WHERE [NormalizedUserName] IS NOT NULL;
+GO
+
+
+CREATE INDEX [IX_Bookings_RideId] ON [Bookings] ([RideId]);
+GO
+
+
+CREATE INDEX [IX_Bookings_RiderId] ON [Bookings] ([RiderId]);
+GO
+
+
+CREATE INDEX [IX_Complaints_BookingId] ON [Complaints] ([BookingId]);
+GO
+
+
+CREATE INDEX [IX_Complaints_UserId] ON [Complaints] ([UserId]);
+GO
+
+
+CREATE INDEX [IX_Messages_BookingId] ON [Messages] ([BookingId]);
+GO
+
+
+CREATE INDEX [IX_Messages_ReceiverId] ON [Messages] ([ReceiverId]);
+GO
+
+
+CREATE INDEX [IX_Messages_SenderId] ON [Messages] ([SenderId]);
+GO
+
+
+CREATE UNIQUE INDEX [IX_Ratings_BookingId] ON [Ratings] ([BookingId]);
+GO
+
+
+CREATE INDEX [IX_Ratings_RatedBy] ON [Ratings] ([RatedBy]);
+GO
+
+
+CREATE INDEX [IX_Ratings_RatedUserId] ON [Ratings] ([RatedUserId]);
+GO
+
+
+CREATE INDEX [IX_RideRequests_RiderId] ON [RideRequests] ([RiderId]);
+GO
+
+
+CREATE INDEX [IX_Rides_DriverId] ON [Rides] ([DriverId]);
+GO
+
+
+CREATE INDEX [IX_Rides_VehicleId] ON [Rides] ([VehicleId]);
+GO
+
+
+CREATE INDEX [IX_Vehicles_UserId] ON [Vehicles] ([UserId]);
+GO
+
+

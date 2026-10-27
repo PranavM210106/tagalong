@@ -1,39 +1,327 @@
 @model Tagalong.Models.ViewModels.LoginViewModel
 @{
     ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Login</h2>
-
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Login" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Password" class="control-label"></label>
-                <input asp-for="Password" type="password" class="form-control" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="RememberMe" /> @Html.DisplayNameFor(m => m.RememberMe)
-                </label>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Login" class="btn btn-primary" />
-            </div>
-            <div class="form-group">
-                <a asp-action="Register">Don't have an account? Register here</a>
-            </div>
-        </form>
+<section class="auth-page" aria-labelledby="login-title">
+    <div class="auth-bg" aria-hidden="true">
+        <div class="auth-gradient"></div>
+        <div class="auth-pattern"></div>
     </div>
-</div>
+    <div class="container-fluid px-4">
+        <div class="row min-vh-100 align-items-center justify-content-center">
+            <div class="col-12">
+                <div class="auth-card">
+                    <header class="auth-header text-center mb-5">
+                        <a asp-controller="Home" asp-action="Index" class="auth-brand d-inline-flex align-items-center gap-2 mb-4" aria-label="Tagalong Home">
+                            <div class="brand-icon" aria-hidden="true">
+                                <i data-lucide="bus" class="brand-icon-svg" aria-hidden="true"></i>
+                            </div>
+                            <span class="brand-text">Tagalong</span>
+                        </a>
+                        <h1 id="login-title" class="fw-bold mb-2">Welcome back</h1>
+                        <p class="text-muted">Sign in to your account to continue</p>
+                    </header>
+
+                    <form asp-action="Login" method="post" class="auth-form" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="text-danger validation-summary" role="alert" aria-live="polite"></div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Email" class="form-label">Email address</label>
+                            <div class="input-wrapper">
+                                <input asp-for="Email" class="form-control" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" />
+                                <i data-lucide="mail" class="input-icon" aria-hidden="true"></i>
+                            </div>
+                            <span asp-validation-for="Email" class="form-error" id="email-error"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label asp-for="Password" class="form-label mb-0">Password</label>
+                                <a asp-action="ForgotPassword" class="forgot-link">Forgot password?</a>
+                            </div>
+                            <div class="input-wrapper position-relative">
+                                <input asp-for="Password" class="form-control" type="password" autocomplete="current-password" placeholder="Enter your password" aria-describedby="password-error" />
+                                <i data-lucide="lock" class="input-icon" aria-hidden="true"></i>
+                                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                                    <i data-lucide="eye" class="toggle-icon toggle-icon-show" aria-hidden="true"></i>
+                                    <i data-lucide="eye-off" class="toggle-icon toggle-icon-hide" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="form-error" id="password-error"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <div class="form-check">
+                                <input asp-for="RememberMe" class="form-check-input" id="rememberMe" />
+                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 auth-submit" data-loading-text="Signing in...">
+                            <span class="btn-text">Sign in</span>
+                            <span class="btn-loader d-none">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Signing in...
+                            </span>
+                        </button>
+                    </form>
+
+                    <footer class="auth-footer text-center mt-5">
+                        <p class="text-muted mb-0">Don't have an account? <a asp-action="Register" class="fw-medium text-gold hover-text-primary-decoration">Create one</a></p>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <style>
+        .auth-page {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-10) var(--space-4);
+        }
+        .auth-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+        .auth-gradient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(234, 179, 8, 0.15) 0%, transparent 70%),
+                        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(250, 204, 21, 0.08) 0%, transparent 60%);
+        }
+        .auth-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23eab308' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: patternMove 30s linear infinite;
+        }
+        @@media (prefers-reduced-motion: reduce) {
+            .auth-pattern {
+                animation: none;
+            }
+        }
+        @@keyframes patternMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        .auth-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 440px;
+            animation: slideUp var(--transition-slow) var(--transition-smooth);
+        }
+        .auth-brand {
+            color: var(--color-text-primary);
+            text-decoration: none;
+        }
+        .auth-brand:hover .brand-text {
+            color: var(--color-brand-primary);
+        }
+        .auth-brand .brand-icon {
+            background: var(--gradient-primary);
+        }
+        .auth-header h1 {
+            color: var(--color-text-primary);
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--space-2);
+        }
+        .auth-header p {
+            color: var(--color-text-muted);
+            margin-bottom: 0;
+        }
+        .form-label {
+            display: block;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-2);
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4) var(--space-3) 3rem;
+            font-size: var(--font-size-base);
+            transition: all var(--transition-base);
+            height: auto;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-disabled);
+        }
+        .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+            color: var(--color-text-primary);
+        }
+        .form-control.is-invalid,
+        .form-control:invalid {
+            border-color: var(--color-danger);
+        }
+        .form-control.is-invalid:focus,
+        .form-control:invalid:focus {
+            box-shadow: 0 0 0 3px var(--color-danger-light);
+        }
+        .input-icon {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            pointer-events: none;
+            transition: color var(--transition-fast);
+        }
+        .form-control:focus + .input-icon {
+            color: var(--color-brand-primary);
+        }
+        .password-toggle {
+            position: absolute;
+            right: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: var(--space-1);
+            color: var(--color-text-disabled);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color var(--transition-fast);
+        }
+        .password-toggle:hover {
+            color: var(--color-text-primary);
+        }
+        .password-toggle .toggle-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .password-toggle .toggle-icon-hide {
+            display: none;
+        }
+        .password-toggle[aria-pressed="true"] .toggle-icon-show {
+            display: none;
+        }
+        .password-toggle[aria-pressed="true"] .toggle-icon-hide {
+            display: block;
+        }
+        .form-check-input {
+            width: 1.125rem;
+            height: 1.125rem;
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-sm);
+            background: var(--color-bg-tertiary);
+        }
+        .form-check-input:checked {
+            background-color: var(--color-brand-primary);
+            border-color: var(--color-brand-primary);
+        }
+        .form-check-input:focus {
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+        }
+        .form-check-label {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+        }
+        .form-error {
+            display: block;
+            color: var(--color-danger);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .validation-summary {
+            background: var(--color-danger-light);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-5);
+            color: var(--color-danger);
+        }
+        .auth-submit {
+            border-radius: var(--radius-lg);
+            padding: var(--space-4) var(--space-6);
+            font-size: var(--font-size-lg);
+        }
+        .auth-footer a {
+            text-decoration: none;
+        }
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        .text-sm {
+            font-size: var(--font-size-sm);
+        }
+        .hover-text-primary-decoration:hover {
+            text-decoration: underline;
+        }
+        .forgot-link {
+            color: var(--color-brand-primary);
+            text-decoration: none;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+}
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password toggle
+            const toggleBtn = document.querySelector('.password-toggle');
+            const passwordInput = document.querySelector('input[type="password"]');
+
+            if (toggleBtn && passwordInput) {
+                toggleBtn.addEventListener('click', function() {
+                    const isPassword = passwordInput.type === 'password';
+                    passwordInput.type = isPassword ? 'text' : 'password';
+                    this.setAttribute('aria-pressed', isPassword);
+                    this.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+                });
+            }
+
+            // Form submission loading state
+            const form = document.querySelector('.auth-form');
+            const submitBtn = document.query('.auth-submit');
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function() {
+                    if (form.checkValidity()) {
+                        submitBtn.disabled = true;
+                        submitBtn.querySelector('.btn-text').classList.add('d-none');
+                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                    }
+                });
+            }
+
+            // Initialize Lucide icons for dynamically added elements
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 }

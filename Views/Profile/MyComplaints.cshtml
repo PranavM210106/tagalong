@@ -1,0 +1,274 @@
+@model IEnumerable<Tagalong.Models.Entities.Complaint>
+@{
+    ViewData["Title"] = "My Complaints";
+}
+
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-8);
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+        .complaints-page {
+            padding: var(--space-8) 0 var(--space-16);
+        }
+        .complaints-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+        }
+        .complaints-header {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--color-border-default);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        @@media (min-width: 640px) {
+            .complaints-header {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+        .complaints-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+        .complaints-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .complaints-table th {
+            padding: var(--space-4) var(--space-6);
+            text-align: left;
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--color-border-default);
+            background: var(--color-bg-tertiary);
+        }
+        .complaints-table td {
+            padding: var(--space-4) var(--space-6);
+            border-bottom: 1px solid var(--color-border-default);
+            color: var(--color-text-secondary);
+            vertical-align: middle;
+        }
+        .complaints-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .complaints-table tbody tr:hover td {
+            background: var(--color-bg-tertiary);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+        }
+        .status-badge.open {
+            background: var(--color-warning-light);
+            color: var(--color-warning);
+        }
+        .status-badge.resolved {
+            background: var(--color-success-light);
+            color: var(--color-success);
+        }
+        .complaint-subject {
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-primary);
+        }
+        .complaint-booking {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+        .complaint-date {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+        .empty-state {
+            padding: var(--space-12) var(--space-6);
+            text-align: center;
+        }
+        .empty-state i {
+            width: 64px;
+            height: 64px;
+            color: var(--color-text-disabled);
+            margin-bottom: var(--space-4);
+        }
+        .empty-state h4 {
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-2);
+        }
+        .empty-state p {
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-6);
+        }
+        .btn-primary {
+            border-radius: var(--radius-lg);
+            background: var(--gradient-primary);
+            border: none;
+            padding: var(--space-3) var(--space-6);
+            font-weight: var(--font-weight-semibold);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        @@media (max-width: 767px) {
+            .complaints-table thead {
+                display: none;
+            }
+            .complaints-table, .complaints-table tbody, .complaints-table tr, .complaints-table td {
+                display: block;
+                width: 100%;
+            }
+            .complaints-table tr {
+                padding: var(--space-4) var(--space-6);
+                border-bottom: 1px solid var(--color-border-default);
+            }
+            .complaints-table td {
+                padding: var(--space-2) 0;
+                border: none;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .complaints-table td::before {
+                content: attr(data-label);
+                font-weight: var(--font-weight-medium);
+                color: var(--color-text-muted);
+                font-size: var(--font-size-xs);
+                text-transform: uppercase;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<header class="page-header">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="breadcrumb mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Home" asp-action="Index" class="text-muted">
+                        <i data-lucide="home" class="me-1" style="width:16px;height:16px;"></i>Home
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="Profile" asp-action="Index" class="text-muted">Profile</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">My Complaints</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-0 fw-semibold">My Complaints</h1>
+        <p class="text-muted mt-1">Track the status of your filed complaints</p>
+    </div>
+</header>
+
+<!-- Complaints Page -->
+<main class="complaints-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="complaints-card">
+            <div class="complaints-header">
+                <h2 class="complaints-title">Your Complaints</h2>
+                <a asp-controller="Profile" asp-action="FileComplaint" class="btn btn-primary align-self-start">
+                    <i data-lucide="plus" class="me-2" aria-hidden="true"></i>File New Complaint
+                </a>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="complaints-table" role="grid">
+                        <thead>
+                            <tr>
+                                <th scope="col">Subject</th>
+                                <th scope="col">Related Ride</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Filed On</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var complaint in Model)
+                            {
+                                <tr>
+                                    <td data-label="Subject">
+                                        <div class="complaint-subject">@complaint.Subject</div>
+                                    </td>
+                                    <td data-label="Related Ride">
+                                        @if (complaint.Booking != null)
+                                        {
+                                            <div class="complaint-booking">
+                                                @complaint.Booking.Ride.StartLocation → @complaint.Booking.Ride.EndLocation
+                                                <br />
+                                                <small>@complaint.Booking.Ride.DepartureTime.ToString("MMM dd, yyyy")</small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">General complaint</span>
+                                        }
+                                    </td>
+                                    <td data-label="Status">
+                                        <span class="status-badge @complaint.Status.ToLower()">
+                                            @complaint.Status
+                                        </span>
+                                    </td>
+                                    <td data-label="Filed On">
+                                        <span class="complaint-date">@complaint.CreatedOn.ToString("MMM dd, yyyy HH:mm")</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i data-lucide="file-text" aria-hidden="true"></i>
+                    <h4>No Complaints Filed</h4>
+                    <p>You haven't filed any complaints yet. If you have an issue with a ride, you can file a complaint.</p>
+                    <a asp-controller="Profile" asp-action="FileComplaint" class="btn btn-primary">
+                        <i data-lucide="plus" class="me-2" aria-hidden="true"></i>File a Complaint
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+}

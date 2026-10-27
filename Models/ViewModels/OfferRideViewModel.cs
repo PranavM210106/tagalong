@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Tagalong.Models.Entities;
 
 namespace Tagalong.Models.ViewModels
@@ -43,6 +42,6 @@ namespace Tagalong.Models.ViewModels
         public int VehicleId { get; set; }
 
         // For dropdown in the view
-        public IEnumerable<SelectListItem> Vehicles { get; set; }
+        public IEnumerable<Vehicle> Vehicles { get; set; }
     }
 }

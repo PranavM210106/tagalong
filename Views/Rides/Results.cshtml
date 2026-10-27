@@ -3,53 +3,542 @@
     ViewData["Title"] = "Matching Rides";
 }
 
-<h2>Matching Rides</h2>
-
-@if (Model.Any())
-{
-    <div class="row">
-        @foreach (var rideResult in Model)
-        {
-            var ride = rideResult.Ride;
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">@ride.StartLocation → @ride.EndLocation</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            @ride.DepartureTime.ToString("MMM dd, yyyy hh:mm tt")
-                        </h6>
-                        <div class="mb-2">
-                            <span class="badge bg-info">Match Quality: @rideResult.MatchQuality</span>
-                            <span class="badge bg-secondary ms-2">Distance: @rideResult.Distance.ToString("0.##") km</span>
-                        </div>
-                        <p class="card-text">
-                            <strong>Seats available:</strong> @ride.SeatsAvailable<br />
-                            <strong>Price per seat:</strong> $@ride.PricePerSeat<br />
-                            <strong>Vehicle:</strong> @ride.Vehicle.Model (@ride.Vehicle.VehicleType)<br />
-                            <strong>Driver:</strong> @ride.Driver.FullName
-                        </p>
-                        @if (ride.SeatsAvailable > 0)
-                        {
-                            <form asp-controller="Rides" asp-action="RequestToJoin" method="post">
-                                <input type="hidden" name="rideId" value="@ride.RideId" />
-                                <button type="submit" class="btn btn-success btn-sm">Request to Join</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <span class="badge bg-danger">Full</span>
-                        }
-                    </div>
-                </div>
-            </div>
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-8);
         }
-    </div>
-}
-else
-{
-    <div class="alert alert-info">No matching rides found. Try adjusting your search criteria.</div>
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+        .results-page {
+            padding: var(--space-8) 0 var(--space-16);
+        }
+
+        /* Sidebar */
+        .results-sidebar {
+            z-index: 10;
+        }
+        .sidebar-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+        }
+        .sidebar-header {
+            padding: var(--space-5);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .sidebar-body {
+            padding: var(--space-5);
+        }
+        .filter-group {
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-5);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .filter-group:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .filter-title {
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-4);
+            display: block;
+        }
+        .price-range-inputs .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-4) + 1rem);
+            font-size: var(--font-size-sm);
+        }
+        .price-range-inputs .form-control:focus {
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+        }
+        .price-range-inputs .input-prefix {
+            left: var(--space-4);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-disabled);
+        }
+        .price-range-inputs .input-prefix + .form-control {
+            padding-left: calc(var(--space-4) + 1rem);
+        }
+
+        /* Seats Filter */
+        .seats-filter {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        .seat-option {
+            cursor: pointer;
+        }
+        .seat-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .seat-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 48px;
+            height: 40px;
+            padding: 0 var(--space-3);
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            transition: all var(--transition-base);
+        }
+        .seat-option:hover .seat-label {
+            border-color: var(--color-brand-primary);
+        }
+        .seat-input:checked + .seat-label {
+            background: var(--color-brand-primary-light);
+            border-color: var(--color-brand-primary);
+            color: var(--color-brand-primary);
+        }
+        .seat-input:focus-visible + .seat-label {
+            outline: 2px solid var(--color-brand-primary);
+            outline-offset: 2px;
+        }
+
+        /* Quality Filter */
+        .quality-filter {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        .quality-option {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            cursor: pointer;
+        }
+        .quality-input {
+            width: 1.125rem;
+            height: 1.125rem;
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-sm);
+            background: var(--color-bg-tertiary);
+            accent-color: var(--color-brand-primary);
+        }
+        .quality-input:focus {
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+        }
+        .quality-label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex: 1;
+        }
+        .quality-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 72px;
+            height: 28px;
+            padding: 0 var(--space-3);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            text-transform: uppercase;
+        }
+        .quality-badge.excellent { background: var(--color-success-light); color: var(--color-success); }
+        .quality-badge.good { background: var(--color-brand-primary-light); color: var(--color-brand-primary); }
+        .quality-badge.fair { background: var(--color-warning-light); color: var(--color-warning); }
+        .quality-badge.poor { background: var(--color-danger-light); color: var(--color-danger); }
+        .quality-desc {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+
+        /* Results Toolbar */
+        .results-toolbar {
+            padding: var(--space-4) var(--space-5);
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-xl);
+        }
+        .results-sort .form-select {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-2) calc(var(--space-4) + 1rem) var(--space-2) var(--space-3);
+            font-size: var(--font-size-sm);
+        }
+        .results-sort .form-select:focus {
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+        }
+        .results-view-toggle .btn {
+            border-radius: var(--radius-lg);
+            padding: var(--space-2) var(--space-3);
+        }
+        .results-view-toggle .btn.active {
+            background: var(--color-brand-primary);
+            border-color: var(--color-brand-primary);
+            color: var(--color-text-inverse);
+        }
+        .results-view-toggle .btn:not(.active):hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-emphasis);
+        }
+
+        /* Ride Cards Grid */
+        .ride-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: var(--space-5);
+        }
+        .ride-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            transition: all var(--transition-base);
+            display: flex;
+            flex-direction: column;
+        }
+        .ride-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--color-brand-primary);
+        }
+        .ride-card-header {
+            padding: var(--space-5);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .route-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            margin-bottom: var(--space-3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .route-badge i {
+            width: 14px;
+            height: 14px;
+        }
+        .departure-time {
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+        }
+        .departure-time i {
+            width: 14px;
+            height: 14px;
+        }
+        .match-quality-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            text-transform: uppercase;
+        }
+        .match-quality-badge.excellent-match { background: var(--color-success-light); color: var(--color-success); }
+        .match-quality-badge.good-match { background: var(--color-brand-primary-light); color: var(--color-brand-primary); }
+        .match-quality-badge.fair-match { background: var(--color-warning-light); color: var(--color-warning); }
+        .match-quality-badge.poor-match { background: var(--color-danger-light); color: var(--color-danger); }
+        .ride-card-body {
+            padding: var(--space-5);
+            flex: 1;
+        }
+        .ride-meta {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            margin-bottom: var(--space-5);
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-base);
+        }
+        .meta-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            flex-shrink: 0;
+        }
+        .driver-info {
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .driver-avatar {
+            width: 48px;
+            height: 48px;
+            overflow: hidden;
+        }
+        .driver-avatar img,
+        .driver-avatar .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+        }
+        .driver-avatar .avatar-placeholder {
+            background: var(--color-bg-tertiary);
+        }
+        .driver-avatar .avatar-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--color-text-disabled);
+        }
+        .driver-name {
+            color: var(--color-text-primary);
+        }
+        .driver-rating i {
+            width: 14px;
+            height: 14px;
+        }
+        .driver-rating .fill {
+            color: var(--color-brand-primary);
+        }
+        .ride-card-footer {
+            padding: var(--space-5);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .ride-card-footer .btn {
+            border-radius: var(--radius-lg);
+        }
+
+        /* List View */
+        .ride-card-list {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            margin-bottom: var(--space-4);
+            transition: all var(--transition-base);
+        }
+        .ride-card-list:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--color-brand-primary);
+        }
+        .ride-card-list-main {
+            border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
+        }
+        .ride-card-list-action {
+            border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
+        }
+        .ride-meta-list {
+            flex-wrap: wrap;
+        }
+
+        /* Empty State */
+        .empty-state {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+        }
+        .empty-icon i {
+            color: var(--color-text-disabled);
+        }
+        .empty-state h3 {
+            color: var(--color-text-primary);
+        }
+        .empty-state p {
+            color: var(--color-text-muted);
+        }
+
+        /* Responsive */
+        @@media (max-width: 991.98px) {
+            .results-sidebar {
+                position: fixed;
+                inset: 0;
+                z-index: 1000;
+                background: rgba(0,0,0,0.5);
+                display: none;
+                padding: var(--space-4);
+                overflow-y: auto;
+            }
+            .results-sidebar.open {
+                display: block;
+            }
+            .sidebar-card {
+                max-width: 360px;
+                margin: 0 auto;
+                max-height: calc(100vh - 2rem);
+                overflow-y: auto;
+            }
+            .sidebar-toggle {
+                display: flex !important;
+            }
+        }
+        @@media (min-width: 992px) {
+            .sidebar-toggle {
+                display: none !important;
+            }
+        }
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: var(--space-6);
+            right: var(--space-6);
+            z-index: 999;
+        }
+    </style>
 }
 
-<div class="mt-4">
-    <a asp-controller="Rides" asp-action="Find" class="btn btn-link">Back to Search</a>
-</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gridView = document.querySelector('.ride-results-grid');
+            const listView = document.querySelector('.ride-results-list');
+            const viewButtons = document.querySelectorAll('[data-view]');
+            const sortSelect = document.getElementById('sortBy');
+            const priceMin = document.getElementById('priceMin');
+            const priceMax = document.getElementById('priceMax');
+            const seatInputs = document.querySelectorAll('.seat-input');
+            const qualityInputs = document.querySelectorAll('.quality-input');
+            const clearFiltersBtn = document.getElementById('clearFilters');
+            const rideItems = document.querySelectorAll('.ride-result-item, .ride-results-list [role="listitem"]');
+
+            // View toggle
+            viewButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const view = this.dataset.view;
+                    viewButtons.forEach(b => {
+                        b.classList.toggle('active', b.dataset.view === view);
+                        b.setAttribute('aria-pressed', b.dataset.view === view);
+                    });
+                    if (gridView && listView) {
+                        if (view === 'grid') {
+                            gridView.classList.remove('d-none');
+                            listView.classList.add('d-none');
+                        } else {
+                            gridView.classList.add('d-none');
+                            listView.classList.remove('d-none');
+                        }
+                    }
+                });
+            });
+
+            // Sort function
+            function sortItems() {
+                const sortBy = sortSelect.value;
+                const containers = [gridView, listView].filter(c => c);
+
+                containers.forEach(container => {
+                    const items = Array.from(container.querySelectorAll('[role="listitem"]'));
+                    items.sort((a, b) => {
+                        switch (sortBy) {
+                            case 'price-asc':
+                                return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                            case 'price-desc':
+                                return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                            case 'time-asc':
+                                return parseInt(a.dataset.departure) - parseInt(b.dataset.departure);
+                            case 'time-desc':
+                                return parseInt(b.dataset.departure) - parseInt(a.dataset.departure);
+                            case 'rating':
+                                return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
+                            case 'match':
+                            default:
+                                const matchOrder = { 'Excellent Match': 0, 'Good Match': 1, 'Fair Match': 2, 'Poor Match': 3 };
+                                return (matchOrder[a.dataset.matchQuality] || 99) - (matchOrder[b.dataset.matchQuality] || 99);
+                        }
+                    });
+                    items.forEach(item => container.appendChild(item));
+                });
+            }
+
+            sortSelect.addEventListener('change', sortItems);
+
+            // Filter function
+            function applyFilters() {
+                const minPrice = priceMin.value ? parseFloat(priceMin.value) : 0;
+                const maxPrice = priceMax.value ? parseFloat(priceMax.value) : Infinity;
+                const minSeats = parseInt(document.querySelector('.seat-input:checked')?.value || '1');
+                const selectedQualities = Array.from(qualityInputs)
+                    .filter(i => i.checked)
+                    .map(i => i.value);
+
+                rideItems.forEach(item => {
+                    const price = parseFloat(item.dataset.price);
+                    const seats = parseInt(item.dataset.seats);
+                    const quality = item.dataset.matchQuality;
+
+                    const priceMatch = price >= minPrice && price <= maxPrice;
+                    const seatsMatch = seats >= minSeats;
+                    const qualityMatch = selectedQualities.length === 0 || selectedQualities.includes(quality);
+
+                    if (priceMatch && seatsMatch && qualityMatch) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            [priceMin, priceMax].forEach(input => {
+                input.addEventListener('input', applyFilters);
+            });
+            seatInputs.forEach(input => {
+                input.addEventListener('change', applyFilters);
+            });
+            qualityInputs.forEach(input => {
+                input.addEventListener('change', applyFilters);
+            });
+
+            // Clear filters
+            clearFiltersBtn.addEventListener('click', function() {
+                priceMin.value = '';
+                priceMax.value = '';
+                seatInputs[0].checked = true;
+                seatInputs.forEach((input, i) => input.checked = i === 0);
+                qualityInputs.forEach((input, i) => input.checked = i < 3);
+                applyFilters();
+            });
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+        @functions {
+            string GetMatchQualityClass(string matchQuality) {
+                return matchQuality?.Replace(" ", "-").ToLower() + "-match";
+            }
+        }
+    </script>
+}

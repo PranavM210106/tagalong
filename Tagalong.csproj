@@ -19,4 +19,11 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="SeedUsers\**" />
+    <Content Remove="SeedUsers\**" />
+    <EmbeddedResource Remove="SeedUsers\**" />
+    <None Remove="SeedUsers\**" />
+  </ItemGroup>
+
 </Project>

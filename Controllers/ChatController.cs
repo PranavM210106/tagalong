@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Tagalong.Data;
 using Tagalong.Models.Entities;
+using Tagalong.Models.ViewModels;
 
 namespace Tagalong.Controllers
 {
@@ -45,21 +46,36 @@ namespace Tagalong.Controllers
             var messages = await _context.Messages
                 .Where(m => m.BookingId == bookingId)
                 .OrderBy(m => m.Timestamp)
-                .Select(m => new
+                .Select(m => new ChatMessageViewModel
                 {
-                    m.MessageId,
-                    m.Content,
-                    m.Timestamp,
+                    Id = m.MessageId,
+                    Content = m.Content,
+                    SentAt = m.Timestamp,
                     SenderId = m.SenderId,
-                    SenderName = m.Sender.FullName
+                    Status = "Delivered",
+                    IsOwn = m.SenderId == userId
                 })
                 .ToListAsync();
 
-            var viewModel = new
+            var otherUserId = booking.RiderId == userId ? booking.Ride.DriverId : booking.RiderId;
+            var otherUserName = booking.RiderId == userId
+                ? booking.Ride.Driver.FullName
+                : booking.Rider.FullName;
+
+            var viewModel = new ChatThreadViewModel
             {
-                Booking = booking,
+                BookingId = bookingId,
+                OtherUserName = otherUserName,
+                OtherUserId = otherUserId,
+                CurrentUserId = userId,
+                RideId = booking.RideId,
                 Messages = messages
             };
+
+            ViewData["CurrentUserId"] = userId;
+            ViewData["OtherUserName"] = otherUserName;
+            ViewData["OtherUserId"] = otherUserId;
+            ViewData["RideId"] = booking.RideId;
 
             return View(viewModel);
         }

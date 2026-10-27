@@ -27,6 +27,8 @@ namespace Tagalong.Models.Entities
         [MaxLength(50)]
         public string Model { get; set; }
 
+        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+
         // Navigation property
         [ForeignKey("UserId")]
         public ApplicationUser Driver { get; set; }

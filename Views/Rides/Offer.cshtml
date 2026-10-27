@@ -4,101 +4,512 @@
     ViewData["Title"] = "Offer a Ride";
 }
 
-<h2>Offer a Ride</h2>
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-12) 0 var(--space-8);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-8);
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            color: var(--color-text-disabled);
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .breadcrumb-item a:hover {
+            color: var(--color-brand-primary);
+        }
+        .form-page {
+            padding: var(--space-8) 0 var(--space-16);
+        }
+        .ride-form {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+        }
+        .form-section {
+            padding-bottom: var(--space-5);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .form-section:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .section-title {
+            display: inline-flex;
+            align-items: center;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-3);
+            border-bottom: 2px solid var(--color-brand-primary);
+        }
+        .section-title i {
+            width: 20px;
+            height: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-2);
+        }
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-wrapper .form-control {
+            padding-left: 3rem;
+        }
+        .input-wrapper .input-prefix {
+            position: absolute;
+            left: 1rem;
+            color: var(--color-text-disabled);
+            font-weight: var(--font-weight-medium);
+            z-index: 2;
+        }
+        .input-wrapper .input-prefix + .form-control {
+            padding-left: 2.5rem;
+        }
+        .input-icon {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            pointer-events: none;
+            transition: color var(--transition-fast);
+            z-index: 2;
+        }
+        .input-wrapper:has(.input-prefix) .input-icon {
+            left: calc(var(--space-4) + 1.25rem);
+        }
+        .form-control:focus + .input-icon,
+        .form-control:focus ~ .input-icon {
+            color: var(--color-brand-primary);
+        }
+        .location-btn {
+            position: absolute;
+            right: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: var(--space-2);
+            color: var(--color-text-disabled);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+        .location-btn:hover {
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+        }
+        .location-btn i {
+            width: 20px;
+            height: 20px;
+        }
+        .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-base);
+            height: auto;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-disabled);
+        }
+        .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+            color: var(--color-text-primary);
+        }
+        .form-control.is-invalid,
+        .form-control:invalid {
+            border-color: var(--color-danger);
+        }
+        .form-control.is-invalid:focus,
+        .form-control:invalid:focus {
+            box-shadow: 0 0 0 3px var(--color-danger-light);
+        }
+        .form-error {
+            display: block;
+            color: var(--color-danger);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .validation-summary {
+            background: var(--color-danger-light);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            color: var(--color-danger);
+        }
+        .form-hint {
+            display: block;
+            color: var(--color-text-disabled);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
 
-<form asp-action="Offer" method="post">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="StartLocation" class="control-label"></label>
-                <input asp-for="StartLocation" class="form-control" />
-                <span asp-validation-for="StartLocation" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="EndLocation" class="control-label"></label>
-                <input asp-for="EndLocation" class="form-control" />
-                <span asp-validation-for="EndLocation" class="text-danger"></span>
+        /* Vehicle Selection Options */
+        .vehicle-selection-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--space-4);
+        }
+        .vehicle-selection-option {
+            display: block;
+            cursor: pointer;
+        }
+        .vehicle-selection-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .vehicle-selection-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-5);
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-xl);
+            transition: all var(--transition-base);
+        }
+        .vehicle-selection-option:hover .vehicle-selection-card {
+            border-color: var(--color-brand-primary);
+        }
+        .vehicle-selection-input:checked + .vehicle-selection-card {
+            border-color: var(--color-brand-primary);
+            background: var(--color-brand-primary-light);
+        }
+        .vehicle-selection-input:focus-visible + .vehicle-selection-card {
+            outline: 2px solid var(--color-brand-primary);
+            outline-offset: 2px;
+        }
+        .vehicle-selection-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .vehicle-selection-icon i {
+            width: 28px;
+            height: 28px;
+            color: var(--color-text-inverse);
+        }
+        .vehicle-selection-model {
+            color: var(--color-text-primary);
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-medium);
+        }
+        .vehicle-selection-details i {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Empty Vehicle State */
+        .empty-vehicle-state {
+            background: var(--color-bg-tertiary);
+            border: 1px dashed var(--color-border-strong);
+            border-radius: var(--radius-xl);
+        }
+        .empty-vehicle-state i {
+            color: var(--color-text-disabled);
+        }
+        .empty-vehicle-state h4 {
+            color: var(--color-text-primary);
+        }
+        .empty-vehicle-state p {
+            color: var(--color-text-muted);
+        }
+
+        /* Form Actions */
+        .form-actions {
+            padding-top: var(--space-5);
+            margin-top: var(--space-5);
+            border-top: 1px solid var(--color-border-default);
+        }
+        .auth-submit {
+            border-radius: var(--radius-lg);
+            background: var(--gradient-primary);
+            border: none;
+            transition: all var(--transition-base);
+            min-width: 200px;
+        }
+        .auth-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        .auth-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .auth-submit:disabled {
+            opacity: 0.7;
+        }
+        .btn-outline-secondary {
+            border-radius: var(--radius-lg);
+            border-color: var(--color-border-strong);
+            color: var(--color-text-secondary);
+            min-width: 200px;
+        }
+        .btn-outline-secondary:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-emphasis);
+            color: var(--color-text-primary);
+        }
+        .btn-outline-secondary i {
+            width: 18px;
+            height: 18px;
+        }
+        .text-sm {
+            font-size: var(--font-size-sm);
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<header class="page-header">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="breadcrumb mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Home" asp-action="Index" class="text-muted">
+                        <i data-lucide="home" class="me-1" style="width:16px;height:16px;"></i>Home
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="Rides" asp-action="Find" class="text-muted">Rides</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Offer a Ride</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-0 fw-semibold">Offer a Ride</h1>
+        <p class="text-muted mt-1">Create a new ride listing for passengers to book</p>
+    </div>
+</header>
+
+<!-- Form Page -->
+<main class="form-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10 col-xl-8">
+                <form class="ride-form" method="post" novalidate>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="validation-summary mb-4" role="alert">
+                            <i data-lucide="alert-circle" class="me-2" style="width:18px;height:18px;"></i>
+                            <strong>Please fix the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Trip Details Section -->
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i data-lucide="map-pin" aria-hidden="true"></i>
+                            Trip Details
+                        </legend>
+
+                        <div class="row g-4">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="StartLocation">Departure</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="navigation" class="input-icon" aria-hidden="true"></i>
+                                    <input type="text" class="form-control" id="StartLocation" name="StartLocation" placeholder="Where are you starting from?" value="@Model.StartLocation" required autocomplete="off" />
+                                    <button type="button" class="location-btn" aria-label="Use current location for departure" data-target="StartLocation">
+                                        <i data-lucide="crosshair" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="StartLocation" class="form-error"></span>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="EndLocation">Destination</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="flag" class="input-icon" aria-hidden="true"></i>
+                                    <input type="text" class="form-control" id="EndLocation" name="EndLocation" placeholder="Where are you going?" value="@Model.EndLocation" required autocomplete="off" />
+                                    <button type="button" class="location-btn" aria-label="Use current location for destination" data-target="EndLocation">
+                                        <i data-lucide="crosshair" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="EndLocation" class="form-error"></span>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="DepartureTime">Departure Date & Time</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="calendar-clock" class="input-icon" aria-hidden="true"></i>
+                                    <input type="datetime-local" class="form-control" id="DepartureTime" name="DepartureTime" value="@(Model.DepartureTime.ToString("yyyy-MM-ddTHH:mm"))" required />
+                                </div>
+                                <span asp-validation-for="DepartureTime" class="form-error"></span>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="SeatsAvailable">Available Seats</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="users" class="input-icon" aria-hidden="true"></i>
+                                    <input type="number" class="form-control" id="SeatsAvailable" name="SeatsAvailable" min="1" max="8" value="@Model.SeatsAvailable" required />
+                                </div>
+                                <span class="form-hint">Number of passenger seats available (1-8)</span>
+                                <span asp-validation-for="SeatsAvailable" class="form-error"></span>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Vehicle Selection Section -->
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i data-lucide="car" aria-hidden="true"></i>
+                            Select Vehicle
+                        </legend>
+
+                        @if (Model.Vehicles != null && Model.Vehicles.Any())
+                        {
+                            <div class="vehicle-selection-options" role="radiogroup" aria-label="Select a vehicle">
+                                @foreach (var vehicle in Model.Vehicles)
+                                {
+                                    <label class="vehicle-selection-option">
+                                        <input type="radio" class="vehicle-selection-input" name="VehicleId" value="@vehicle.VehicleId" @(Model.VehicleId == vehicle.VehicleId ? "checked" : "") required />
+                                        <div class="vehicle-selection-card">
+                                            <div class="vehicle-selection-icon" aria-hidden="true">
+                                                <i data-lucide="car" style="width:28px;height:28px;"></i>
+                                            </div>
+                                            <div class="vehicle-selection-info flex-grow-1">
+                                                <div class="vehicle-selection-model">@vehicle.Model (@vehicle.VehicleType)</div>
+                                                <div class="vehicle-selection-details text-muted small d-flex align-items-center gap-2 mt-1">
+                                                    <span><i data-lucide="tag" aria-hidden="true"></i> @vehicle.RegistrationNumber</span>
+                                                    <span><i data-lucide="users" aria-hidden="true"></i> @vehicle.SeatCapacity seats</span>
+                                                </div>
+                                            </div>
+                                            <i data-lucide="check-circle" class="vehicle-selection-check text-primary" style="width:24px;height:24px;"></i>
+                                        </div>
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="VehicleId" class="form-error"></span>
+                        }
+                        else
+                        {
+                            <div class="empty-vehicle-state p-5 text-center">
+                                <i data-lucide="car" class="mb-3" style="width:48px;height:48px;"></i>
+                                <h4 class="mb-2">No Vehicles Registered</h4>
+                                <p class="mb-4">You need to add a vehicle before offering rides.</p>
+                                <a asp-controller="Account" asp-action="Vehicles" class="btn btn-primary">
+                                    <i data-lucide="plus" class="me-2" style="width:16px;height:16px;"></i>Add Vehicle
+                                </a>
+                            </div>
+                        }
+                    </fieldset>
+
+                    <!-- Pricing Section -->
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i data-lucide="credit-card" aria-hidden="true"></i>
+                            Pricing
+                        </legend>
+
+                        <div class="row g-4">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="PricePerSeat">Price Per Seat ($)</label>
+                                <div class="input-wrapper">
+                                    <span class="input-prefix">$</span>
+                                    <input type="number" class="form-control" id="PricePerSeat" name="PricePerSeat" step="0.01" min="0" value="@Model.PricePerSeat" required />
+                                </div>
+                                <span class="form-hint">Set a fair price per passenger seat</span>
+                                <span asp-validation-for="PricePerSeat" class="form-error"></span>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Estimated Earnings</label>
+                                <div class="input-wrapper">
+                                    <span class="input-prefix">$</span>
+                                    <input type="text" class="form-control" readonly value="@((Model.PricePerSeat * Model.SeatsAvailable).ToString("F2"))" style="background:var(--color-bg-secondary);" />
+                                </div>
+                                <span class="form-hint">Based on @Model.SeatsAvailable seats @@@Model.PricePerSeat each</span>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions d-flex flex-column flex-sm-row gap-3 justify-content-end">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                            <i data-lucide="x" class="me-2" aria-hidden="true"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn auth-submit">
+                            <span class="btn-text">
+                                <i data-lucide="plus-circle" class="me-2" aria-hidden="true"></i>Publish Ride
+                            </span>
+                            <span class="btn-loader d-none">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Publishing...
+                            </span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="StartLat" class="control-label"></label>
-                <input asp-for="StartLat" class="form-control" />
-                <span asp-validation-for="StartLat" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="StartLng" class="control-label"></label>
-                <input asp-for="StartLng" class="form-control" />
-                <span asp-validation-for="StartLng" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="EndLat" class="control-label"></label>
-                <input asp-for="EndLat" class="form-control" />
-                <span asp-validation-for="EndLat" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="EndLng" class="control-label"></label>
-                <input asp-for="EndLng" class="form-control" />
-                <span asp-validation-for="EndLng" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="DepartureTime" class="control-label"></label>
-                <input asp-for="DepartureTime" class="form-control" />
-                <span asp-validation-for="DepartureTime" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="SeatsAvailable" class="control-label"></label>
-                <input asp-for="SeatsAvailable" class="form-control" />
-                <span asp-validation-for="SeatsAvailable" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="PricePerSeat" class="control-label"></label>
-                <input asp-for="PricePerSeat" class="form-control" />
-                <span asp-validation-for="PricePerSeat" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group">
-                <label asp-for="VehicleId" class="control-label"></label>
-                <select asp-for="VehicleId" asp-items="Model.Vehicles" class="form-control">
-                    <option value="">-- Select a Vehicle --</option>
-                </select>
-                <span asp-validation-for="VehicleId" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <input type="submit" value="Offer Ride" class="btn btn-primary" />
-    </div>
-</form>
+</main>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set min datetime for departure time
+            const departureInput = document.querySelector('input[name="DepartureTime"]');
+            if (departureInput) {
+                const now = new Date();
+                const isoString = now.toISOString().slice(0, 16);
+                departureInput.min = isoString;
+            }
+
+            // Form submission loading state
+            const form = document.querySelector('.ride-form');
+            const submitBtn = document.querySelector('.auth-submit');
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function() {
+                    if (form.checkValidity()) {
+                        submitBtn.disabled = true;
+                        submitBtn.querySelector('.btn-text').classList.add('d-none');
+                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                    }
+                });
+            }
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 }

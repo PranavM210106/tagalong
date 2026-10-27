@@ -3,52 +3,164 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Tagalong - Share rides, save money, reduce your carbon footprint" />
     <title>@ViewData["Title"] - Tagalong</title>
+
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+
+    @RenderSection("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Tagalong</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedControl"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Rides" asp-action="Offer">Offer a Ride</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Rides" asp-action="Find">Find a Ride</a>
-                        </li>
-                    </ul>
-                    <partial name="_LoginPartial" />
+    @{
+        var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+        var action = ViewContext.RouteData.Values["action"]?.ToString();
+        var isAuthPage = string.Equals(controller, "Account", StringComparison.OrdinalIgnoreCase)
+            || (string.Equals(controller, "Home", StringComparison.OrdinalIgnoreCase)
+                && (string.Equals(action, "Login", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(action, "Register", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(action, "ForgotPassword", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(action, "ResetPassword", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    @if (!isAuthPage)
+    {
+        <a href="#main-content" class="skip-link">Skip to main content</a>
+    }
+
+    @if (!isAuthPage)
+    {
+        <!-- Navigation -->
+        <header class="site-header" role="banner">
+            <nav class="navbar navbar-expand-lg" id="mainNavbar" aria-label="Main navigation">
+                <div class="container-fluid px-md-4 px-lg-5">
+                    <!-- Brand -->
+                    <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index" aria-label="Tagalong Home">
+                        <svg class="brand-icon me-2" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                            <line x1="6" y1="1" x2="6" y2="4"></line>
+                            <line x1="10" y1="1" x2="10" y2="4"></line>
+                            <line x1="14" y1="1" x2="14" y2="4"></line>
+                        </svg>
+                        <span class="brand-text">Tagalong</span>
+                    </a>
+
+                    <!-- Mobile Toggle -->
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <!-- Navigation Links -->
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                    <i data-lucide="home" class="nav-icon" aria-hidden="true"></i>
+                                    <span>Home</span>
+                                </a>
+                            </li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Rides" asp-action="Offer">
+                                        <i data-lucide="car" class="nav-icon" aria-hidden="true"></i>
+                                        <span>Offer Ride</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Rides" asp-action="Find">
+                                        <i data-lucide="search" class="nav-icon" aria-hidden="true"></i>
+                                        <span>Find Ride</span>
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                @if (User.IsInRole("Driver"))
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-controller="Rides" asp-action="Offer">
+                                            <i data-lucide="car" class="nav-icon" aria-hidden="true"></i>
+                                            <span>Offer Ride</span>
+                                        </a>
+                                    </li>
+                                }
+                                @if (User.IsInRole("Rider"))
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-controller="Rides" asp-action="Find">
+                                            <i data-lucide="search" class="nav-icon" aria-hidden="true"></i>
+                                            <span>Find Ride</span>
+                                        </a>
+                                    </li>
+                                }
+                            }
+                        </ul>
+
+                        <!-- User Menu -->
+                        <partial name="_LoginPartial" />
+                    </div>
+                </div>
+            </nav>
+        </header>
+    }
+
+    <!-- Main Content -->
+    <main id="main-content" role="main" class="site-main">
+        @RenderBody()
+    </main>
+
+    @if (!isAuthPage)
+    {
+        <!-- Footer -->
+        <footer class="site-footer" role="contentinfo">
+            <div class="container-fluid px-md-4 px-lg-5">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <p class="mb-0 text-muted small">&copy; @DateTime.Now.Year Tagalong. All rights reserved.</p>
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-muted small text-decoration-none hover-text-primary">Privacy Policy</a>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+        </footer>
+    }
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Tagalong - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @RenderSection("Scripts", required: false)
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Navbar scroll effect
+            const navbar = document.getElementById('mainNavbar');
+            if (navbar) {
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 20) {
+                        navbar.classList.add('scrolled');
+                    } else {
+                        navbar.classList.remove('scrolled');
+                    }
+                }, { passive: true });
+            }
+        });
+    </script>
 </body>
 </html>

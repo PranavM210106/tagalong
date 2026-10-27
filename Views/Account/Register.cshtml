@@ -1,60 +1,454 @@
 @model Tagalong.Models.ViewModels.RegisterViewModel
 @{
     ViewData["Title"] = "Register";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Register</h2>
-
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Register" method="post">
-    @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="FullName" class="control-label"></label>
-                <input asp-for="FullName" class="form-control" />
-                <span asp-validation-for="FullName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PhoneNumber" class="control-label"></label>
-                <input asp-for="PhoneNumber" class="form-control" />
-                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Password" class="control-label"></label>
-                <input asp-for="Password" class="form-control" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ConfirmPassword" class="control-label"></label>
-                <input asp-for="ConfirmPassword" class="form-control" />
-                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Role" class="control-label"></label>
-                <select asp-for="Role" class="form-control">
-                    <option value="">-- Select Role --</option>
-                    <option value="Driver">Driver</option>
-                    <option value="Rider">Rider</option>
-                </select>
-                <span asp-validation-for="Role" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Register" class="btn btn-primary" />
-            </div>
-        </form>
+<section class="auth-page" aria-labelledby="register-title">
+    <div class="auth-bg" aria-hidden="true">
+        <div class="auth-gradient"></div>
+        <div class="auth-pattern"></div>
     </div>
-</div>
+    <div class="container-fluid px-4">
+        <div class="row min-vh-100 align-items-center justify-content-center">
+            <div class="col-12">
+                <div class="auth-card">
+                    <header class="auth-header text-center mb-5">
+                        <a asp-controller="Home" asp-action="Index" class="auth-brand d-inline-flex align-items-center gap-2 mb-4" aria-label="Tagalong Home">
+                            <div class="brand-icon" aria-hidden="true">
+                                <i data-lucide="bus" class="brand-icon-svg" aria-hidden="true"></i>
+                            </div>
+                            <span class="brand-text">Tagalong</span>
+                        </a>
+                        <h1 id="register-title" class="fw-bold mb-2">Create your account</h1>
+                        <p class="text-muted">Join thousands of riders and drivers today</p>
+                    </header>
 
-<div>
-    <a asp-action="Login">Already have an account? Login here</a>
-</div>
+                    <form asp-action="Register" method="post" class="auth-form" novalidate>
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger validation-summary" role="alert" aria-live="polite"></div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="FullName" class="form-label">Full name</label>
+                            <div class="input-wrapper">
+                                <input asp-for="FullName" class="form-control" autocomplete="name" placeholder="John Doe" aria-describedby="fullName-error" />
+                                <i data-lucide="user" class="input-icon" aria-hidden="true"></i>
+                            </div>
+                            <span asp-validation-for="FullName" class="form-error" id="fullName-error"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Email" class="form-label">Email address</label>
+                            <div class="input-wrapper">
+                                <input asp-for="Email" class="form-control" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" />
+                                <i data-lucide="mail" class="input-icon" aria-hidden="true"></i>
+                            </div>
+                            <span asp-validation-for="Email" class="form-error" id="email-error"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="PhoneNumber" class="form-label">Phone number</label>
+                            <div class="input-wrapper">
+                                <input asp-for="PhoneNumber" class="form-control" type="tel" autocomplete="tel" placeholder="+1 (555) 000-0000" aria-describedby="phone-error" />
+                                <i data-lucide="phone" class="input-icon" aria-hidden="true"></i>
+                            </div>
+                            <span asp-validation-for="PhoneNumber" class="form-error" id="phone-error"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <div class="input-wrapper position-relative">
+                                <input asp-for="Password" class="form-control" type="password" autocomplete="new-password" placeholder="Create a password" aria-describedby="password-error password-hint" />
+                                <i data-lucide="lock" class="input-icon" aria-hidden="true"></i>
+                                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                                    <i data-lucide="eye" class="toggle-icon toggle-icon-show" aria-hidden="true"></i>
+                                    <i data-lucide="eye-off" class="toggle-icon toggle-icon-hide" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div id="password-hint" class="form-hint">At least 8 characters with uppercase, lowercase, and number</div>
+                            <span asp-validation-for="Password" class="form-error" id="password-error"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
+                            <div class="input-wrapper position-relative">
+                                <input asp-for="ConfirmPassword" class="form-control" type="password" autocomplete="new-password" placeholder="Confirm your password" aria-describedby="confirmPassword-error" />
+                                <i data-lucide="lock" class="input-icon" aria-hidden="true"></i>
+                                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                                    <i data-lucide="eye" class="toggle-icon toggle-icon-show" aria-hidden="true"></i>
+                                    <i data-lucide="eye-off" class="toggle-icon toggle-icon-hide" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="form-error" id="confirmPassword-error"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Role" class="form-label">I want to</label>
+                            <div class="role-options" role="radiogroup" aria-label="Select your role">
+                                <label class="role-option" for="role-driver">
+                                    <input type="radio" id="role-driver" name="Role" value="Driver" @(Model.Role == "Driver" ? "checked" : "") class="role-input" aria-describedby="driver-desc" />
+                                    <div class="role-card">
+                                        <div class="role-icon">
+                                            <i data-lucide="steering-wheel" aria-hidden="true"></i>
+                                        </div>
+                                        <div class="role-info">
+                                            <span class="role-title">Drive</span>
+                                            <span id="driver-desc" class="role-desc">Offer rides and earn money</span>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="role-option" for="role-rider">
+                                    <input type="radio" id="role-rider" name="Role" value="Rider" @(Model.Role == "Rider" ? "checked" : "") class="role-input" aria-describedby="rider-desc" />
+                                    <div class="role-card">
+                                        <div class="role-icon">
+                                            <i data-lucide="user" aria-hidden="true"></i>
+                                        </div>
+                                        <div class="role-info">
+                                            <span class="role-title">Ride</span>
+                                            <span id="rider-desc" class="role-desc">Find rides and save money</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <span asp-validation-for="Role" class="form-error"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 auth-submit" data-loading-text="Creating account...">
+                            <span class="btn-text">Create account</span>
+                            <span class="btn-loader d-none">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Creating account...
+                            </span>
+                        </button>
+                    </form>
+
+                    <footer class="auth-footer text-center mt-5">
+                        <p class="text-muted mb-0">Already have an account? <a asp-action="Login" class="fw-medium text-gold hover-text-primary-decoration">Sign in</a></p>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <style>
+        .auth-page {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-10) var(--space-4);
+        }
+        .auth-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+        .auth-gradient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(234, 179, 8, 0.15) 0%, transparent 70%),
+                        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(250, 204, 21, 0.08) 0%, transparent 60%);
+        }
+        .auth-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23eab308' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: patternMove 30s linear infinite;
+        }
+        @@media (prefers-reduced-motion: reduce) {
+            .auth-pattern {
+                animation: none;
+            }
+        }
+        @@keyframes patternMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        .auth-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 440px;
+            animation: slideUp var(--transition-slow) var(--transition-smooth);
+        }
+        .auth-brand {
+            color: var(--color-text-primary);
+            text-decoration: none;
+        }
+        .auth-brand:hover .brand-text {
+            color: var(--color-brand-primary);
+        }
+        .auth-brand .brand-icon {
+            background: var(--gradient-primary);
+        }
+        .auth-header h1 {
+            color: var(--color-text-primary);
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--space-2);
+        }
+        .auth-header p {
+            color: var(--color-text-muted);
+            margin-bottom: 0;
+        }
+        .form-label {
+            display: block;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-2);
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .form-control {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            padding: var(--space-3) var(--space-4) var(--space-3) 3rem;
+            font-size: var(--font-size-base);
+            transition: all var(--transition-base);
+            height: auto;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-disabled);
+        }
+        .form-control:focus {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-brand-primary);
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+            color: var(--color-text-primary);
+        }
+        .form-control.is-invalid,
+        .form-control:invalid {
+            border-color: var(--color-danger);
+        }
+        .form-control.is-invalid:focus,
+        .form-control:invalid:focus {
+            box-shadow: 0 0 0 3px var(--color-danger-light);
+        }
+        .input-icon {
+            position: absolute;
+            left: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-disabled);
+            pointer-events: none;
+            transition: color var(--transition-fast);
+        }
+        .form-control:focus + .input-icon {
+            color: var(--color-brand-primary);
+        }
+        .password-toggle {
+            position: absolute;
+            right: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: var(--space-1);
+            color: var(--color-text-disabled);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color var(--transition-fast);
+        }
+        .password-toggle:hover {
+            color: var(--color-text-primary);
+        }
+        .password-toggle .toggle-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .password-toggle .toggle-icon-hide {
+            display: none;
+        }
+        .password-toggle[aria-pressed="true"] .toggle-icon-show {
+            display: none;
+        }
+        .password-toggle[aria-pressed="true"] .toggle-icon-hide {
+            display: block;
+        }
+        .form-check-input {
+            width: 1.125rem;
+            height: 1.125rem;
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-sm);
+            background: var(--color-bg-tertiary);
+        }
+        .form-check-input:checked {
+            background-color: var(--color-brand-primary);
+            border-color: var(--color-brand-primary);
+        }
+        .form-check-input:focus {
+            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+        }
+        .form-check-label {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+        }
+        .form-error {
+            display: block;
+            color: var(--color-danger);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .validation-summary {
+            background: var(--color-danger-light);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-5);
+            color: var(--color-danger);
+        }
+        .form-hint {
+            display: block;
+            color: var(--color-text-disabled);
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+        }
+        .auth-submit {
+            border-radius: var(--radius-lg);
+            padding: var(--space-4) var(--space-6);
+            font-size: var(--font-size-lg);
+        }
+        .auth-footer a {
+            text-decoration: none;
+        }
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        .text-sm {
+            font-size: var(--font-size-sm);
+        }
+        .hover-text-primary-decoration:hover {
+            text-decoration: underline;
+        }
+
+        /* Role Options */
+        .role-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        .role-option {
+            display: block;
+            cursor: pointer;
+        }
+        .role-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .role-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4) var(--space-5);
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-xl);
+            transition: all var(--transition-base);
+        }
+        .role-option:hover .role-card {
+            border-color: var(--color-brand-primary);
+        }
+        .role-input:checked + .role-card {
+            border-color: var(--color-brand-primary);
+            background: var(--color-brand-primary-light);
+        }
+        .role-input:focus-visible + .role-card {
+            outline: 2px solid var(--color-brand-primary);
+            outline-offset: 2px;
+        }
+        .role-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .role-icon i {
+            width: 24px;
+            height: 24px;
+            color: var(--color-text-inverse);
+        }
+        .role-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+        .role-title {
+            color: var(--color-text-primary);
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-base);
+        }
+        .role-desc {
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+        }
+    </style>
+}
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password toggles
+            document.querySelectorAll('.password-toggle').forEach(function(toggleBtn) {
+                const input = toggleBtn.closest('.input-wrapper').querySelector('input[type="password"]');
+                if (input) {
+                    toggleBtn.addEventListener('click', function() {
+                        const isPassword = input.type === 'password';
+                        input.type = isPassword ? 'text' : 'password';
+                        this.setAttribute('aria-pressed', isPassword);
+                        this.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+                    });
+                }
+            });
+
+            // Role selection visual feedback
+            document.querySelectorAll('.role-input').forEach(function(input) {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.role-input').forEach(function(i) {
+                        i.closest('.role-option').querySelector('.role-card').classList.remove('checked');
+                    });
+                    this.closest('.role-option').querySelector('.role-card').classList.add('checked');
+                });
+            });
+
+            // Form submission loading state
+            const form = document.querySelector('.auth-form');
+            const submitBtn = document.querySelector('.auth-submit');
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function() {
+                    if (form.checkValidity()) {
+                        submitBtn.disabled = true;
+                        submitBtn.querySelector('.btn-text').classList.add('d-none');
+                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                    }
+                });
+            }
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 }
