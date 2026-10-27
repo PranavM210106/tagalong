@@ -13,13 +13,10 @@ builder.Services.AddControllersWithViews();
 // Add DbContext
 // On Render, Blueprint with fromDatabase injects connection string as env var
 // Try multiple sources in order of precedence - ENV VARS FIRST on Linux to override appsettings.json
-var isLinux = OperatingatingSystem.IsLinux();
+var isLinux = OperatingSystem.IsLinux();
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
     ?? Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? (isLinux ? null : builder.Configuration.GetConnectionString("DefaultConnection"));
-
-// On Linux (Render), ALWAYS use PostgreSQL. On Windows, use SQL Server only for local LocalDB.
-var isLinux = OperatingSystem.IsLinux();
 var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
     (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
