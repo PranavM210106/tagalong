@@ -221,12 +221,7 @@ catch (Exception ex)
 }
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-}
-
-// Trust Vercel's X-Forwarded-Proto header for HTTPS detection
+// Trust Vercel's X-Forwarded-Proto header for HTTPS detection - MUST be first
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
@@ -234,7 +229,13 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardLimit = null
 });
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+}
+
+// Disable HTTPS redirection - Vercel handles SSL termination
+// app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
