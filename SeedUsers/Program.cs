@@ -7,7 +7,12 @@ using Tagalong.Models.Entities;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+// On Render, Blueprint with fromDatabase injects connection string as env var
+// Try multiple sources in order of precedence
+var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"]
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL"); // Render also uses this sometimes
+
 // On Linux (Render), ALWAYS use PostgreSQL. On Windows, use SQL Server only for local LocalDB.
 var isLinux = OperatingSystem.IsLinux();
 var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
@@ -18,20 +23,28 @@ var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
 // On Linux, validate connection string is PostgreSQL format; if not, try to build from Render PG env vars
 if (isLinux && !string.IsNullOrEmpty(connectionString))
 {
-    // Check if it's a valid PostgreSQL connection string (proper precedence with parentheses)
+    // First: explicitly reject SQL Server connection strings
+    var isSqlServer = connectionString.Contains("Trusted_Connection", StringComparison.OrdinalIgnoreCase) ||
+                      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
+                      connectionString.Contains("(localdb)", StringComparison.OrdinalIgnoreCase) ||
+                      connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
+
+    // Check if it's a valid PostgreSQL connection string (key=value or URL format)
     var isPostgres = connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
                      (connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
-                      connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase)) ||
+                      connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase) &&
+                      !isSqlServer) ||  // Server=+Database= but NOT SQL Server
                      connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
                      connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase);
 
     // DEBUG: Log the connection string format (first 50 chars)
     Console.WriteLine($"[DEBUG] Linux detected. Connection string starts with: {connectionString.Substring(0, Math.Min(50, connectionString.Length))}...");
+    Console.WriteLine($"[DEBUG] IsSqlServer check: {isSqlServer}");
     Console.WriteLine($"[DEBUG] IsPostgres check result: {isPostgres}");
 
-    if (!isPostgres || connectionString.Contains("Trusted_Connection", StringComparison.OrdinalIgnoreCase))
+    if (isSqlServer || !isPostgres)
     {
-        Console.WriteLine("[DEBUG] Connection string is not valid PostgreSQL format (or contains Trusted_Connection). Attempting to build from env vars...");
+        Console.WriteLine("[DEBUG] Connection string is SQL Server or not valid PostgreSQL format. Attempting to build from env vars...");
 
         // Try to build from Render's individual PG environment variables
         var pgHost = Environment.GetEnvironmentVariable("PGHOST");
