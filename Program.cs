@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Tagalong.Data;
@@ -10,8 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Add DbContext
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var isPostgreSql = !string.IsNullOrEmpty(connectionString) &&
+    (connectionString.Contains("postgresql", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("npgsql", StringComparison.OrdinalIgnoreCase));
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (isPostgreSql)
+    {
+        options.UseNpgsql(connectionString);
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
+});
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
