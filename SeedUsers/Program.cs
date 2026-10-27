@@ -1,3 +1,5 @@
+using System;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +85,33 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
     else
     {
         Console.WriteLine("[DEBUG] Using injected connection string as-is (valid PostgreSQL format)");
+
+        // Convert postgresql:// URL format to key=value format for Npgsql compatibility
+        if (connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+            connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var uri = new Uri(connectionString);
+                var host = uri.Host;
+                var port = uri.Port > 0 ? uri.Port : 5432;
+                var database = uri.AbsolutePath.TrimStart('/');
+                var userInfo = uri.UserInfo.Split(':');
+                var username = userInfo.Length > 0 ? userInfo[0] : "";
+                var password = userInfo.Length > 1 ? userInfo[1] : "";
+
+                // Parse query parameters
+                var query = QueryHelpers.ParseQuery(uri.Query);
+                var sslMode = query.ContainsKey("sslmode") ? query["sslmode"].ToString() : "Require";
+
+                connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode={sslMode};Trust Server Certificate=true";
+                Console.WriteLine("[DEBUG] Converted postgresql:// URL to key=value format");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Failed to parse postgresql:// URL: {ex.Message}");
+            }
+        }
     }
 }
 
