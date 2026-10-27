@@ -12,20 +12,21 @@ builder.Services.AddControllersWithViews();
 
 // Add DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var isPostgreSql = !string.IsNullOrEmpty(connectionString) &&
-    (connectionString.Contains("postgresql", StringComparison.OrdinalIgnoreCase) ||
-     connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase) ||
-     connectionString.Contains("npgsql", StringComparison.OrdinalIgnoreCase));
+// Default to PostgreSQL for production (Render), use SQL Server only for local LocalDB
+var isLocalDb = !string.IsNullOrEmpty(connectionString) &&
+    (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (isPostgreSql)
+    if (isLocalDb)
     {
-        options.UseNpgsql(connectionString);
+        options.UseSqlServer(connectionString);
     }
     else
     {
-        options.UseSqlServer(connectionString);
+        options.UseNpgsql(connectionString);
     }
 });
 
