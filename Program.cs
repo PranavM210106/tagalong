@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -226,7 +227,23 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
     // Trust all proxies (Vercel's edge IPs change)
-    ForwardLimit = null
+    ForwardLimit = null,
+    KnownNetworks = new List<IPNetwork>(),
+    KnownProxies = new List<IPAddress>()
+});
+
+// Safety net: Force HTTPS scheme when behind Vercel proxy
+app.Use((context, next) =>
+{
+    if (context.Request.Headers.ContainsKey("X-Forwarded-Proto"))
+    {
+        var proto = context.Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(proto) && proto.Contains("https", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Request.Scheme = "https";
+        }
+    }
+    return next();
 });
 
 if (!app.Environment.IsDevelopment())
