@@ -109,75 +109,86 @@ builder.Services.AddScoped<IDistanceService, DistanceService>();
 
 var app = builder.Build();
 
+// Health check endpoint for Render - MUST be before UseHttpsRedirection for TCP health checks
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 // One-time database initialization (seed only - migrations run via preDeployCommand)
-using (var scope = app.Services.CreateScope())
+// Wrapped in try-catch to avoid crashing app startup if seeding fails
+try
 {
-    var services = scope.ServiceProvider;
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-
-    // Seed roles
-    string[] roleNames = { "Admin", "Driver", "Rider" };
-    foreach (var roleName in roleNames)
+    using (var scope = app.Services.CreateScope())
     {
-        var roleExist = await roleManager.RoleExistsAsync(roleName);
-        if (!roleExist)
+        var services = scope.ServiceProvider;
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+        // Seed roles
+        string[] roleNames = { "Admin", "Driver", "Rider" };
+        foreach (var roleName in roleNames)
         {
-            await roleManager.CreateAsync(new IdentityRole(roleName));
-        }
-    }
-
-    // Seed test users from environment variables (optional, defaults for dev)
-    var testUsers = new[]
-    {
-        new {
-            Email = Environment.GetEnvironmentVariable("SEED_RIDER_EMAIL") ?? "rider@test.com",
-            Password = Environment.GetEnvironmentVariable("SEED_RIDER_PASSWORD") ?? "Test123!",
-            FullName = "Test Rider", Role = "Rider"
-        },
-        new {
-            Email = Environment.GetEnvironmentVariable("SEED_DRIVER_EMAIL") ?? "driver@test.com",
-            Password = Environment.GetEnvironmentVariable("SEED_DRIVER_PASSWORD") ?? "Test123!",
-            FullName = "Test Driver", Role = "Driver"
-        },
-        new {
-            Email = Environment.GetEnvironmentVariable("SEED_ADMIN_EMAIL") ?? "admin@test.com",
-            Password = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD") ?? "Test123!",
-            FullName = "Test Admin", Role = "Admin"
-        }
-    };
-
-    foreach (var u in testUsers)
-    {
-        var existing = await userManager.FindByEmailAsync(u.Email);
-        if (existing == null)
-        {
-            var user = new ApplicationUser
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
             {
-                UserName = u.Email,
-                Email = u.Email,
-                FullName = u.FullName,
-                PhoneNumber = "+1234567890",
-                ProfilePicture = "",
-                IsVerified = true,
-                EmailConfirmed = true
-            };
-            var result = await userManager.CreateAsync(user, u.Password);
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(user, u.Role);
+                await roleManager.CreateAsync(new IdentityRole(roleName));
             }
         }
-        else
+
+        // Seed test users from environment variables (optional, defaults for dev)
+        var testUsers = new[]
         {
-            // Update password for existing user
-            var removeResult = await userManager.RemovePasswordAsync(existing);
-            if (removeResult.Succeeded)
+            new {
+                Email = Environment.GetEnvironmentVariable("SEED_RIDER_EMAIL") ?? "rider@test.com",
+                Password = Environment.GetEnvironmentVariable("SEED_RIDER_PASSWORD") ?? "Test123!",
+                FullName = "Test Rider", Role = "Rider"
+            },
+            new {
+                Email = Environment.GetEnvironmentVariable("SEED_DRIVER_EMAIL") ?? "driver@test.com",
+                Password = Environment.GetEnvironmentVariable("SEED_DRIVER_PASSWORD") ?? "Test123!",
+                FullName = "Test Driver", Role = "Driver"
+            },
+            new {
+                Email = Environment.GetEnvironmentVariable("SEED_ADMIN_EMAIL") ?? "admin@test.com",
+                Password = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD") ?? "Test123!",
+                FullName = "Test Admin", Role = "Admin"
+            }
+        };
+
+        foreach (var u in testUsers)
+        {
+            var existing = await userManager.FindByEmailAsync(u.Email);
+            if (existing == null)
             {
-                await userManager.AddPasswordAsync(existing, u.Password);
+                var user = new ApplicationUser
+                {
+                    UserName = u.Email,
+                    Email = u.Email,
+                    FullName = u.FullName,
+                    PhoneNumber = "+1234567890",
+                    ProfilePicture = "",
+                    IsVerified = true,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(user, u.Password);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, u.Role);
+                }
+            }
+            else
+            {
+                // Update password for existing user
+                var removeResult = await userManager.RemovePasswordAsync(existing);
+                if (removeResult.Succeeded)
+                {
+                    await userManager.AddPasswordAsync(existing, u.Password);
+                }
             }
         }
     }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"[WARNING] Database seeding failed (app will continue): {ex.Message}");
 }
 
 // Configure the HTTP request pipeline.
@@ -187,9 +198,6 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
-// Health check endpoint for Render - MUST be before UseHttpsRedirection for TCP health checks
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
