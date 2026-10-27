@@ -239,8 +239,8 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Read PORT from environment (Vercel sets this at runtime)
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var serverPort = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Clear();
-app.Urls.Add($"http://0.0.0.0:{port}");
+app.Urls.Add($"http://0.0.0.0:{serverPort}");
 
 app.Run();
