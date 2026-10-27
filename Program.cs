@@ -109,16 +109,12 @@ builder.Services.AddScoped<IDistanceService, DistanceService>();
 
 var app = builder.Build();
 
-// One-time database initialization (migrations + seed) on first startup
+// One-time database initialization (seed only - migrations run via preDeployCommand)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var dbContext = services.GetRequiredService<ApplicationDbContext>();
-
-    // Run migrations
-    await dbContext.Database.MigrateAsync();
 
     // Seed roles
     string[] roleNames = { "Admin", "Driver", "Rider" };
@@ -192,7 +188,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Health check endpoint for Render
+// Health check endpoint for Render - MUST be before UseHttpsRedirection for TCP health checks
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 app.UseHttpsRedirection();
