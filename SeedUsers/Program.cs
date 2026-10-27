@@ -8,18 +8,16 @@ using Tagalong.Models.Entities;
 var builder = Host.CreateApplicationBuilder(args);
 
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
-// Default to PostgreSQL for production (Render), use SQL Server only for local LocalDB
-var isLocalDb = !string.IsNullOrEmpty(connectionString) &&
+// On Linux (Render), ALWAYS use PostgreSQL. On Windows, use SQL Server only for LocalDB.
+var isLinux = OperatingSystem.IsLinux();
+var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
     (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
 
-// Also default to PostgreSQL when running on Linux (Render containers)
-var isLinux = OperatingSystem.IsLinux();
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (isLocalDb && !isLinux)
+    if (isLocalDb)
     {
         options.UseSqlServer(connectionString);
     }
