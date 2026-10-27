@@ -40,7 +40,7 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
         var pgUser = Environment.GetEnvironmentVariable("PGUSER");
         var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD");
 
-        Console.WriteLine($"[DEBUG] PGHOST={pgHost}, PGPORT={pgPort}, PGDATABASE={pgDatabase}, PGUSER={pgUser}, PGPASSWORD={'[hidden]'}");
+        Console.WriteLine($"[DEBUG] PGHOST={pgHost}, PGPORT={pgPort}, PGDATABASE={pgDatabase}, PGUSER={pgUser}, PGPASSWORD=\"[hidden]\"");
 
         if (!string.IsNullOrEmpty(pgHost) && !string.IsNullOrEmpty(pgDatabase) &&
             !string.IsNullOrEmpty(pgUser) && !string.IsNullOrEmpty(pgPassword))
