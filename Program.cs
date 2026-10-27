@@ -192,6 +192,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Health check endpoint for Render
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
