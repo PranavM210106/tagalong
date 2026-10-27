@@ -5,6 +5,7 @@
     dockerfilePath: ./Dockerfile
     plan: free
     region: oregon
+    healthCheckPath: /health
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
