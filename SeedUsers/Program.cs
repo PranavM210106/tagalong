@@ -18,10 +18,10 @@ var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
 // On Linux, validate connection string is PostgreSQL format; if not, try to build from Render PG env vars
 if (isLinux && !string.IsNullOrEmpty(connectionString))
 {
-    // Check if it's a valid PostgreSQL connection string
+    // Check if it's a valid PostgreSQL connection string (proper precedence with parentheses)
     var isPostgres = connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
-                     connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
-                     connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase) ||
+                     (connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
+                      connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase)) ||
                      connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
                      connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase);
 
