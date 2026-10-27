@@ -2,7 +2,7 @@
   "buildCommand": "dotnet publish Tagalong.csproj -c Release -o ./output",
   "devCommand": "dotnet run --project Tagalong.csproj",
   "installCommand": "dotnet restore",
-  "framework": "dotnet",
+  "framework": "container",
   "regions": ["iad1"],
   "functions": {
     "api/**/*.cs": {
