@@ -7,6 +7,8 @@
 /obj/
 /Debug/
 /Release/
+**/bin/
+**/obj/
 
 # Visual Studio files
 .vs/
@@ -35,3 +37,7 @@ Thumbs.db
 
 # Rider and Driver specific folders that might contain uploads
 /wwwroot/uploads/
+
+# User secrets
+**/appsettings.Development.json
+**/secrets.json
