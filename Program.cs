@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Http;
 using Tagalong.Data;
 using Tagalong.Models.Entities;
 using Tagalong.Services;
@@ -133,6 +134,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// Configure Identity cookie for Vercel proxy (HTTPS at edge, HTTP to container)
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.IsEssential = true;
+    options.Cookie.HttpOnly = true;
+});
+
 // Add application services
 builder.Services.AddScoped<IDistanceService, DistanceService>();
 
@@ -252,6 +262,7 @@ if (!app.Environment.IsDevelopment())
 // app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCookiePolicy();
 
 app.UseAuthentication();
 app.UseAuthorization();
