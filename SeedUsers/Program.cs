@@ -25,8 +25,14 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
                      connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
                      connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase);
 
-    if (!isPostgres)
+    // DEBUG: Log the connection string format (first 50 chars)
+    Console.WriteLine($"[DEBUG] Linux detected. Connection string starts with: {connectionString.Substring(0, Math.Min(50, connectionString.Length))}...");
+    Console.WriteLine($"[DEBUG] IsPostgres check result: {isPostgres}");
+
+    if (!isPostgres || connectionString.Contains("Trusted_Connection", StringComparison.OrdinalIgnoreCase))
     {
+        Console.WriteLine("[DEBUG] Connection string is not valid PostgreSQL format (or contains Trusted_Connection). Attempting to build from env vars...");
+
         // Try to build from Render's individual PG environment variables
         var pgHost = Environment.GetEnvironmentVariable("PGHOST");
         var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
@@ -34,18 +40,23 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
         var pgUser = Environment.GetEnvironmentVariable("PGUSER");
         var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD");
 
+        Console.WriteLine($"[DEBUG] PGHOST={pgHost}, PGPORT={pgPort}, PGDATABASE={pgDatabase}, PGUSER={pgUser}, PGPASSWORD={'[hidden]'}");
+
         if (!string.IsNullOrEmpty(pgHost) && !string.IsNullOrEmpty(pgDatabase) &&
             !string.IsNullOrEmpty(pgUser) && !string.IsNullOrEmpty(pgPassword))
         {
             connectionString = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};SSL Mode=Require;Trust Server Certificate=true";
+            Console.WriteLine("[DEBUG] Built connection string from individual PG env vars");
         }
         else
         {
             // Fallback: try DATABASE_URL (Render sometimes uses this)
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+            Console.WriteLine($"[DEBUG] DATABASE_URL={databaseUrl}");
             if (!string.IsNullOrEmpty(databaseUrl))
             {
                 connectionString = databaseUrl;
+                Console.WriteLine("[DEBUG] Using DATABASE_URL");
             }
             else
             {
@@ -54,6 +65,10 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
                     "Set ConnectionStrings__DefaultConnection or ensure Render PostgreSQL env vars (PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD) are available.");
             }
         }
+    }
+    else
+    {
+        Console.WriteLine("[DEBUG] Using injected connection string as-is (valid PostgreSQL format)");
     }
 }
 
