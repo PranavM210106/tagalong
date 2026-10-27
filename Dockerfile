@@ -3,6 +3,7 @@ WORKDIR /app
 EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG CACHEBUST=1
 WORKDIR /src
 COPY ["Tagalong.csproj", "."]
 RUN dotnet restore "Tagalong.csproj"
