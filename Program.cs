@@ -224,16 +224,14 @@ catch (Exception ex)
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
 
 // Trust Vercel's X-Forwarded-Proto header for HTTPS detection
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
-    KnownNetworks = { },
-    KnownProxies = { }
+    // Trust all proxies (Vercel's edge IPs change)
+    ForwardLimit = null
 });
 
 app.UseHttpsRedirection();
