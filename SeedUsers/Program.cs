@@ -7,8 +7,24 @@ using Tagalong.Models.Entities;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+// Default to PostgreSQL for production (Render), use SQL Server only for local LocalDB
+var isLocalDb = !string.IsNullOrEmpty(connectionString) &&
+    (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
+{
+    if (isLocalDb)
+    {
+        options.UseSqlServer(connectionString);
+    }
+    else
+    {
+        options.UseNpgsql(connectionString);
+    }
+});
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
