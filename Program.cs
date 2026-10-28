@@ -134,13 +134,20 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Configure Identity cookie for Vercel proxy (HTTPS at edge, HTTP to container)
+// Configure Identity cookie for Render/Vercel proxy (HTTPS at edge, HTTP to container)
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
+});
+
+// Configure cookie policy for cross-site cookies
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.Secure = CookieSecurePolicy.Always;
 });
 
 // Add application services
@@ -231,15 +238,15 @@ catch (Exception ex)
 }
 
 // Configure the HTTP request pipeline.
-// Trust Vercel's X-Forwarded-Proto header for HTTPS detection - MUST be first
+// Trust Render/Vercel proxy headers for HTTPS detection - MUST be first
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
-    // Trust all proxies (Vercel's edge IPs change) - KnownNetworks/KnownProxies default to empty
+    // Trust all proxies (edge IPs change) - KnownNetworks/KnownProxies default to empty
     ForwardLimit = null
 });
 
-// Safety net: Force HTTPS scheme when behind Vercel proxy
+// Safety net: Force HTTPS scheme when behind proxy
 app.Use((context, next) =>
 {
     if (context.Request.Headers.ContainsKey("X-Forwarded-Proto"))

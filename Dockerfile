@@ -2,7 +2,6 @@
 WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
-ENV PORT=8080
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG CACHEBUST=1
