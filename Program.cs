@@ -27,40 +27,56 @@ var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
 
-// On Linux, validate connection string is PostgreSQL format; if not, try to build from Render PG env vars
+// Convert postgresql:// or postgres:// URL format to key=value format for Npgsql compatibility across all platforms
+if (!string.IsNullOrEmpty(connectionString) &&
+    (connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase)))
+{
+    try
+    {
+        var uri = new Uri(connectionString);
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+        var userInfo = uri.UserInfo.Split(':');
+        var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+
+        // Parse query parameters
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        var sslMode = query.ContainsKey("sslmode") ? query["sslmode"].ToString() : "Require";
+
+        connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode={sslMode};Trust Server Certificate=true";
+        Console.WriteLine("[DEBUG] Converted postgresql:// URL to key=value format");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DEBUG] Failed to parse postgresql:// URL: {ex.Message}");
+    }
+}
+
+// On Linux, if connection string is still SQL Server or missing, attempt fallback to individual Render PG env vars
 if (isLinux && !string.IsNullOrEmpty(connectionString))
 {
-    // First: explicitly reject SQL Server connection strings
     var isSqlServer = connectionString.Contains("Trusted_Connection", StringComparison.OrdinalIgnoreCase) ||
                       connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
                       connectionString.Contains("(localdb)", StringComparison.OrdinalIgnoreCase) ||
                       connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
 
-    // Check if it's a valid PostgreSQL connection string (key=value or URL format)
     var isPostgres = connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
                      (connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
                       connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase) &&
-                      !isSqlServer) ||  // Server=+Database= but NOT SQL Server
-                     connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
-                     connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase);
-
-    // DEBUG: Log the connection string format (first 50 chars)
-    Console.WriteLine($"[DEBUG] Linux detected. Connection string starts with: {connectionString.Substring(0, Math.Min(50, connectionString.Length))}...");
-    Console.WriteLine($"[DEBUG] IsSqlServer check: {isSqlServer}");
-    Console.WriteLine($"[DEBUG] IsPostgres check result: {isPostgres}");
+                      !isSqlServer);
 
     if (isSqlServer || !isPostgres)
     {
         Console.WriteLine("[DEBUG] Connection string is SQL Server or not valid PostgreSQL format. Attempting to build from env vars...");
 
-        // Try to build from Render's individual PG environment variables
         var pgHost = Environment.GetEnvironmentVariable("PGHOST");
         var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
         var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE");
         var pgUser = Environment.GetEnvironmentVariable("PGUSER");
         var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD");
-
-        Console.WriteLine($"[DEBUG] PGHOST={pgHost}, PGPORT={pgPort}, PGDATABASE={pgDatabase}, PGUSER={pgUser}, PGPASSWORD=\"[hidden]\"");
 
         if (!string.IsNullOrEmpty(pgHost) && !string.IsNullOrEmpty(pgDatabase) &&
             !string.IsNullOrEmpty(pgUser) && !string.IsNullOrEmpty(pgPassword))
@@ -70,9 +86,7 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
         }
         else
         {
-            // Fallback: try DATABASE_URL (Render sometimes uses this)
             var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-            Console.WriteLine($"[DEBUG] DATABASE_URL={databaseUrl}");
             if (!string.IsNullOrEmpty(databaseUrl))
             {
                 connectionString = databaseUrl;
@@ -83,37 +97,6 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
                 throw new InvalidOperationException(
                     "PostgreSQL connection string not configured. " +
                     "Set ConnectionStrings__DefaultConnection or ensure Render PostgreSQL env vars (PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD) are available.");
-            }
-        }
-    }
-    else
-    {
-        Console.WriteLine("[DEBUG] Using injected connection string as-is (valid PostgreSQL format)");
-
-        // Convert postgresql:// URL format to key=value format for Npgsql compatibility
-        if (connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
-            connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var uri = new Uri(connectionString);
-                var host = uri.Host;
-                var port = uri.Port > 0 ? uri.Port : 5432;
-                var database = uri.AbsolutePath.TrimStart('/');
-                var userInfo = uri.UserInfo.Split(':');
-                var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
-                var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
-
-                // Parse query parameters
-                var query = QueryHelpers.ParseQuery(uri.Query);
-                var sslMode = query.ContainsKey("sslmode") ? query["sslmode"].ToString() : "Require";
-
-                connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode={sslMode};Trust Server Certificate=true";
-                Console.WriteLine("[DEBUG] Converted postgresql:// URL to key=value format");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DEBUG] Failed to parse postgresql:// URL: {ex.Message}");
             }
         }
     }
