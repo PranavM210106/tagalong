@@ -114,14 +114,14 @@
                                     </div>
                                     <div class="meta-item">
                                         <i data-lucide="truck" class="meta-icon" aria-hidden="true"></i>
-                                        <span>@ride.Vehicle.Model (@ride.Vehicle.VehicleType)</span>
+                                        <span>@(ride.Vehicle != null ? $"{ride.Vehicle.Model} ({ride.Vehicle.VehicleType})" : "Standard Vehicle")</span>
                                     </div>
                                 </div>
                                 <div class="driver-info d-flex align-items-center gap-3">
                                     <div class="driver-avatar">
-                                        @if (!string.IsNullOrEmpty(ride.Driver.ProfilePicture))
+                                        @if (!string.IsNullOrEmpty(ride.Driver?.ProfilePicture))
                                         {
-                                            <img src="@ride.Driver.ProfilePicture" alt="@ride.Driver.FullName" class="rounded-circle" />
+                                            <img src="@ride.Driver.ProfilePicture" alt="@(ride.Driver?.FullName ?? "Driver")" class="rounded-circle" />
                                         }
                                         else
                                         {
@@ -131,13 +131,13 @@
                                         }
                                     </div>
                                     <div>
-                                        <div class="driver-name fw-medium">@ride.Driver.FullName</div>
+                                        <div class="driver-name fw-medium">@(ride.Driver?.FullName ?? "Driver")</div>
                                         <div class="driver-rating d-flex align-items-center gap-1 text-warning small">
                                             @for (int i = 1; i <= 5; i++)
                                             {
-                                                <i data-lucide="star" class="@(i <= (int)Math.Round(ride.Driver.AverageRating ?? 0) ? "fill" : "")" aria-hidden="true"></i>
+                                                <i data-lucide="star" class="@(i <= (int)Math.Round(ride.Driver?.AverageRating ?? 0) ? "fill" : "")" aria-hidden="true"></i>
                                             }
-                                            <span class="text-muted">@ride.Driver.AverageRating?.ToString("0.0")</span>
+                                            <span class="text-muted">@(ride.Driver?.AverageRating?.ToString("0.0") ?? "New")</span>
                                         </div>
                                     </div>
                                 </div>

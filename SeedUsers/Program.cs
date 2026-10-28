@@ -7,6 +7,8 @@ using Microsoft.Extensions.Hosting;
 using Tagalong.Data;
 using Tagalong.Models.Entities;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = Host.CreateApplicationBuilder(args);
 
 // On Render, Blueprint with fromDatabase injects connection string as env var
@@ -17,7 +19,6 @@ var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__De
     ?? (isLinux ? null : builder.Configuration["ConnectionStrings:DefaultConnection"]);
 
 // On Linux (Render), ALWAYS use PostgreSQL. On Windows, use SQL Server only for local LocalDB.
-var isLinux = OperatingSystem.IsLinux();
 var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
     (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
@@ -97,8 +98,8 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
                 var port = uri.Port > 0 ? uri.Port : 5432;
                 var database = uri.AbsolutePath.TrimStart('/');
                 var userInfo = uri.UserInfo.Split(':');
-                var username = userInfo.Length > 0 ? userInfo[0] : "";
-                var password = userInfo.Length > 1 ? userInfo[1] : "";
+                var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+                var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
 
                 // Parse query parameters
                 var query = QueryHelpers.ParseQuery(uri.Query);
@@ -133,17 +134,38 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 
 var app = builder.Build();
 
-// Apply migrations
+// Apply migrations or ensure schema
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await dbContext.Database.MigrateAsync();
+    try
+    {
+        await dbContext.Database.MigrateAsync();
+        Console.WriteLine("[INFO] Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[WARN] MigrateAsync failed ({ex.Message}). Falling back to EnsureCreatedAsync...");
+        await dbContext.Database.EnsureCreatedAsync();
+        Console.WriteLine("[INFO] Database EnsureCreatedAsync finished.");
+    }
 }
 
 using (var scope = app.Services.CreateScope())
 {
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    // Ensure roles exist
+    string[] roleNames = { "Admin", "Driver", "Rider" };
+    foreach (var roleName in roleNames)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+            Console.WriteLine($"Created role: {roleName}");
+        }
+    }
 
     // Create test users
     var testUsers = new[]

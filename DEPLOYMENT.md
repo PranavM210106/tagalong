@@ -4,8 +4,16 @@
 - **URL**: https://github.com/PranavM210106/tagalong
 - **Branch**: main
 
-## Test Credentials
-> **Note**: Test credentials are seeded via SeedUsers project. Run `dotnet run --project SeedUsers/SeedUsers.csproj` after deployment to create test users. Check SeedUsers/Program.cs for current credentials.
+## Test Credentials (Seeded Automatically)
+The application automatically creates the database schema, roles, and default test accounts on startup:
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Rider** | `rider@test.com` | `Test123!` |
+| **Driver** | `driver@test.com` | `Test123!` |
+| **Admin** | `admin@test.com` | `Test123!` |
+
+> **Note**: You can customize these credentials in Render by setting environment variables (`SEED_RIDER_EMAIL`, `SEED_RIDER_PASSWORD`, `SEED_DRIVER_EMAIL`, `SEED_DRIVER_PASSWORD`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`).
 
 ---
 
@@ -73,16 +81,11 @@ vercel --prod
 ### 1. Update Vercel with Render Database URL
 After Render creates the database, copy the **External Connection String** and update Vercel environment variable `ConnectionStrings__DefaultConnection`.
 
-### 2. Run Database Migrations
-The app will auto-migrate on first run. If needed, run manually:
-```bash
-# On Render shell
-dotnet ef database update --project Tagalong.csproj
-```
+### 2. Database Migrations & Test User Seeding
+The application automatically applies all EF Core migrations and seeds the test users on application startup whenever the Docker container launches on Render. No manual shell commands are needed.
 
-### 3. Seed Test Users
+If you ever need to seed locally for development:
 ```bash
-# On Render shell
 dotnet run --project SeedUsers/SeedUsers.csproj
 ```
 

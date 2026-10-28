@@ -37,27 +37,38 @@ namespace Tagalong.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser
+                try
                 {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    FullName = model.FullName,
-                    PhoneNumber = model.PhoneNumber
-                };
+                    var user = new ApplicationUser
+                    {
+                        UserName = model.Email,
+                        Email = model.Email,
+                        FullName = model.FullName,
+                        PhoneNumber = model.PhoneNumber,
+                        ProfilePicture = "",
+                        IsVerified = false,
+                        EmailConfirmed = true
+                    };
 
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    // Assign role (Driver/Rider)
-                    await _userManager.AddToRoleAsync(user, model.Role);
+                    var result = await _userManager.CreateAsync(user, model.Password);
+                    if (result.Succeeded)
+                    {
+                        // Assign role (Driver/Rider)
+                        await _userManager.AddToRoleAsync(user, model.Role);
 
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("Index", "Home");
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        return RedirectToAction("Index", "Home");
+                    }
+
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
                 }
-
-                foreach (var error in result.Errors)
+                catch (System.Exception ex)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    System.Console.WriteLine($"[ERROR] Registration exception: {ex.Message}\n{ex.StackTrace}");
+                    ModelState.AddModelError(string.Empty, $"Registration error: {ex.Message}");
                 }
             }
 
@@ -78,14 +89,28 @@ namespace Tagalong.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-                if (result.Succeeded)
+                try
                 {
-                    return RedirectToAction("Index", "Home");
+                    var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+                    if (result.Succeeded)
+                    {
+                        var user = await _userManager.FindByEmailAsync(model.Email);
+                        if (user != null && await _userManager.IsInRoleAsync(user, "Admin"))
+                        {
+                            return RedirectToAction("Index", "Admin");
+                        }
+                        return RedirectToAction("Index", "Home");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid login attempt. Please verify your email and password.");
+                        return View(model);
+                    }
                 }
-                else
+                catch (System.Exception ex)
                 {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    System.Console.WriteLine($"[ERROR] Login exception: {ex.Message}\n{ex.StackTrace}");
+                    ModelState.AddModelError(string.Empty, $"Login error: {ex.Message}");
                     return View(model);
                 }
             }

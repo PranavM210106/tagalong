@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Tagalong.Data;
 using Tagalong.Models.Entities;
 using Tagalong.Services;
+// Enable legacy timestamp behavior for Npgsql to support DateTime without UTC kind enforcement
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,8 +101,8 @@ if (isLinux && !string.IsNullOrEmpty(connectionString))
                 var port = uri.Port > 0 ? uri.Port : 5432;
                 var database = uri.AbsolutePath.TrimStart('/');
                 var userInfo = uri.UserInfo.Split(':');
-                var username = userInfo.Length > 0 ? userInfo[0] : "";
-                var password = userInfo.Length > 1 ? userInfo[1] : "";
+                var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+                var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
 
                 // Parse query parameters
                 var query = QueryHelpers.ParseQuery(uri.Query);
@@ -286,10 +288,29 @@ try
                     {
                         Console.WriteLine($"[ERROR] Failed to update password for {u.Email}: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
                     }
+                    else
+                    {
+                        Console.WriteLine($"[INFO] Updated password for: {u.Email}");
+                    }
                 }
                 else
                 {
                     Console.WriteLine($"[ERROR] Failed to remove old password for {u.Email}: {string.Join(", ", removeResult.Errors.Select(e => e.Description))}");
+                }
+
+                // Ensure existing user has their role assigned
+                if (!await userManager.IsInRoleAsync(existing, u.Role))
+                {
+                    await userManager.AddToRoleAsync(existing, u.Role);
+                    Console.WriteLine($"[INFO] Added existing user {u.Email} to role {u.Role}");
+                }
+
+                // Ensure existing user is active and verified
+                if (!existing.EmailConfirmed || !existing.IsVerified)
+                {
+                    existing.EmailConfirmed = true;
+                    existing.IsVerified = true;
+                    await userManager.UpdateAsync(existing);
                 }
             }
         }

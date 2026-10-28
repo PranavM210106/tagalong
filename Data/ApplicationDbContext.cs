@@ -137,7 +137,7 @@ namespace Tagalong.Data
                 
             builder.Entity<Message>()
                 .Property(m => m.Timestamp)
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         }
     }
 }

@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Tagalong.Data;
+using Tagalong.Models;
 using Tagalong.Models.Entities;
 
 namespace Tagalong.Controllers
@@ -29,6 +31,11 @@ namespace Tagalong.Controllers
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+
             // Get nearby active rides (simplified - in a real app you'd use user's saved location)
             var nearbyRides = await _context.Rides
                 .Where(r => r.Status == "Active" && r.DriverId != user.Id)
@@ -38,6 +45,13 @@ namespace Tagalong.Controllers
                 .ToListAsync();
 
             return View(nearbyRides);
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        [AllowAnonymous]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }
