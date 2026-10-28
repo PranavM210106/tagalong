@@ -125,7 +125,20 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
     else
     {
-        options.UseNpgsql(connectionString);
+        options.UseNpgsql(connectionString, npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null);
+        });
+    }
+
+    // Enable detailed logging in development or when DEBUG env var is set
+    if (!isLinux || Environment.GetEnvironmentVariable("DEBUG") == "true")
+    {
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
     }
 });
 
@@ -161,10 +174,18 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     try
     {
+        Console.WriteLine("[INFO] Checking database connection...");
+        var canConnect = await dbContext.Database.CanConnectAsync();
+        Console.WriteLine($"[INFO] Database connection: {(canConnect ? "OK" : "FAILED")}");
+
         var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
         if (pendingMigrations.Any())
         {
             Console.WriteLine($"[INFO] Applying {pendingMigrations.Count()} pending migrations...");
+            foreach (var m in pendingMigrations)
+            {
+                Console.WriteLine($"[INFO]   - {m}");
+            }
             await dbContext.Database.MigrateAsync();
             Console.WriteLine("[INFO] Migrations applied successfully");
         }
@@ -175,7 +196,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[WARNING] Migration failed: {ex.Message}");
+        Console.WriteLine($"[ERROR] Migration failed: {ex.Message}");
+        Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
     }
 }
 
@@ -199,7 +221,11 @@ try
             var roleExist = await roleManager.RoleExistsAsync(roleName);
             if (!roleExist)
             {
-                await roleManager.CreateAsync(new IdentityRole(roleName));
+                var result = await roleManager.CreateAsync(new IdentityRole(roleName));
+                if (!result.Succeeded)
+                {
+                    Console.WriteLine($"[ERROR] Failed to create role {roleName}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
             }
         }
 
@@ -242,6 +268,11 @@ try
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(user, u.Role);
+                    Console.WriteLine($"[INFO] Created user: {u.Email}");
+                }
+                else
+                {
+                    Console.WriteLine($"[ERROR] Failed to create user {u.Email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
                 }
             }
             else
@@ -250,7 +281,15 @@ try
                 var removeResult = await userManager.RemovePasswordAsync(existing);
                 if (removeResult.Succeeded)
                 {
-                    await userManager.AddPasswordAsync(existing, u.Password);
+                    var addResult = await userManager.AddPasswordAsync(existing, u.Password);
+                    if (!addResult.Succeeded)
+                    {
+                        Console.WriteLine($"[ERROR] Failed to update password for {u.Email}: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[ERROR] Failed to remove old password for {u.Email}: {string.Join(", ", removeResult.Errors.Select(e => e.Description))}");
                 }
             }
         }
@@ -258,7 +297,8 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"[WARNING] Database seeding failed (app will continue): {ex.Message}");
+    Console.WriteLine($"[ERROR] Database seeding failed: {ex.Message}");
+    Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
 }
 
 // Configure the HTTP request pipeline.
@@ -282,6 +322,21 @@ app.Use((context, next) =>
         }
     }
     return next();
+});
+
+// Global exception logging middleware (before UseExceptionHandler)
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[UNHANDLED EXCEPTION] {ex.Message}");
+        Console.WriteLine($"[UNHANDLED EXCEPTION] Stack: {ex.StackTrace}");
+        throw; // Re-throw to let UseExceptionHandler handle it
+    }
 });
 
 if (!app.Environment.IsDevelopment())
