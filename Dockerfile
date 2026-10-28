@@ -2,6 +2,9 @@
 WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+# Install EF Core tools for migrations at runtime (preDeployCommand)
+RUN dotnet tool install --global dotnet-ef --version 8.0.10
+ENV PATH="${PATH}:/root/.dotnet/tools"
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG CACHEBUST=1
@@ -18,4 +21,7 @@ RUN dotnet publish "Tagalong.csproj" -c Release -o /app/publish /p:UseAppHost=fa
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# Ensure EF Core tools available for preDeployCommand
+RUN dotnet tool install --global dotnet-ef --version 8.0.10
+ENV PATH="${PATH}:/root/.dotnet/tools"
 ENTRYPOINT ["dotnet", "Tagalong.dll"]

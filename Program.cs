@@ -155,10 +155,34 @@ builder.Services.AddScoped<IDistanceService, DistanceService>();
 
 var app = builder.Build();
 
+// Apply database migrations on startup (in case preDeployCommand didn't run)
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+        if (pendingMigrations.Any())
+        {
+            Console.WriteLine($"[INFO] Applying {pendingMigrations.Count()} pending migrations...");
+            await dbContext.Database.MigrateAsync();
+            Console.WriteLine("[INFO] Migrations applied successfully");
+        }
+        else
+        {
+            Console.WriteLine("[INFO] No pending migrations");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[WARNING] Migration failed: {ex.Message}");
+    }
+}
+
 // Health check endpoint for Render - MUST be before UseHttpsRedirection for TCP health checks
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
-// One-time database initialization (seed only - migrations run via preDeployCommand)
+// One-time database initialization (seed only - migrations run via preDeployCommand and startup)
 // Wrapped in try-catch to avoid crashing app startup if seeding fails
 try
 {

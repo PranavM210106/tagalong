@@ -6,7 +6,7 @@ services:
     plan: free
     region: oregon
     healthCheckPath: /health
-    preDeployCommand: "dotnet ef database update --project Tagalong.csproj --context ApplicationDbContext"
+    preDeployCommand: "cd /app && dotnet ef database update --project Tagalong.csproj --context ApplicationDbContext"
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
