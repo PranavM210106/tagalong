@@ -1,6 +1,8 @@
 @model IEnumerable<Tagalong.Models.Entities.Ride>
+@inject Microsoft.AspNetCore.Identity.UserManager<Tagalong.Models.Entities.ApplicationUser> UserManager
 @{
     ViewData["Title"] = "Home Page";
+    var currentUserId = UserManager.GetUserId(User);
 }
 
 <!-- Hero Section: Professional Mobility Experience (Uber & Rapido Grade) -->
@@ -192,12 +194,30 @@
             <div class="row g-4" role="list">
                 @foreach (var ride in Model.Take(6))
                 {
+                    bool isOwnRide = !string.IsNullOrEmpty(currentUserId) && ride.DriverId == currentUserId;
+                    bool hasAlreadyBooked = !string.IsNullOrEmpty(currentUserId) && ride.Bookings != null && ride.Bookings.Any(b => b.RiderId == currentUserId && b.BookingStatus != "Cancelled");
+                    int passengerCount = ride.Bookings?.Count(b => b.BookingStatus != "Cancelled") ?? 0;
+
                     <div class="col-12 col-md-6 col-lg-4" role="listitem">
                         <article class="ride-card h-100">
                             <div class="ride-card-header">
-                                <div class="route-badge">
-                                    <i data-lucide="navigation" class="me-1" aria-hidden="true"></i>
-                                    <span>@ride.StartLocation → @ride.EndLocation</span>
+                                <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2 mb-2">
+                                    <div class="route-badge">
+                                        <i data-lucide="navigation" class="me-1" aria-hidden="true"></i>
+                                        <span>@ride.StartLocation → @ride.EndLocation</span>
+                                    </div>
+                                    @if (isOwnRide)
+                                    {
+                                        <span class="badge bg-warning text-dark fw-bold px-2 py-1">
+                                            <i data-lucide="shield" class="me-1" style="width:12px;height:12px;"></i> Your Offered Ride
+                                        </span>
+                                    }
+                                    else if (hasAlreadyBooked)
+                                    {
+                                        <span class="badge bg-success text-white fw-bold px-2 py-1">
+                                            <i data-lucide="check" class="me-1" style="width:12px;height:12px;"></i> You're Booked
+                                        </span>
+                                    }
                                 </div>
                                 <time class="departure-time" datetime="@ride.DepartureTime.ToString("yyyy-MM-ddTHH:mm")">
                                     <i data-lucide="clock" class="me-1" aria-hidden="true"></i>
@@ -245,7 +265,21 @@
                                 </div>
                             </div>
                             <div class="ride-card-footer">
-                                @if (ride.SeatsAvailable > 0)
+                                @if (isOwnRide)
+                                {
+                                    <a asp-controller="Bookings" asp-action="MyRides" asp-route-tab="driver" class="btn btn-outline-warning w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2">
+                                        <i data-lucide="sliders" style="width:18px;height:18px;"></i>
+                                        <span>Manage Ride & Passengers (@passengerCount)</span>
+                                    </a>
+                                }
+                                else if (hasAlreadyBooked)
+                                {
+                                    <a asp-controller="Bookings" asp-action="MyRides" asp-route-tab="rider" class="btn btn-outline-success w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2">
+                                        <i data-lucide="check-circle" style="width:18px;height:18px;"></i>
+                                        <span>Booked (View in My Trips)</span>
+                                    </a>
+                                }
+                                else if (ride.SeatsAvailable > 0)
                                 {
                                     <button type="button" class="btn btn-primary w-100 py-3 fw-bold btn-book-trigger"
                                             data-ride-id="@ride.RideId"

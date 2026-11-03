@@ -1,6 +1,15 @@
 @model Tagalong.Models.ViewModels.MyRidesViewModel
 @{
     ViewData["Title"] = "My Rides & Bookings";
+    var queryTab = Context.Request.Query["tab"].ToString();
+    var viewDataTab = ViewData["ActiveTab"] as string;
+    string targetTab = !string.IsNullOrEmpty(queryTab) ? queryTab : (!string.IsNullOrEmpty(viewDataTab) ? viewDataTab : "");
+    
+    bool isDriverRole = User.IsInRole("Driver");
+    int driverRidesCount = Model.AsDriver?.Count() ?? 0;
+    int riderBookingsCount = Model.AsRider?.Count() ?? 0;
+
+    bool showDriverTabFirst = targetTab == "driver" || (targetTab != "rider" && isDriverRole && driverRidesCount > 0 && riderBookingsCount == 0);
 }
 
 <section class="page-header" aria-labelledby="page-title">
@@ -30,25 +39,43 @@
 
 <section class="my-rides-page py-4">
     <div class="container-fluid px-md-4 px-lg-5">
+        
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; border-radius: 12px;">
+                <i data-lucide="check-circle" style="width:20px;height:20px;flex-shrink:0;"></i>
+                <div>@TempData["SuccessMessage"]</div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; border-radius: 12px;">
+                <i data-lucide="alert-circle" style="width:20px;height:20px;flex-shrink:0;"></i>
+                <div>@TempData["ErrorMessage"]</div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
         <!-- Tabs Navigation -->
         <ul class="nav nav-tabs nav-fill mb-4" id="ridesTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active d-flex align-items-center justify-content-center gap-2 py-3" id="rider-tab" data-bs-toggle="tab" data-bs-target="#rider-pane" type="button" role="tab" aria-controls="rider-pane" aria-selected="true">
+                <button class="nav-link @(showDriverTabFirst ? "" : "active") d-flex align-items-center justify-content-center gap-2 py-3" id="rider-tab" data-bs-toggle="tab" data-bs-target="#rider-pane" type="button" role="tab" aria-controls="rider-pane" aria-selected="@(showDriverTabFirst ? "false" : "true")">
                     <i data-lucide="user-check" style="width: 18px; height: 18px;"></i>
-                    <span>As Rider (@(Model.AsRider?.Count() ?? 0))</span>
+                    <span>As Rider (@riderBookingsCount)</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link d-flex align-items-center justify-content-center gap-2 py-3" id="driver-tab" data-bs-toggle="tab" data-bs-target="#driver-pane" type="button" role="tab" aria-controls="driver-pane" aria-selected="false">
+                <button class="nav-link @(showDriverTabFirst ? "active" : "") d-flex align-items-center justify-content-center gap-2 py-3" id="driver-tab" data-bs-toggle="tab" data-bs-target="#driver-pane" type="button" role="tab" aria-controls="driver-pane" aria-selected="@(showDriverTabFirst ? "true" : "false")">
                     <i data-lucide="car" style="width: 18px; height: 18px;"></i>
-                    <span>As Driver (@(Model.AsDriver?.Count() ?? 0))</span>
+                    <span>As Driver (@driverRidesCount)</span>
                 </button>
             </li>
         </ul>
 
         <div class="tab-content" id="ridesTabContent">
             <!-- Rider Pane -->
-            <div class="tab-pane fade show active" id="rider-pane" role="tabpanel" aria-labelledby="rider-tab">
+            <div class="tab-pane fade @(showDriverTabFirst ? "" : "show active")" id="rider-pane" role="tabpanel" aria-labelledby="rider-tab">
                 @if (Model.AsRider != null && Model.AsRider.Any())
                 {
                     <div class="row g-4">
@@ -59,7 +86,7 @@
                                 <article class="card card-elevated h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="badge @(booking.BookingStatus == "Confirmed" ? "badge-success" : booking.BookingStatus == "Pending" ? "badge-warning" : "badge-secondary")">
+                                            <span class="badge @(booking.BookingStatus == "Confirmed" ? "badge-success" : booking.BookingStatus == "Pending" ? "badge-warning" : booking.BookingStatus == "Completed" ? "badge-info" : "badge-secondary")">
                                                 @booking.BookingStatus
                                             </span>
                                             <span class="text-xs text-muted">ID: #@booking.BookingId (@booking.SeatsBooked @(booking.SeatsBooked == 1 ? "seat" : "seats"))</span>
@@ -127,10 +154,11 @@
                                             <i data-lucide="message-square" style="width: 15px; height: 15px;"></i> Chat Driver
                                         </a>
                                         <div class="d-flex gap-2">
-                                            @if (booking.BookingStatus != "Cancelled")
+                                            @if (booking.BookingStatus != "Cancelled" && booking.BookingStatus != "Completed")
                                             {
-                                                <form asp-controller="Bookings" asp-action="Cancel" asp-route-id="@booking.BookingId" method="post" onsubmit="return confirm('Cancel this ride booking?');">
+                                                <form asp-controller="Bookings" asp-action="CancelBooking" method="post" onsubmit="return confirm('Cancel this ride booking?');">
                                                     @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="bookingId" value="@booking.BookingId" />
                                                     <button type="submit" class="btn btn-sm btn-outline-danger">Cancel Booking</button>
                                                 </form>
                                             }
@@ -162,20 +190,30 @@
             </div>
 
             <!-- Driver Pane -->
-            <div class="tab-pane fade" id="driver-pane" role="tabpanel" aria-labelledby="driver-tab">
+            <div class="tab-pane fade @(showDriverTabFirst ? "show active" : "")" id="driver-pane" role="tabpanel" aria-labelledby="driver-tab">
                 @if (Model.AsDriver != null && Model.AsDriver.Any())
                 {
                     <div class="row g-4">
                         @foreach (var ride in Model.AsDriver)
                         {
+                            var activeBookings = ride.Bookings?.Where(b => b.BookingStatus != "Cancelled").ToList() ?? new List<Tagalong.Models.Entities.Booking>();
+                            var pendingCount = ride.Bookings?.Count(b => b.BookingStatus == "Pending") ?? 0;
+                            var totalEarned = activeBookings.Sum(b => b.SeatsBooked * ride.PricePerSeat);
+
                             <div class="col-12 col-lg-6">
                                 <article class="card card-elevated h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="badge @(ride.Status == "Active" ? "badge-success" : "badge-secondary")">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="badge @(ride.Status == "Active" ? "badge-success" : ride.Status == "Completed" ? "badge-info" : "badge-secondary")">
                                                 @ride.Status
                                             </span>
                                             <span class="text-xs text-muted">Seats: @ride.SeatsAvailable Available</span>
+                                            @if (pendingCount > 0)
+                                            {
+                                                <span class="badge bg-warning text-dark fw-bold animate-pulse">
+                                                    @pendingCount Request@(pendingCount > 1 ? "s" : "") Pending
+                                                </span>
+                                            }
                                         </div>
                                         <div class="text-gold fw-bold fs-5">
                                             ₹@ride.PricePerSeat <span class="text-xs text-muted">/seat</span>
@@ -196,7 +234,7 @@
                                             <div class="stepper-bar @(ride.Status == "Completed" ? "active" : "")"></div>
                                             <div class="stepper-item @(ride.Status == "Completed" ? "completed" : "")">
                                                 <div class="stepper-bubble">@(ride.Status == "Completed" ? "✓" : "3")</div>
-                                                <span class="stepper-text">Finished</span>
+                                                <span class="stepper-text">Completed</span>
                                             </div>
                                         </div>
 
@@ -229,12 +267,116 @@
                                                 <div class="fw-medium">@(ride.Vehicle != null ? $"{ride.Vehicle.Model} ({ride.Vehicle.RegistrationNumber})" : "Registered Vehicle")</div>
                                             </div>
                                         </div>
+
+                                        <!-- Passengers & Booking Requests Section -->
+                                        <div class="passengers-section mt-4 pt-3 border-top border-secondary">
+                                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i data-lucide="users" class="text-gold" style="width: 18px; height: 18px;"></i>
+                                                    <h6 class="text-white fw-bold mb-0">Passengers & Booking Requests</h6>
+                                                </div>
+                                                <span class="badge @(activeBookings.Any() ? "badge-primary" : "badge-secondary")">
+                                                    @activeBookings.Count Joined • ₹@totalEarned Total
+                                                </span>
+                                            </div>
+
+                                            @if (ride.Bookings != null && ride.Bookings.Any())
+                                            {
+                                                <div class="passenger-list d-flex flex-column gap-3">
+                                                    @foreach (var booking in ride.Bookings.OrderByDescending(b => b.BookingId))
+                                                    {
+                                                        <div class="passenger-item p-3 rounded" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
+                                                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-2">
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center bg-secondary text-white fw-bold" style="width:36px;height:36px;font-size:14px;">
+                                                                        @(booking.Rider?.FullName?.Substring(0, 1).ToUpper() ?? "R")
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="fw-semibold text-white">@(booking.Rider?.FullName ?? "Rider")</div>
+                                                                        <div class="text-xs text-muted">
+                                                                            <i data-lucide="phone" class="me-1" style="width:12px;height:12px;"></i>
+                                                                            @(booking.Rider?.PhoneNumber ?? booking.Rider?.Email ?? "No contact details")
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <span class="badge @(booking.BookingStatus == "Confirmed" ? "badge-success" : booking.BookingStatus == "Pending" ? "badge-warning" : booking.BookingStatus == "Completed" ? "badge-info" : "badge-secondary")">
+                                                                        @booking.BookingStatus
+                                                                    </span>
+                                                                    <span class="badge bg-dark border border-secondary text-gold">
+                                                                        @booking.SeatsBooked @(booking.SeatsBooked == 1 ? "seat" : "seats") • ₹@(booking.SeatsBooked * ride.PricePerSeat)
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Actions for this passenger -->
+                                                            <div class="d-flex flex-wrap gap-2 justify-content-end align-items-center pt-2 border-top border-white-10">
+                                                                <a asp-controller="Chat" asp-action="Thread" asp-route-id="@booking.BookingId" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 py-1 px-2" style="font-size: 12px;">
+                                                                    <i data-lucide="message-square" style="width:13px;height:13px;"></i> Chat
+                                                                </a>
+
+                                                                @if (booking.BookingStatus == "Pending")
+                                                                {
+                                                                    <form asp-controller="Bookings" asp-action="ConfirmRider" method="post" class="d-inline">
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                                                        <button type="submit" class="btn btn-sm btn-success d-flex align-items-center gap-1 py-1 px-2" style="font-size: 12px;">
+                                                                            <i data-lucide="check" style="width:13px;height:13px;"></i> Accept
+                                                                        </button>
+                                                                    </form>
+                                                                    <form asp-controller="Bookings" asp-action="CancelBooking" method="post" class="d-inline" onsubmit="return confirm('Decline this passenger request?');">
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                                                        <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 py-1 px-2" style="font-size: 12px;">
+                                                                            <i data-lucide="x" style="width:13px;height:13px;"></i> Decline
+                                                                        </button>
+                                                                    </form>
+                                                                }
+                                                                else if (booking.BookingStatus == "Confirmed" && ride.Status == "Active")
+                                                                {
+                                                                    <form asp-controller="Bookings" asp-action="CancelBooking" method="post" class="d-inline" onsubmit="return confirm('Remove this passenger and restore seat availability?');">
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                                                        <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 py-1 px-2" style="font-size: 12px;">
+                                                                            <i data-lucide="user-minus" style="width:13px;height:13px;"></i> Remove
+                                                                        </button>
+                                                                    </form>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="p-3 text-center rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1);">
+                                                    <i data-lucide="users" class="text-muted mb-1" style="width: 20px; height: 20px;"></i>
+                                                    <p class="text-muted text-xs mb-0">No passengers joined yet. Your ride is live and visible on the homepage & search!</p>
+                                                </div>
+                                            }
+                                        </div>
                                     </div>
-                                    <div class="card-footer d-flex justify-content-between align-items-center">
-                                        <span class="text-xs text-muted">Departure in @Math.Max(0, (int)(ride.DepartureTime - DateTime.Now).TotalHours) hrs</span>
-                                        <a asp-controller="Rides" asp-action="Results" asp-route-pickup="@ride.StartLocation" asp-route-dropoff="@ride.EndLocation" class="btn btn-sm btn-outline-light">
-                                            View in Search
-                                        </a>
+                                    <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                        <span class="text-xs text-muted">
+                                            <i data-lucide="clock" class="me-1" style="width:13px;height:13px;"></i>
+                                            @(ride.DepartureTime > DateTime.Now ? $"Departs in {(int)(ride.DepartureTime - DateTime.Now).TotalHours}h {(int)(ride.DepartureTime - DateTime.Now).Minutes}m" : "Departure time reached")
+                                        </span>
+                                        <div class="d-flex gap-2">
+                                            @if (ride.Status == "Active")
+                                            {
+                                                <form asp-controller="Bookings" asp-action="MarkCompleted" method="post" onsubmit="return confirm('Mark this ride as completed? All confirmed passengers will be marked completed.');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="rideId" value="@ride.RideId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1">
+                                                        <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Complete Trip
+                                                    </button>
+                                                </form>
+                                            }
+                                            <a asp-controller="Rides" asp-action="Results" asp-route-pickup="@ride.StartLocation" asp-route-dropoff="@ride.EndLocation" class="btn btn-sm btn-outline-light">
+                                                View Live
+                                            </a>
+                                        </div>
                                     </div>
                                 </article>
                             </div>
@@ -357,5 +499,27 @@
             background: var(--color-brand-primary);
         }
 
+        @@keyframes pulseSlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .animate-pulse {
+            animation: pulseSlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
     </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check hash in URL (e.g. #driver-pane)
+            if (window.location.hash) {
+                var triggerEl = document.querySelector('button[data-bs-target="' + window.location.hash + '"]');
+                if (triggerEl) {
+                    var tab = new bootstrap.Tab(triggerEl);
+                    tab.show();
+                }
+            }
+        });
+    </script>
 }

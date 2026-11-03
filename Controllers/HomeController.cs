@@ -36,12 +36,14 @@ namespace Tagalong.Controllers
                 return RedirectToAction("Index", "Admin");
             }
 
-            // Get nearby active rides (simplified - in a real app you'd use user's saved location)
+            // Get all active rides so the driver sees their newly created ride immediately
             var nearbyRides = await _context.Rides
-                .Where(r => r.Status == "Active" && r.DriverId != user.Id)
+                .Where(r => r.Status == "Active")
                 .Include(r => r.Driver)
                 .Include(r => r.Vehicle)
-                .Take(10) // Limit for demo
+                .Include(r => r.Bookings)
+                .OrderByDescending(r => r.RideId)
+                .Take(12)
                 .ToListAsync();
 
             return View(nearbyRides);

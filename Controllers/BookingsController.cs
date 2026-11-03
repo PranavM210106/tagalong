@@ -25,12 +25,15 @@ namespace Tagalong.Controllers
         }
 
         // GET: Bookings/MyRides
-        public async Task<IActionResult> MyRides()
+        public async Task<IActionResult> MyRides(string? tab = null)
         {
             var userId = _userManager.GetUserId(User);
             var user = await _context.Users
                 .Include(u => u.OfferedRides)
                     .ThenInclude(r => r.Vehicle)
+                .Include(u => u.OfferedRides)
+                    .ThenInclude(r => r.Bookings)
+                        .ThenInclude(b => b.Rider)
                 .Include(u => u.BookingsAsRider)
                     .ThenInclude(b => b.Ride)
                         .ThenInclude(r => r.Driver)
@@ -46,10 +49,15 @@ namespace Tagalong.Controllers
 
             var model = new MyRidesViewModel
             {
-                AsDriver = user.OfferedRides.Where(r => r.Status == "Active" || r.Status == "Completed"),
-                AsRider = user.BookingsAsRider.Where(b => b.BookingStatus == "Pending" || b.BookingStatus == "Confirmed")
-                    .Select(b => b)
+                AsDriver = user.OfferedRides
+                    .Where(r => r.Status == "Active" || r.Status == "Completed")
+                    .OrderByDescending(r => r.RideId),
+                AsRider = user.BookingsAsRider
+                    .Where(b => b.BookingStatus == "Pending" || b.BookingStatus == "Confirmed" || b.BookingStatus == "Completed")
+                    .OrderByDescending(b => b.BookingId)
             };
+
+            ViewData["ActiveTab"] = tab;
 
             return View(model);
         }
@@ -78,7 +86,8 @@ namespace Tagalong.Controllers
             booking.BookingStatus = "Confirmed";
             _context.Update(booking);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(MyRides));
+            TempData["SuccessMessage"] = "Passenger accepted and ride confirmed!";
+            return RedirectToAction(nameof(MyRides), new { tab = "driver" });
         }
 
         // POST: Bookings/CancelBooking/5
@@ -102,25 +111,26 @@ namespace Tagalong.Controllers
                 return Forbid();
             }
 
-            // If the rider cancels, we just update the booking status
-            // If the driver cancels, we might want to cancel the entire ride? 
-            // For simplicity, we'll just cancel the booking and adjust seats
-            if (booking.RiderId == userId)
-            {
-                booking.BookingStatus = "Cancelled";
-                // Return the seat to the ride
-                booking.Ride.SeatsAvailable += booking.SeatsBooked;
-            }
-            else // Driver cancels the booking (but not the entire ride)
-            {
-                booking.BookingStatus = "Cancelled";
-                booking.Ride.SeatsAvailable += booking.SeatsBooked;
-            }
+            booking.BookingStatus = "Cancelled";
+            // Return the seats to the ride
+            booking.Ride.SeatsAvailable += booking.SeatsBooked;
 
             _context.Update(booking);
             _context.Update(booking.Ride);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(MyRides));
+            TempData["SuccessMessage"] = booking.RiderId == userId ? "Your booking was cancelled." : "Passenger booking declined.";
+            
+            string tab = booking.RiderId == userId ? "rider" : "driver";
+            return RedirectToAction(nameof(MyRides), new { tab = tab });
+        }
+
+        // POST: Bookings/Cancel/5 (Alias for CancelBooking)
+        [HttpPost]
+        [ActionName("Cancel")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            return await CancelBooking(id);
         }
 
         // POST: Bookings/MarkCompleted/5
@@ -128,7 +138,10 @@ namespace Tagalong.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkCompleted(int rideId)
         {
-            var ride = await _context.Rides.FindAsync(rideId);
+            var ride = await _context.Rides
+                .Include(r => r.Bookings)
+                .FirstOrDefaultAsync(r => r.RideId == rideId);
+
             if (ride == null)
             {
                 return NotFound();
@@ -142,9 +155,18 @@ namespace Tagalong.Controllers
             }
 
             ride.Status = "Completed";
+            if (ride.Bookings != null)
+            {
+                foreach (var b in ride.Bookings.Where(b => b.BookingStatus == "Confirmed"))
+                {
+                    b.BookingStatus = "Completed";
+                }
+            }
+
             _context.Update(ride);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(MyRides));
+            TempData["SuccessMessage"] = "Trip completed successfully! All confirmed passengers marked completed.";
+            return RedirectToAction(nameof(MyRides), new { tab = "driver" });
         }
     }
 }
