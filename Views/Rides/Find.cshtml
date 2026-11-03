@@ -586,6 +586,9 @@
             let googlePickupMarker = null;
             let googleDropMarker = null;
             let leafletMap = null;
+            let leafletPickupMarker = null;
+            let leafletDropMarker = null;
+            let leafletUpdateRoute = null;
 
             function haversineDistance(c1, c2) {
                 const R = 6371;
@@ -776,6 +779,8 @@
                 let pickupMarker = L.marker(pCoord, { icon: pickupIcon, draggable: true }).addTo(leafletMap);
                 let dropMarker = L.marker(dCoord, { icon: dropoffIcon, draggable: true }).addTo(leafletMap);
                 let routeLine = null;
+                leafletPickupMarker = pickupMarker;
+                leafletDropMarker = dropMarker;
 
                 function updateRoute() {
                     const p1 = pickupMarker.getLatLng();
@@ -827,6 +832,7 @@
                     updateRoute();
                 });
 
+                leafletUpdateRoute = updateRoute;
                 updateRoute();
             }
 
@@ -860,11 +866,46 @@
 
                     if (googleMap) {
                         updateGoogleRoute();
-                    } else {
-                        location.reload();
+                    } else if (leafletMap && leafletUpdateRoute) {
+                        if (leafletPickupMarker && pickupLatInput && pickupLngInput) {
+                            leafletPickupMarker.setLatLng([parseFloat(pickupLatInput.value), parseFloat(pickupLngInput.value)]);
+                        }
+                        if (leafletDropMarker && dropLatInput && dropLngInput) {
+                            leafletDropMarker.setLatLng([parseFloat(dropLatInput.value), parseFloat(dropLngInput.value)]);
+                        }
+                        leafletUpdateRoute();
                     }
                 });
             });
+
+            // Initialize Place Autocomplete on Pickup and Drop Location Inputs
+            if (window.TagalongPlaceAutocomplete) {
+                TagalongPlaceAutocomplete.attach('#PickupLocation', {
+                    latInputId: 'PickupLat',
+                    lngInputId: 'PickupLng',
+                    onSelect: function(place) {
+                        if (leafletPickupMarker && leafletMap) {
+                            leafletPickupMarker.setLatLng([place.lat, place.lng]);
+                            if (leafletUpdateRoute) leafletUpdateRoute();
+                        } else if (googleMap && typeof updateGoogleRoute === 'function') {
+                            updateGoogleRoute();
+                        }
+                    }
+                });
+
+                TagalongPlaceAutocomplete.attach('#DropLocation', {
+                    latInputId: 'DropLat',
+                    lngInputId: 'DropLng',
+                    onSelect: function(place) {
+                        if (leafletDropMarker && leafletMap) {
+                            leafletDropMarker.setLatLng([place.lat, place.lng]);
+                            if (leafletUpdateRoute) leafletUpdateRoute();
+                        } else if (googleMap && typeof updateGoogleRoute === 'function') {
+                            updateGoogleRoute();
+                        }
+                    }
+                });
+            }
 
             tryLoadGoogleMaps(gmapKey);
 

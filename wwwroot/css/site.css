@@ -2274,6 +2274,136 @@ textarea.form-control {
 }
 
 /* ==========================================================================
+   Place Autocomplete Suggestions Dropdown (Uber / Google Maps style)
+   ========================================================================== */
+.place-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 1060;
+  background: #12131a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(234, 179, 8, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-height: 290px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: none;
+  animation: autocompleteFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes autocompleteFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.place-autocomplete-dropdown.active {
+  display: block;
+}
+
+.place-autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #e4e4e7;
+  user-select: none;
+}
+
+.place-autocomplete-item:hover,
+.place-autocomplete-item.focused {
+  background: rgba(234, 179, 8, 0.14);
+  color: #ffffff;
+}
+
+.place-autocomplete-item.focused .place-item-title {
+  color: #facc15;
+}
+
+.place-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+  transition: transform 0.15s ease;
+}
+
+.place-autocomplete-item:hover .place-item-icon,
+.place-autocomplete-item.focused .place-item-icon {
+  transform: scale(1.08);
+  background: rgba(234, 179, 8, 0.22);
+}
+
+.place-item-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.place-item-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.place-item-subtitle {
+  font-size: 0.77rem;
+  color: #a1a1aa;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  margin-top: 1px;
+}
+
+.place-item-tag {
+  font-size: 0.65rem;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+  margin-left: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* Scrollbar for autocomplete dropdown */
+.place-autocomplete-dropdown::-webkit-scrollbar {
+  width: 5px;
+}
+.place-autocomplete-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+.place-autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #facc15;
+}
+
+/* ==========================================================================
    Print
    ========================================================================== */
 @media print {

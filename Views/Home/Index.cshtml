@@ -816,6 +816,16 @@
             });
         }
 
+            // Initialize Place Autocomplete on Hero Search Inputs
+            if (window.TagalongPlaceAutocomplete) {
+                TagalongPlaceAutocomplete.attach('#heroPickup', {
+                    placeholderIcon: 'pickup'
+                });
+                TagalongPlaceAutocomplete.attach('#heroDestination', {
+                    placeholderIcon: 'destination'
+                });
+            }
+
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }

@@ -830,6 +830,9 @@
             let googlePickupMarker = null;
             let googleDropMarker = null;
             let leafletMap = null;
+            let leafletPickupMarker = null;
+            let leafletDropMarker = null;
+            let leafletUpdateRoute = null;
 
             function haversineDistance(c1, c2) {
                 const R = 6371; // km
@@ -1073,6 +1076,9 @@
                 let pickupMarker = L.marker(pickupCoord, { icon: pickupIcon, draggable: true }).addTo(leafletMap);
                 let dropMarker = L.marker(dropoffCoord, { icon: dropoffIcon, draggable: true }).addTo(leafletMap);
                 let routePolyline = null;
+                leafletPickupMarker = pickupMarker;
+                leafletDropMarker = dropMarker;
+                leafletUpdateRoute = updateLeafletRoute;
 
                 function updateLeafletRoute() {
                     const p1 = pickupMarker.getLatLng();
@@ -1292,6 +1298,35 @@
                         submitBtn.disabled = true;
                         submitBtn.querySelector('.btn-text').classList.add('d-none');
                         submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                    }
+                });
+            }
+
+            // Initialize Tagalong Place Autocomplete for Driver Departure and Destination
+            if (window.TagalongPlaceAutocomplete) {
+                TagalongPlaceAutocomplete.attach('#StartLocation', {
+                    latInputId: 'StartLat',
+                    lngInputId: 'StartLng',
+                    onSelect: function(place) {
+                        if (leafletPickupMarker && leafletMap) {
+                            leafletPickupMarker.setLatLng([place.lat, place.lng]);
+                            if (leafletUpdateRoute) leafletUpdateRoute();
+                        } else if (googleMap && typeof updateGoogleRoute === 'function') {
+                            updateGoogleRoute();
+                        }
+                    }
+                });
+
+                TagalongPlaceAutocomplete.attach('#EndLocation', {
+                    latInputId: 'EndLat',
+                    lngInputId: 'EndLng',
+                    onSelect: function(place) {
+                        if (leafletDropMarker && leafletMap) {
+                            leafletDropMarker.setLatLng([place.lat, place.lng]);
+                            if (leafletUpdateRoute) leafletUpdateRoute();
+                        } else if (googleMap && typeof updateGoogleRoute === 'function') {
+                            updateGoogleRoute();
+                        }
                     }
                 });
             }
