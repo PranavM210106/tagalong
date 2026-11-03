@@ -47,6 +47,13 @@ namespace Tagalong.Controllers
             return View(nearbyRides);
         }
 
+        // GET: Home/Privacy
+        [AllowAnonymous]
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         [AllowAnonymous]
         public IActionResult Error()

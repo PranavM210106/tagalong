@@ -1,4 +1,4 @@
-@model Tagalong.Models.ViewModels.LoginViewModel
+﻿@model Tagalong.Models.ViewModels.LoginViewModel
 @{
     ViewData["Title"] = "Login";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -14,12 +14,7 @@
             <div class="col-12">
                 <div class="auth-card">
                     <header class="auth-header text-center mb-5">
-                        <a asp-controller="Home" asp-action="Index" class="auth-brand d-inline-flex align-items-center gap-2 mb-4" aria-label="Tagalong Home">
-                            <div class="brand-icon" aria-hidden="true">
-                                <i data-lucide="bus" class="brand-icon-svg" aria-hidden="true"></i>
-                            </div>
-                            <span class="brand-text">Tagalong</span>
-                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="auth-brand d-inline-flex align-items-center mb-4 text-decoration-none" aria-label="Tagalong Home"><span class="brand-text text-white fw-bold fs-2 tracking-tight">Tagalong</span></a>
                         <h1 id="login-title" class="fw-bold mb-2">Welcome back</h1>
                         <p class="text-muted">Sign in to your account to continue</p>
                     </header>
@@ -39,7 +34,7 @@
                         <div class="form-group mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label asp-for="Password" class="form-label mb-0">Password</label>
-                                <a asp-action="ForgotPassword" class="forgot-link">Forgot password?</a>
+                                <a href="#" onclick="alert('Please contact your campus mobility admin to reset credentials.'); return false;" class="forgot-link">Forgot password?</a>
                             </div>
                             <div class="input-wrapper position-relative">
                                 <input asp-for="Password" class="form-control" type="password" autocomplete="current-password" placeholder="Enter your password" aria-describedby="password-error" />
@@ -78,213 +73,7 @@
 </section>
 
 @section Styles {
-    <style>
-        .auth-page {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-10) var(--space-4);
-        }
-        .auth-bg {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-        }
-        .auth-gradient {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(234, 179, 8, 0.15) 0%, transparent 70%),
-                        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(250, 204, 21, 0.08) 0%, transparent 60%);
-        }
-        .auth-pattern {
-            position: absolute;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23eab308' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            animation: patternMove 30s linear infinite;
-        }
-        @@media (prefers-reduced-motion: reduce) {
-            .auth-pattern {
-                animation: none;
-            }
-        }
-        @@keyframes patternMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(60px, 60px); }
-        }
-        .auth-card {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-            padding: var(--space-8);
-            box-shadow: var(--shadow-xl);
-            width: 100%;
-            max-width: 440px;
-            animation: slideUp var(--transition-slow) var(--transition-smooth);
-        }
-        .auth-brand {
-            color: var(--color-text-primary);
-            text-decoration: none;
-        }
-        .auth-brand:hover .brand-text {
-            color: var(--color-brand-primary);
-        }
-        .auth-brand .brand-icon {
-            background: var(--gradient-primary);
-        }
-        .auth-header h1 {
-            color: var(--color-text-primary);
-            font-size: var(--font-size-3xl);
-            margin-bottom: var(--space-2);
-        }
-        .auth-header p {
-            color: var(--color-text-muted);
-            margin-bottom: 0;
-        }
-        .form-label {
-            display: block;
-            font-size: var(--font-size-xs);
-            font-weight: var(--font-weight-semibold);
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: var(--space-2);
-        }
-        .input-wrapper {
-            position: relative;
-        }
-        .form-control {
-            background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border-strong);
-            border-radius: var(--radius-lg);
-            color: var(--color-text-primary);
-            padding: var(--space-3) var(--space-4) var(--space-3) 3rem;
-            font-size: var(--font-size-base);
-            transition: all var(--transition-base);
-            height: auto;
-        }
-        .form-control::placeholder {
-            color: var(--color-text-disabled);
-        }
-        .form-control:focus {
-            background: var(--color-bg-tertiary);
-            border-color: var(--color-brand-primary);
-            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
-            color: var(--color-text-primary);
-        }
-        .form-control.is-invalid,
-        .form-control:invalid {
-            border-color: var(--color-danger);
-        }
-        .form-control.is-invalid:focus,
-        .form-control:invalid:focus {
-            box-shadow: 0 0 0 3px var(--color-danger-light);
-        }
-        .input-icon {
-            position: absolute;
-            left: var(--space-4);
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            color: var(--color-text-disabled);
-            pointer-events: none;
-            transition: color var(--transition-fast);
-        }
-        .form-control:focus + .input-icon {
-            color: var(--color-brand-primary);
-        }
-        .password-toggle {
-            position: absolute;
-            right: var(--space-4);
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            padding: var(--space-1);
-            color: var(--color-text-disabled);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color var(--transition-fast);
-        }
-        .password-toggle:hover {
-            color: var(--color-text-primary);
-        }
-        .password-toggle .toggle-icon {
-            width: 20px;
-            height: 20px;
-        }
-        .password-toggle .toggle-icon-hide {
-            display: none;
-        }
-        .password-toggle[aria-pressed="true"] .toggle-icon-show {
-            display: none;
-        }
-        .password-toggle[aria-pressed="true"] .toggle-icon-hide {
-            display: block;
-        }
-        .form-check-input {
-            width: 1.125rem;
-            height: 1.125rem;
-            border: 1px solid var(--color-border-strong);
-            border-radius: var(--radius-sm);
-            background: var(--color-bg-tertiary);
-        }
-        .form-check-input:checked {
-            background-color: var(--color-brand-primary);
-            border-color: var(--color-brand-primary);
-        }
-        .form-check-input:focus {
-            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
-        }
-        .form-check-label {
-            color: var(--color-text-secondary);
-            font-size: var(--font-size-sm);
-        }
-        .form-error {
-            display: block;
-            color: var(--color-danger);
-            font-size: var(--font-size-xs);
-            margin-top: var(--space-1);
-        }
-        .validation-summary {
-            background: var(--color-danger-light);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            margin-bottom: var(--space-5);
-            color: var(--color-danger);
-        }
-        .auth-submit {
-            border-radius: var(--radius-lg);
-            padding: var(--space-4) var(--space-6);
-            font-size: var(--font-size-lg);
-        }
-        .auth-footer a {
-            text-decoration: none;
-        }
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
-        .text-sm {
-            font-size: var(--font-size-sm);
-        }
-        .hover-text-primary-decoration:hover {
-            text-decoration: underline;
-        }
-        .forgot-link {
-            color: var(--color-brand-primary);
-            text-decoration: none;
-            font-size: var(--font-size-sm);
-            font-weight: var(--font-weight-medium);
-        }
-        .forgot-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/pages/auth.css" asp-append-version="true" />
 }
 
 @section Scripts {
@@ -306,19 +95,18 @@
 
             // Form submission loading state
             const form = document.querySelector('.auth-form');
-            const submitBtn = document.query('.auth-submit');
+            const submitBtn = document.querySelector('.auth-submit');
 
             if (form && submitBtn) {
                 form.addEventListener('submit', function() {
                     if (form.checkValidity()) {
                         submitBtn.disabled = true;
-                        submitBtn.querySelector('.btn-text').classList.add('d-none');
-                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                        submitBtn.querySelector('.btn-text')?.classList.add('d-none');
+                        submitBtn.querySelector('.btn-loader')?.classList.remove('d-none');
                     }
                 });
             }
 
-            // Initialize Lucide icons for dynamically added elements
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }

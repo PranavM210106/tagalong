@@ -41,38 +41,53 @@ vercel --prod
 
 ---
 
-## Render Deployment (Backend + Database)
+## Render Deployment (Web Service + PostgreSQL)
 
-### Option 1: render.yaml (Infrastructure as Code)
-1. Go to https://dashboard.render.com
-2. Click **New** → **Blueprint**
-3. Connect GitHub repo: `PranavM210106/tagalong`
-4. Render will detect `render.yaml` and create:
-   - Web Service (Docker)
-   - PostgreSQL Database (Free tier)
-5. Click **Apply**
+### Connecting to Your Existing Render PostgreSQL Database
+Your shared database credentials:
+- **Database Name:** `tagalong_db_la01`
+- **Region:** `oregon`
+- **External Connection URL:**
+  `postgresql://tagalong_db_la01_user:dhdIzeHj5eWvniPSVxxC0ByQsINXbabZ@dpg-dbgh1b4s728c739p6tlg-a.oregon-postgres.render.com/tagalong_db_la01?sslmode=require`
 
-### Option 2: Manual Setup
-1. **Create PostgreSQL Database**:
-   - New → PostgreSQL
-   - Name: `tagalong-db`
-   - Database: `tagalong`
-   - User: `tagalong`
-   - Plan: Free
-   - Copy the **Internal Connection String**
+---
 
-2. **Create Web Service**:
-   - New → Web Service
-   - Connect GitHub: `PranavM210106/tagalong`
-   - Environment: Docker
-   - Dockerfile Path: `./Dockerfile`
-   - Plan: Free
-   - Environment Variables:
-     ```
-     ASPNETCORE_ENVIRONMENT = Production
-     ConnectionStrings__DefaultConnection = <Paste Internal Connection String>
-     ASPNETCORE_URLS = http://0.0.0.0:10000
-     ```
+### Step-by-Step: Deploy to Render in 3 Minutes
+
+#### Method 1: Web Service Setup (Recommended & Simplest)
+1. Log into your [Render Dashboard](https://dashboard.render.com).
+2. Click **New +** (top right) ➔ **Web Service**.
+3. Select **Build and deploy from a Git repository** and connect `tagalong`.
+4. Configure the settings:
+   * **Name:** `tagalong` (or any name you choose)
+   * **Region:** `Oregon (US West)` *(matches your database)*
+   * **Runtime / Environment:** `Docker` *(Render auto-detects `Dockerfile`)*
+   * **Instance Type:** `Free`
+5. Scroll down to **Environment Variables** and add:
+   | Key | Value |
+   | :--- | :--- |
+   | `ASPNETCORE_ENVIRONMENT` | `Production` |
+   | `ConnectionStrings__DefaultConnection` | `postgresql://tagalong_db_la01_user:dhdIzeHj5eWvniPSVxxC0ByQsINXbabZ@dpg-dbgh1b4s728c739p6tlg-a.oregon-postgres.render.com/tagalong_db_la01?sslmode=require` |
+   | `PORT` | `8080` |
+   | `ASPNETCORE_URLS` | `http://0.0.0.0:8080` |
+6. Click **Create Web Service**.
+
+#### Method 2: Blueprint (`render.yaml`)
+1. In Render Dashboard, click **New +** ➔ **Blueprint**.
+2. Connect your `tagalong` Git repository.
+3. Render reads `render.yaml` which automatically configures the web service and the connection string.
+4. Click **Apply**.
+
+---
+
+### What Happens Automatically on First Launch
+When Render builds and starts the container:
+1. **Database Schema Creation:** `Program.cs` automatically detects the PostgreSQL database and applies all EF Core migrations (`MigrateAsync()`).
+2. **Seed Roles & Accounts:** It automatically seeds the standard mobility roles (`Admin`, `Driver`, `Rider`) and default test accounts:
+   * **Rider:** `rider@test.com` / `Test123!`
+   * **Driver:** `driver@test.com` / `Test123!`
+   * **Admin:** `admin@test.com` / `Test123!`
+3. **Health Check:** Render pings `/health` at port `8080` and turns the service **Live**.
 
 ---
 

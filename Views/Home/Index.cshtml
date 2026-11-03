@@ -3,41 +3,143 @@
     ViewData["Title"] = "Home Page";
 }
 
-<!-- Hero Section -->
-<section class="hero-section" aria-labelledby="hero-title">
-    <div class="hero-bg" aria-hidden="true">
-        <div class="hero-gradient"></div>
-        <div class="hero-pattern"></div>
+<!-- Hero Section: Professional Mobility Experience (Uber & Rapido Grade) -->
+<section class="hero-section" id="heroSection" aria-label="Hero Section">
+    <!-- Full-bleed Commute Video Layer in Black Background -->
+    <div class="hero-video-bg-container" aria-hidden="true">
+        <video id="heroFullscreenVideo"
+               class="hero-fullscreen-video"
+               autoplay
+               muted
+               loop
+               playsinline
+               preload="auto"
+               poster="~/images/hero/commute_poster.jpg"
+               aria-label="App Commute Motion Video">
+            <source src="~/videos/hero_commute_hd.mp4" type="video/mp4" />
+            <source src="~/videos/car_commute_loop.mp4" type="video/mp4" />
+        </video>
+        <!-- Deep Cinematic Black Overlay & Subtle Grid -->
+        <div class="hero-video-black-overlay"></div>
+        <div class="hero-matrix-grid"></div>
     </div>
-    <div class="container-fluid px-md-4 px-lg-5">
-        <div class="row min-vh-100 align-items-center justify-content-center">
-            <div class="col-12 col-lg-10 col-xl-8 text-center">
-                <h1 id="hero-title" class="display-2 fw-bold mb-4 hero-title">Share Rides. Save Money. Reduce Your Footprint.</h1>
-                <p class="lead mb-5 hero-subtitle">Connect with drivers and riders heading your way. Simple, safe, and sustainable.</p>
-                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center hero-cta">
-                    <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary btn-lg px-5 py-3">
-                        <i data-lucide="car" class="me-2" aria-hidden="true"></i>
-                        Offer a Ride
+
+    <!-- Professional Hero Content Container -->
+    <div class="container hero-content-container position-relative" style="z-index: 5;">
+        <div class="row align-items-center justify-content-between g-5">
+            
+            <!-- Left Column: Compelling Narrative, Value Proposition & Dual Actions -->
+            <div class="col-12 col-lg-7 hero-copy-col">
+                <div class="hero-chip-pill mb-3 d-inline-flex align-items-center gap-2">
+                    <span class="chip-glow-dot"></span>
+                    <span class="chip-text">SMART CARPOOLING & DAILY COMMUTE</span>
+                </div>
+
+                <h1 class="hero-main-title text-white mb-3">
+                    Share Rides.<br />
+                    <span class="gradient-text-gold">Save Fuel.</span> Travel Smarter.
+                </h1>
+
+                <p class="hero-subtitle text-muted mb-4">
+                    India's next-gen ride-sharing community. Split petrol costs in Rupees (₹), reduce traffic congestion, and travel with 100% verified commuters heading your exact way.
+                </p>
+
+                <!-- Dual Quick Action Buttons -->
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-4 hero-action-buttons">
+                    <a asp-controller="Rides" asp-action="Find" class="btn btn-hero-primary d-inline-flex align-items-center gap-2">
+                        <i data-lucide="search" class="hero-btn-icon" aria-hidden="true"></i>
+                        <span>Find a Ride</span>
                     </a>
-                    <a asp-controller="Rides" asp-action="Find" class="btn btn-outline-light btn-lg px-5 py-3">
-                        <i data-lucide="search" class="me-2" aria-hidden="true"></i>
-                        Find a Ride
+                    <a asp-controller="Rides" asp-action="Offer" class="btn btn-hero-ghost d-inline-flex align-items-center gap-2">
+                        <i data-lucide="car" class="hero-btn-icon" aria-hidden="true"></i>
+                        <span>Offer a Ride</span>
                     </a>
                 </div>
+
+                <!-- Verified Trust Proof Points -->
+                <div class="hero-trust-row d-flex flex-wrap align-items-center gap-4 text-muted small">
+                    <div class="trust-item d-flex align-items-center gap-2">
+                        <i data-lucide="shield-check" class="text-warning" style="width:18px;height:18px;"></i>
+                        <span>100% Verified Community</span>
+                    </div>
+                    <div class="trust-item d-flex align-items-center gap-2">
+                        <i data-lucide="star" class="text-warning" style="width:18px;height:18px;"></i>
+                        <span>4.9 / 5 Rating</span>
+                    </div>
+                    <div class="trust-item d-flex align-items-center gap-2">
+                        <i data-lucide="indian-rupee" class="text-warning" style="width:18px;height:18px;"></i>
+                        <span>Transparent ₹ Pricing</span>
+                    </div>
+                </div>
             </div>
+
+            <!-- Right Column: Interactive Quick Route Search Console (Uber/Rapido Style) -->
+            <div class="col-12 col-lg-5 hero-widget-col">
+                <div class="hero-console-card">
+                    <div class="console-card-header d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom border-white-10">
+                        <div class="d-flex align-items-center gap-2">
+                            <i data-lucide="compass" class="text-warning" style="width:20px;height:20px;"></i>
+                            <h3 class="h6 mb-0 fw-bold text-white">Find Your Commute</h3>
+                        </div>
+                        <span class="badge-live-route small">
+                            <span class="live-dot"></span>
+                            Live Routes
+                        </span>
+                    </div>
+
+                    <form asp-controller="Rides" asp-action="Find" method="get" class="hero-search-form">
+                        <div class="form-group mb-3">
+                            <label class="console-label" for="heroPickup">Pickup Location</label>
+                            <div class="console-input-wrap">
+                                <i data-lucide="circle-dot" class="console-icon text-success"></i>
+                                <input type="text" id="heroPickup" name="pickup" class="form-control console-input" placeholder="Enter pickup address or landmark" autocomplete="off" />
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="console-label" for="heroDestination">Drop-off Destination</label>
+                            <div class="console-input-wrap">
+                                <i data-lucide="map-pin" class="console-icon text-warning"></i>
+                                <input type="text" id="heroDestination" name="destination" class="form-control console-input" placeholder="Enter destination or college gate" autocomplete="off" />
+                            </div>
+                        </div>
+
+                        <!-- Popular Hotspot Chips -->
+                        <div class="mb-4">
+                            <span class="console-sublabel">Popular Rajkot Stops:</span>
+                            <div class="d-flex flex-wrap gap-1 mt-1 hero-chips">
+                                <button type="button" class="btn-console-chip" onclick="document.getElementById('heroPickup').value='Marwadi University';">📍 Marwadi Univ</button>
+                                <button type="button" class="btn-console-chip" onclick="document.getElementById('heroDestination').value='Madhapar Chowk';">📍 Madhapar</button>
+                                <button type="button" class="btn-console-chip" onclick="document.getElementById('heroDestination').value='Rajkot Junction';">🚆 Junction</button>
+                                <button type="button" class="btn-console-chip" onclick="document.getElementById('heroDestination').value='Crystal Mall';">🛍️ Crystal Mall</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-console-submit w-100 d-flex align-items-center justify-content-center gap-2">
+                            <i data-lucide="search" style="width:18px;height:18px;"></i>
+                            <span>Search Matching Rides</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
         </div>
-        <div class="scroll-indicator" aria-hidden="true">
+    </div>
+
+    <!-- Centered Bottom Scroll Indicator -->
+    <div class="scroll-indicator" aria-hidden="true">
+        <a href="#features-section" class="scroll-link" aria-label="Scroll to features">
             <i data-lucide="chevron-down" class="scroll-icon"></i>
-        </div>
+        </a>
     </div>
 </section>
 
 <!-- Features Section -->
-<section class="features-section" aria-labelledby="features-title">
+<section class="features-section" id="features-section" aria-labelledby="features-title">
     <div class="container-fluid px-md-4 px-lg-5">
         <header class="text-center mb-5">
-            <h2 id="features-title" class="display-5 fw-bold mb-3">Why Choose Tagalong?</h2>
-            <p class="lead text-muted">Built for modern commuters who value convenience, safety, and sustainability.</p>
+            <h2 id="features-title" class="display-5 fw-bold mb-3 text-white">Why Choose Tagalong?</h2>
+            <p class="lead text-muted">Built for modern commuters who value convenience, safety, and transparent Rupee pricing.</p>
         </header>
         <div class="row g-4">
             <div class="col-12 col-md-4">
@@ -45,8 +147,8 @@
                     <div class="feature-icon">
                         <i data-lucide="map-pin" aria-hidden="true"></i>
                     </div>
-                    <h3 class="feature-title">Smart Matching</h3>
-                    <p class="feature-description">Haversine-powered location matching finds rides that perfectly align with your route and schedule.</p>
+                    <h3 class="feature-title">Smart GPS Matching</h3>
+                    <p class="feature-description">Haversine and Google Maps intelligence instantly connects riders and drivers sharing identical commute corridors in Rajkot and beyond.</p>
                 </article>
             </div>
             <div class="col-12 col-md-4">
@@ -54,17 +156,17 @@
                     <div class="feature-icon">
                         <i data-lucide="shield-check" aria-hidden="true"></i>
                     </div>
-                    <h3 class="feature-title">Verified Drivers</h3>
-                    <p class="feature-description">Background checks, ratings, and reviews ensure every ride is safe and reliable.</p>
+                    <h3 class="feature-title">100% Verified Community</h3>
+                    <p class="feature-description">Every driver profile, car registration, and student/work ID is verified with authentic passenger reviews and star ratings.</p>
                 </article>
             </div>
             <div class="col-12 col-md-4">
                 <article class="feature-card h-100">
                     <div class="feature-icon">
-                        <i data-lucide="message-circle" aria-hidden="true"></i>
+                        <i data-lucide="indian-rupee" aria-hidden="true"></i>
                     </div>
-                    <h3 class="feature-title">In-App Chat</h3>
-                    <p class="feature-description">Coordinate seamlessly with your ride partner through secure, real-time messaging.</p>
+                    <h3 class="feature-title">Affordable Rupee Pricing</h3>
+                    <p class="feature-description">No surge pricing or hidden commissions. Set or pay transparent per-seat fares in Indian Rupees (₹) with dynamic earnings estimates.</p>
                 </article>
             </div>
         </div>
@@ -76,8 +178,8 @@
     <div class="container-fluid px-md-4 px-lg-5">
         <header class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-5">
             <div>
-                <h2 id="rides-title" class="display-5 fw-bold mb-1">Rides Near You</h2>
-                <p class="text-muted mb-0">Available rides updated in real-time</p>
+                <h2 id="rides-title" class="display-5 fw-bold mb-1 text-white">Rides Near You</h2>
+                <p class="text-muted mb-0">Active carpooling routes departing soon</p>
             </div>
             <a asp-controller="Rides" asp-action="Find" class="btn btn-outline-primary">
                 <i data-lucide="grid" class="me-2" aria-hidden="true"></i>
@@ -109,8 +211,8 @@
                                         <span><strong>@ride.SeatsAvailable</strong> seats available</span>
                                     </div>
                                     <div class="meta-item">
-                                        <i data-lucide="dollar-sign" class="meta-icon" aria-hidden="true"></i>
-                                        <span>$@ride.PricePerSeat <small class="text-muted">/ seat</small></span>
+                                        <span class="meta-icon text-gold fw-bold">₹</span>
+                                        <span class="text-gold fw-bold fs-6">₹@ride.PricePerSeat <small class="text-muted fw-normal">/ seat</small></span>
                                     </div>
                                     <div class="meta-item">
                                         <i data-lucide="truck" class="meta-icon" aria-hidden="true"></i>
@@ -131,7 +233,7 @@
                                         }
                                     </div>
                                     <div>
-                                        <div class="driver-name fw-medium">@(ride.Driver?.FullName ?? "Driver")</div>
+                                        <div class="driver-name fw-medium text-white">@(ride.Driver?.FullName ?? "Driver")</div>
                                         <div class="driver-rating d-flex align-items-center gap-1 text-warning small">
                                             @for (int i = 1; i <= 5; i++)
                                             {
@@ -145,13 +247,17 @@
                             <div class="ride-card-footer">
                                 @if (ride.SeatsAvailable > 0)
                                 {
-                                    <form asp-controller="Rides" asp-action="RequestToJoin" method="post" class="w-100">
-                                        <input type="hidden" name="rideId" value="@ride.RideId" />
-                                        <button type="submit" class="btn btn-primary w-100 py-3 fw-medium">
-                                            <i data-lucide="user-plus" class="me-2" aria-hidden="true"></i>
-                                            Request to Join
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-primary w-100 py-3 fw-bold btn-book-trigger"
+                                            data-ride-id="@ride.RideId"
+                                            data-route="@ride.StartLocation → @ride.EndLocation"
+                                            data-driver="@(ride.Driver?.FullName ?? "Driver")"
+                                            data-price="@ride.PricePerSeat"
+                                            data-seats="@ride.SeatsAvailable"
+                                            data-time="@ride.DepartureTime.ToString("MMM dd, hh:mm tt")"
+                                            data-vehicle="@(ride.Vehicle != null ? $"{ride.Vehicle.Model} ({ride.Vehicle.RegistrationNumber})" : "Standard Commute")">
+                                        <i data-lucide="user-plus" class="me-2" aria-hidden="true"></i>
+                                        Request to Join
+                                    </button>
                                 }
                                 else
                                 {
@@ -169,9 +275,9 @@
                 <div class="empty-icon mb-4">
                     <i data-lucide="car" class="mx-auto" style="width: 80px; height: 80px;" aria-hidden="true"></i>
                 </div>
-                <h3 class="h4 fw-bold mb-2">No rides available right now</h3>
-                <p class="text-muted mb-4">Be the first to offer a ride and help others on their journey.</p>
-                <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary">
+                <h3 class="h4 fw-bold mb-2 text-white">No active rides right now</h3>
+                <p class="text-muted mb-4">Be the first to offer a ride and help commuters on your route.</p>
+                <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary px-4 py-2">
                     <i data-lucide="plus" class="me-2" aria-hidden="true"></i>
                     Offer a Ride
                 </a>
@@ -180,90 +286,366 @@
     </div>
 </section>
 
+
+<!-- Booking Confirmation Modal (Uber & Rapido Grade) -->
+<div class="modal fade" id="bookingConfirmModal" tabindex="-1" aria-labelledby="bookingConfirmTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: #11131a; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px;">
+            <div class="modal-header border-bottom border-white-10 p-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark fw-bold">₹ COMMUTE SHARE</span>
+                    <h5 class="modal-title text-white fw-bold mb-0" id="bookingConfirmTitle">Confirm Your Ride</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Rides" asp-action="RequestToJoin" method="post" id="modalBookingForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="rideId" id="modalRideId" />
+                <div class="modal-body p-4">
+                    <!-- Route -->
+                    <div class="p-3 rounded-3 mb-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                        <div class="text-xs text-muted text-uppercase fw-semibold mb-1">Route Corridor</div>
+                        <div class="text-white fw-bold fs-6" id="modalRoute">—</div>
+                        <div class="text-muted small mt-1" id="modalTime">—</div>
+                    </div>
+
+                    <!-- Driver & Vehicle -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+                        <div>
+                            <div class="text-xs text-muted text-uppercase fw-semibold">Driver</div>
+                            <div class="text-white fw-medium" id="modalDriver">—</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-xs text-muted text-uppercase fw-semibold">Vehicle</div>
+                            <div class="text-white small" id="modalVehicle">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Seats Selector -->
+                    <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-3" style="background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.25);">
+                        <div>
+                            <div class="fw-bold text-white">Seats to Reserve</div>
+                            <div class="text-muted small"><span id="modalMaxSeats">0</span> seats available</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="btnMinusSeat" style="width:32px;height:32px;border-radius:50%;">-</button>
+                            <input type="number" name="seatsBooked" id="modalSeatsCount" value="1" min="1" max="4" readonly style="width:40px; text-align:center; background:transparent; border:none; color:#fff; font-weight:bold; font-size:1.1rem;" />
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="btnPlusSeat" style="width:32px;height:32px;border-radius:50%;">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Price Calculation -->
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top border-white-10">
+                        <span class="text-muted">Total Fare in ₹:</span>
+                        <div class="text-gold fw-bold fs-4" id="modalTotalFare">₹0</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-white-10 p-4">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                        Confirm & Request Ride
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Styles {
     <style>
+        /* Hero Section: Professional Mobility Experience (Uber & Rapido Grade) */
         .hero-section {
             position: relative;
+            min-height: calc(100vh - 70px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
+            background: #040406;
+            padding: 5rem 0 4rem;
         }
-        .hero-bg {
+        .hero-video-bg-container {
             position: absolute;
             inset: 0;
-            z-index: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
         }
-        .hero-gradient {
+        .hero-fullscreen-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.58;
+            filter: brightness(0.85) contrast(1.15);
+            transition: opacity 0.5s ease;
+        }
+        .hero-video-black-overlay {
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(234, 179, 8, 0.15) 0%, transparent 70%),
-                        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(250, 204, 21, 0.08) 0%, transparent 60%),
-                        var(--color-bg-primary);
+            background: radial-gradient(circle at 70% 40%, rgba(4, 4, 6, 0.4) 0%, rgba(4, 4, 6, 0.75) 55%, rgba(4, 4, 6, 0.94) 100%),
+                        linear-gradient(180deg, rgba(4, 4, 6, 0.75) 0%, rgba(4, 4, 6, 0.5) 40%, rgba(4, 4, 6, 0.96) 100%);
+            pointer-events: none;
+            z-index: 2;
         }
-        .hero-pattern {
+        .hero-matrix-grid {
             position: absolute;
             inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23eab308' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            animation: patternMove 30s linear infinite;
+            background-image: radial-gradient(rgba(234, 179, 8, 0.1) 1px, transparent 1px);
+            background-size: 32px 32px;
+            opacity: 0.35;
+            pointer-events: none;
+            z-index: 3;
         }
-        @@media (prefers-reduced-motion: reduce) {
-            .hero-pattern {
-                animation: none;
-            }
+
+        /* Hero Typography & Narrative */
+        .hero-content-container {
+            z-index: 5;
+            width: 100%;
         }
-        @@keyframes patternMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(60px, 60px); }
+        .hero-chip-pill {
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            border-radius: 9999px;
+            padding: 4px 14px 4px 10px;
         }
-        .hero-title {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            line-height: 1.1;
-            background: linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-brand-primary) 100%);
+        .chip-glow-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+            display: inline-block;
+        }
+        .chip-text {
+            color: #facc15;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+        .hero-main-title {
+            font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+        }
+        .gradient-text-gold {
+            background: linear-gradient(135deg, #facc15 0%, #eab308 50%, #fef08a 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
         .hero-subtitle {
-            font-size: clamp(1.125rem, 2vw, 1.25rem);
-            color: var(--color-text-muted);
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 580px;
+            color: rgba(255, 255, 255, 0.72) !important;
         }
-        .hero-cta .btn {
-            min-width: 200px;
+
+        /* Hero Action Buttons */
+        .btn-hero-primary {
+            background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+            color: #09090b !important;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 14px 34px;
+            border-radius: 9999px;
+            border: none;
+            box-shadow: 0 4px 22px rgba(234, 179, 8, 0.42);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
         }
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(234, 179, 8, 0.6);
+            color: #000000 !important;
+        }
+        .btn-hero-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff !important;
+            font-weight: 600;
+            font-size: 1.05rem;
+            padding: 14px 34px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
+            text-decoration: none;
+        }
+        .btn-hero-ghost:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #ffffff !important;
+            transform: translateY(-2px);
+        }
+        .hero-btn-icon {
+            width: 19px;
+            height: 19px;
+        }
+        .hero-trust-row {
+            padding-top: 0.5rem;
+        }
+        .trust-item {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        /* Right Column Search Console (Uber & Rapido Grade) */
+        .hero-console-card {
+            background: rgba(13, 13, 18, 0.88);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(234, 179, 8, 0.25);
+            transition: border-color 0.3s ease;
+        }
+        .hero-console-card:hover {
+            border-color: rgba(234, 179, 8, 0.35);
+        }
+        .border-white-10 {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+        .badge-live-route {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 9999px;
+            padding: 3px 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+            display: inline-block;
+        }
+        .console-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.65);
+            margin-bottom: 6px;
+        }
+        .console-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .console-icon {
+            position: absolute;
+            left: 14px;
+            width: 17px;
+            height: 17px;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .console-input {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 12px 14px 12px 42px;
+            font-size: 0.92rem;
+            transition: all 0.2s ease;
+        }
+        .console-input:focus {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: #facc15;
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.18);
+        }
+        .console-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+        .console-sublabel {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.45);
+        }
+        .btn-console-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.75);
+            border-radius: 9999px;
+            padding: 3px 9px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .btn-console-chip:hover {
+            background: rgba(234, 179, 8, 0.15);
+            border-color: rgba(234, 179, 8, 0.4);
+            color: #facc15;
+        }
+        .btn-console-submit {
+            background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+            color: #09090b;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 13px;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 18px rgba(234, 179, 8, 0.35);
+            transition: all 0.2s ease;
+        }
+        .btn-console-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(234, 179, 8, 0.5);
+            color: #000000;
+        }
+
         .scroll-indicator {
             position: absolute;
             bottom: 2rem;
             left: 50%;
             transform: translateX(-50%);
             animation: bounce 2s ease-in-out infinite;
+            z-index: 5;
         }
-        @@media (prefers-reduced-motion: reduce) {
-            .scroll-indicator {
-                animation: none;
-            }
+        .scroll-link {
+            color: rgba(255, 255, 255, 0.4);
+            transition: color 0.2s ease;
+            display: inline-block;
+            text-decoration: none;
         }
-        @@keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
-            40% { transform: translateX(-50%) translateY(-10px); }
-            60% { transform: translateX(-50%) translateY(-5px); }
+        .scroll-link:hover {
+            color: #eab308;
         }
         .scroll-icon {
-            width: 24px;
-            height: 24px;
-            color: var(--color-text-disabled);
+            width: 28px;
+            height: 28px;
         }
-        .features-section {
+        @@keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        .features-section, .rides-section {
             padding: var(--space-20) 0;
         }
-        .feature-card {
+        .feature-card, .ride-card {
             background: var(--color-bg-card);
             border: 1px solid var(--color-border-default);
             border-radius: var(--radius-2xl);
-            padding: var(--space-6);
             transition: all var(--transition-base);
         }
-        .feature-card:hover {
+        .feature-card {
+            padding: var(--space-6);
+        }
+        .feature-card:hover, .ride-card:hover {
             transform: translateY(-4px);
             box-shadow: var(--shadow-xl);
             border-color: var(--color-brand-primary);
@@ -277,11 +659,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: var(--space-4);
-        }
-        .feature-icon i {
-            width: 28px;
-            height: 28px;
-            color: var(--color-text-inverse);
+            color: #030303;
         }
         .feature-title {
             font-size: var(--font-size-xl);
@@ -292,23 +670,6 @@
         .feature-description {
             color: var(--color-text-muted);
             line-height: 1.6;
-        }
-        .rides-section {
-            padding: var(--space-20) 0;
-        }
-        .ride-card {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-            overflow: hidden;
-            transition: all var(--transition-base);
-            display: flex;
-            flex-direction: column;
-        }
-        .ride-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-xl);
-            border-color: var(--color-brand-primary);
         }
         .ride-card-header {
             padding: var(--space-5);
@@ -325,69 +686,41 @@
             font-weight: var(--font-weight-medium);
             margin-bottom: var(--space-3);
         }
-        .route-badge i {
-            width: 14px;
-            height: 14px;
-        }
         .departure-time {
             color: var(--color-text-muted);
             font-size: var(--font-size-sm);
         }
-        .departure-time i {
-            width: 14px;
-            height: 14px;
-        }
         .ride-card-body {
             padding: var(--space-5);
-            flex: 1;
         }
         .ride-meta {
             display: flex;
             flex-direction: column;
-            gap: var(--space-4);
-            margin-bottom: var(--space-5);
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
         }
         .meta-item {
             display: flex;
             align-items: center;
             gap: var(--space-3);
             color: var(--color-text-secondary);
-            font-size: var(--font-size-base);
-        }
-        .meta-icon {
-            width: 20px;
-            height: 20px;
-            color: var(--color-text-disabled);
-            flex-shrink: 0;
         }
         .driver-info {
             padding-top: var(--space-4);
             border-top: 1px solid var(--color-border-default);
         }
         .driver-avatar {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             overflow: hidden;
         }
-        .driver-avatar img,
-        .driver-avatar .avatar-placeholder {
+        .driver-avatar img, .avatar-placeholder {
             width: 100%;
             height: 100%;
         }
-        .driver-avatar .avatar-placeholder {
+        .avatar-placeholder {
             background: var(--color-bg-tertiary);
-        }
-        .driver-avatar .avatar-icon {
-            width: 24px;
-            height: 24px;
-            color: var(--color-text-disabled);
-        }
-        .driver-name {
-            color: var(--color-text-primary);
-        }
-        .driver-rating i {
-            width: 14px;
-            height: 14px;
         }
         .driver-rating .fill {
             color: var(--color-brand-primary);
@@ -396,22 +729,96 @@
             padding: var(--space-5);
             border-top: 1px solid var(--color-border-default);
         }
-        .ride-card-footer .btn {
-            border-radius: var(--radius-lg);
-        }
         .empty-state {
             background: var(--color-bg-card);
             border: 1px solid var(--color-border-default);
             border-radius: var(--radius-2xl);
         }
-        .empty-icon i {
-            color: var(--color-text-disabled);
-        }
-        .empty-state h3 {
-            color: var(--color-text-primary);
-        }
-        .empty-state p {
-            color: var(--color-text-muted);
-        }
     </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Autoplay and keep background video looping smoothly
+            const heroVideo = document.getElementById('heroFullscreenVideo');
+            if (heroVideo) {
+                heroVideo.muted = true;
+                const playPromise = heroVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(function() {
+                        // User agent or low battery prevented autoplay; fallback poster remains active
+                        heroVideo.controls = false;
+                    });
+                }
+            }
+
+            
+        // Booking Modal Interactivity
+        let currentPricePerSeat = 0;
+        let currentAvailableSeats = 1;
+
+        function updateModalTotal() {
+            const countInput = document.getElementById('modalSeatsCount');
+            const totalEl = document.getElementById('modalTotalFare');
+            const count = parseInt(countInput.value) || 1;
+            totalEl.textContent = '₹' + (count * currentPricePerSeat);
+        }
+
+        document.querySelectorAll('.btn-book-trigger').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const rideId = this.getAttribute('data-ride-id');
+                const route = this.getAttribute('data-route');
+                const driver = this.getAttribute('data-driver');
+                const price = parseFloat(this.getAttribute('data-price')) || 0;
+                const seats = parseInt(this.getAttribute('data-seats')) || 1;
+                const time = this.getAttribute('data-time');
+                const vehicle = this.getAttribute('data-vehicle');
+
+                currentPricePerSeat = price;
+                currentAvailableSeats = seats;
+
+                document.getElementById('modalRideId').value = rideId;
+                document.getElementById('modalRoute').textContent = route;
+                document.getElementById('modalDriver').textContent = driver;
+                document.getElementById('modalTime').textContent = time;
+                document.getElementById('modalVehicle').textContent = vehicle;
+                document.getElementById('modalMaxSeats').textContent = seats;
+                document.getElementById('modalSeatsCount').value = 1;
+
+                updateModalTotal();
+
+                const modal = new bootstrap.Modal(document.getElementById('bookingConfirmModal'));
+                modal.show();
+            });
+        });
+
+        const btnMinus = document.getElementById('btnMinusSeat');
+        const btnPlus = document.getElementById('btnPlusSeat');
+        if (btnMinus) {
+            btnMinus.addEventListener('click', function() {
+                const countInput = document.getElementById('modalSeatsCount');
+                let count = parseInt(countInput.value) || 1;
+                if (count > 1) {
+                    countInput.value = count - 1;
+                    updateModalTotal();
+                }
+            });
+        }
+        if (btnPlus) {
+            btnPlus.addEventListener('click', function() {
+                const countInput = document.getElementById('modalSeatsCount');
+                let count = parseInt(countInput.value) || 1;
+                if (count < currentAvailableSeats) {
+                    countInput.value = count + 1;
+                    updateModalTotal();
+                }
+            });
+        }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 }

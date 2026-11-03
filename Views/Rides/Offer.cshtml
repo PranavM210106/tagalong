@@ -1,11 +1,36 @@
 @model Tagalong.Models.ViewModels.OfferRideViewModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     ViewData["Title"] = "Offer a Ride";
+    var defaultGMapKey = Configuration["GoogleMaps:ApiKey"] ?? "";
 }
 
 @section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        .leaflet-container {
+            background: #090a0f !important;
+        }
+        #offerMap .leaflet-tile {
+            filter: brightness(0.65) invert(1) contrast(2.6) hue-rotate(205deg) saturate(0.35) brightness(0.85) !important;
+        }
+        .leaflet-control-zoom a {
+            background: #18181b !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        .leaflet-control-zoom a:hover {
+            color: #facc15 !important;
+        }
+        .leaflet-control-attribution {
+            background: rgba(9, 10, 15, 0.85) !important;
+            color: rgba(255, 255, 255, 0.5) !important;
+            font-size: 10px !important;
+        }
+        .leaflet-control-attribution a {
+            color: #eab308 !important;
+        }
         .page-header {
             padding: var(--space-12) 0 var(--space-8);
             border-bottom: 1px solid var(--color-border-default);
@@ -36,11 +61,13 @@
             padding: var(--space-8);
         }
         .form-section {
-            padding-bottom: var(--space-5);
+            padding-bottom: var(--space-6);
             border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-6);
         }
         .form-section:last-of-type {
             border-bottom: none;
+            margin-bottom: 0;
             padding-bottom: 0;
         }
         .section-title {
@@ -77,12 +104,13 @@
         .input-wrapper .input-prefix {
             position: absolute;
             left: 1rem;
-            color: var(--color-text-disabled);
-            font-weight: var(--font-weight-medium);
+            color: var(--color-brand-primary);
+            font-weight: var(--font-weight-bold);
+            font-size: 1.1rem;
             z-index: 2;
         }
         .input-wrapper .input-prefix + .form-control {
-            padding-left: 2.5rem;
+            padding-left: 2.75rem;
         }
         .input-icon {
             position: absolute;
@@ -95,13 +123,6 @@
             pointer-events: none;
             transition: color var(--transition-fast);
             z-index: 2;
-        }
-        .input-wrapper:has(.input-prefix) .input-icon {
-            left: calc(var(--space-4) + 1.25rem);
-        }
-        .form-control:focus + .input-icon,
-        .form-control:focus ~ .input-icon {
-            color: var(--color-brand-primary);
         }
         .location-btn {
             position: absolute;
@@ -118,14 +139,11 @@
             justify-content: center;
             border-radius: var(--radius-md);
             transition: all var(--transition-fast);
+            z-index: 2;
         }
         .location-btn:hover {
             background: var(--color-brand-primary-light);
             color: var(--color-brand-primary);
-        }
-        .location-btn i {
-            width: 20px;
-            height: 20px;
         }
         .form-control {
             background: var(--color-bg-tertiary);
@@ -146,14 +164,6 @@
             box-shadow: 0 0 0 3px var(--color-brand-primary-light);
             color: var(--color-text-primary);
         }
-        .form-control.is-invalid,
-        .form-control:invalid {
-            border-color: var(--color-danger);
-        }
-        .form-control.is-invalid:focus,
-        .form-control:invalid:focus {
-            box-shadow: 0 0 0 3px var(--color-danger-light);
-        }
         .form-error {
             display: block;
             color: var(--color-danger);
@@ -172,6 +182,112 @@
             color: var(--color-text-disabled);
             font-size: var(--font-size-xs);
             margin-top: var(--space-1);
+        }
+
+        /* Map styling */
+        .route-map-wrapper {
+            margin-top: var(--space-5);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            background: #111;
+            box-shadow: var(--shadow-md);
+        }
+        .map-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-bg-tertiary);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .map-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--color-text-secondary);
+        }
+        .map-badge.highlight {
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+        #offerMap, #googleMapContainer {
+            height: 330px;
+            width: 100%;
+            z-index: 1;
+            background: #121212;
+        }
+        .leaflet-container {
+            background: #121212 !important;
+            font-family: inherit;
+        }
+
+        /* Custom Map Pins */
+        .custom-map-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(0,0,0,0.8);
+            font-size: 16px;
+            position: relative;
+        }
+        .custom-map-pin.pickup {
+            background: #16a34a;
+            border: 2px solid #ffffff;
+            color: #fff;
+        }
+        .custom-map-pin.dropoff {
+            background: #eab308;
+            border: 2px solid #ffffff;
+            color: #000;
+        }
+        .pulse-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid rgba(234, 179, 8, 0.6);
+            animation: mapPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+        }
+        @@keyframes mapPulse {
+            0% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        /* Quick Location Chips */
+        .quick-locations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+        }
+        .quick-chip {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-default);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-xs);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .quick-chip:hover {
+            border-color: var(--color-brand-primary);
+            color: var(--color-brand-primary);
+            background: var(--color-brand-primary-light);
         }
 
         /* Vehicle Selection Options */
@@ -205,34 +321,23 @@
         .vehicle-selection-input:checked + .vehicle-selection-card {
             border-color: var(--color-brand-primary);
             background: var(--color-brand-primary-light);
-        }
-        .vehicle-selection-input:focus-visible + .vehicle-selection-card {
-            outline: 2px solid var(--color-brand-primary);
-            outline-offset: 2px;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.15);
         }
         .vehicle-selection-icon {
-            width: 56px;
-            height: 56px;
+            width: 52px;
+            height: 52px;
             background: var(--gradient-primary);
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-        }
-        .vehicle-selection-icon i {
-            width: 28px;
-            height: 28px;
-            color: var(--color-text-inverse);
+            color: #030303;
         }
         .vehicle-selection-model {
             color: var(--color-text-primary);
             font-size: var(--font-size-base);
-            font-weight: var(--font-weight-medium);
-        }
-        .vehicle-selection-details i {
-            width: 14px;
-            height: 14px;
+            font-weight: var(--font-weight-semibold);
         }
 
         /* Empty Vehicle State */
@@ -243,12 +348,6 @@
         }
         .empty-vehicle-state i {
             color: var(--color-text-disabled);
-        }
-        .empty-vehicle-state h4 {
-            color: var(--color-text-primary);
-        }
-        .empty-vehicle-state p {
-            color: var(--color-text-muted);
         }
 
         /* Form Actions */
@@ -261,36 +360,59 @@
             border-radius: var(--radius-lg);
             background: var(--gradient-primary);
             border: none;
+            color: #030303;
+            font-weight: var(--font-weight-bold);
             transition: all var(--transition-base);
             min-width: 200px;
         }
         .auth-submit:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: var(--shadow-glow);
+            color: #000;
         }
-        .auth-submit:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        .auth-submit:disabled {
-            opacity: 0.7;
-        }
-        .btn-outline-secondary {
-            border-radius: var(--radius-lg);
-            border-color: var(--color-border-strong);
-            color: var(--color-text-secondary);
-            min-width: 200px;
-        }
-        .btn-outline-secondary:hover {
-            background: var(--color-bg-tertiary);
-            border-color: var(--color-border-emphasis);
+
+        /* Modal styling */
+        .modal-content.dark-modal {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-2xl);
             color: var(--color-text-primary);
         }
-        .btn-outline-secondary i {
-            width: 18px;
-            height: 18px;
+        .modal-header.dark-modal-header {
+            border-bottom: 1px solid var(--color-border-default);
+            padding: var(--space-5) var(--space-6);
         }
-        .text-sm {
-            font-size: var(--font-size-sm);
+        .modal-footer.dark-modal-footer {
+            border-top: 1px solid var(--color-border-default);
+            padding: var(--space-4) var(--space-6);
+        }
+        .btn-close-white {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        .pac-container {
+            background-color: #1a1a1a;
+            border: 1px solid rgba(234, 179, 8, 0.4);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            font-family: inherit;
+            z-index: 99999;
+        }
+        .pac-item {
+            color: #f5f5f5;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .pac-item:hover, .pac-item-selected {
+            background-color: rgba(234, 179, 8, 0.15);
+        }
+        .pac-item-query {
+            color: #facc15;
+            font-size: 14px;
+        }
+        .pac-matched {
+            font-weight: bold;
+            color: #ffffff;
         }
     </style>
 }
@@ -308,11 +430,11 @@
                 <li class="breadcrumb-item">
                     <a asp-controller="Rides" asp-action="Find" class="text-muted">Rides</a>
                 </li>
-                <li class="breadcrumb-item active" aria-current="page">Offer a Ride</li>
+                <li class="breadcrumb-item active text-gold fw-medium" aria-current="page">Offer a Ride</li>
             </ol>
         </nav>
         <h1 class="h2 mb-0 fw-semibold">Offer a Ride</h1>
-        <p class="text-muted mt-1">Create a new ride listing for passengers to book</p>
+        <p class="text-muted mt-1">Share empty seats on your route with live GPS navigation and earn in Rupees (₹)</p>
     </div>
 </header>
 
@@ -320,8 +442,10 @@
 <main class="form-page">
     <div class="container-fluid px-md-4 px-lg-5">
         <div class="row justify-content-center">
-            <div class="col-12 col-lg-10 col-xl-8">
-                <form class="ride-form" method="post" novalidate>
+            <div class="col-12 col-lg-10 col-xl-9">
+                <form class="ride-form" method="post" novalidate id="offerRideForm">
+                    @Html.AntiForgeryToken()
+
                     @if (!ViewData.ModelState.IsValid)
                     {
                         <div class="validation-summary mb-4" role="alert">
@@ -336,51 +460,97 @@
                         </div>
                     }
 
+                    <!-- Hidden lat/lng fields -->
+                    <input type="hidden" id="StartLat" name="StartLat" value="@(Model.StartLat != 0 ? Model.StartLat : 22.3667)" />
+                    <input type="hidden" id="StartLng" name="StartLng" value="@(Model.StartLng != 0 ? Model.StartLng : 70.7972)" />
+                    <input type="hidden" id="EndLat" name="EndLat" value="@(Model.EndLat != 0 ? Model.EndLat : 22.3168)" />
+                    <input type="hidden" id="EndLng" name="EndLng" value="@(Model.EndLng != 0 ? Model.EndLng : 70.7813)" />
+
                     <!-- Trip Details Section -->
                     <fieldset class="form-section">
                         <legend class="section-title">
                             <i data-lucide="map-pin" aria-hidden="true"></i>
-                            Trip Details
+                            Trip Details & Route Map
                         </legend>
 
                         <div class="row g-4">
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="StartLocation">Departure</label>
+                                <label class="form-label" for="StartLocation">Departure Location <span class="text-danger">*</span></label>
                                 <div class="input-wrapper">
                                     <i data-lucide="navigation" class="input-icon" aria-hidden="true"></i>
                                     <input type="text" class="form-control" id="StartLocation" name="StartLocation" placeholder="Where are you starting from?" value="@Model.StartLocation" required autocomplete="off" />
-                                    <button type="button" class="location-btn" aria-label="Use current location for departure" data-target="StartLocation">
+                                    <button type="button" class="location-btn" id="btnCurrentLocation" title="Use current GPS location" aria-label="Use current location for departure">
                                         <i data-lucide="crosshair" aria-hidden="true"></i>
                                     </button>
                                 </div>
                                 <span asp-validation-for="StartLocation" class="form-error"></span>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="EndLocation">Destination</label>
+                                <label class="form-label" for="EndLocation">Destination <span class="text-danger">*</span></label>
                                 <div class="input-wrapper">
                                     <i data-lucide="flag" class="input-icon" aria-hidden="true"></i>
                                     <input type="text" class="form-control" id="EndLocation" name="EndLocation" placeholder="Where are you going?" value="@Model.EndLocation" required autocomplete="off" />
-                                    <button type="button" class="location-btn" aria-label="Use current location for destination" data-target="EndLocation">
-                                        <i data-lucide="crosshair" aria-hidden="true"></i>
-                                    </button>
                                 </div>
                                 <span asp-validation-for="EndLocation" class="form-error"></span>
                             </div>
+
+                            <!-- Quick stops chips -->
+                            <div class="col-12">
+                                <div class="small text-muted mb-1 d-flex align-items-center gap-1">
+                                    <i data-lucide="zap" style="width:14px;height:14px;" class="text-warning"></i>
+                                    <span>Quick Pick Popular Stops:</span>
+                                </div>
+                                <div class="quick-locations">
+                                    <button type="button" class="quick-chip" data-name="Marwadi University" data-lat="22.3667" data-lng="70.7972">📍 Marwadi University</button>
+                                    <button type="button" class="quick-chip" data-name="Madhapar Chowk" data-lat="22.3168" data-lng="70.7813">📍 Madhapar Chowk</button>
+                                    <button type="button" class="quick-chip" data-name="Rajkot Junction" data-lat="22.3115" data-lng="70.8021">🚆 Rajkot Junction</button>
+                                    <button type="button" class="quick-chip" data-name="Kalawad Road" data-lat="22.2835" data-lng="70.7712">🛣️ Kalawad Road</button>
+                                    <button type="button" class="quick-chip" data-name="Crystal Mall" data-lat="22.2858" data-lng="70.7735">🛍️ Crystal Mall</button>
+                                    <button type="button" class="quick-chip" data-name="Rajkot Airport" data-lat="22.3092" data-lng="70.7794">✈️ Airport</button>
+                                </div>
+                            </div>
+
+                            <!-- Live Route Map (Google Maps API + Resilient Dark Engine) -->
+                            <div class="col-12">
+                                <div class="route-map-wrapper">
+                                    <div class="map-header-bar">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="map-badge highlight">
+                                                <i data-lucide="route" style="width:14px;height:14px;"></i>
+                                                <span id="routeDistanceChip">Route Preview</span>
+                                            </span>
+                                            <span class="map-badge" id="routeDurationBadge">
+                                                <i data-lucide="clock" style="width:14px;height:14px;"></i>
+                                                <span id="routeDurationChip">~20 min</span>
+                                            </span>
+                                            <span class="map-badge" id="mapEngineStatusBadge">
+                                                <i data-lucide="map" style="width:14px;height:14px;" class="text-gold"></i>
+                                                <span id="mapEngineName">Live GPS Active</span>
+                                            </span>
+                                        </div>
+                                        <div class="text-muted small d-none d-sm-block">
+                                            <span>💡 Click on map to drop Pickup 🟢 or Destination 🏁 pins</span>
+                                        </div>
+                                    </div>
+                                    <div id="offerMap"></div>
+                                </div>
+                            </div>
+
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="DepartureTime">Departure Date & Time</label>
+                                <label class="form-label" for="DepartureTime">Departure Date & Time <span class="text-danger">*</span></label>
                                 <div class="input-wrapper">
                                     <i data-lucide="calendar-clock" class="input-icon" aria-hidden="true"></i>
-                                    <input type="datetime-local" class="form-control" id="DepartureTime" name="DepartureTime" value="@(Model.DepartureTime.ToString("yyyy-MM-ddTHH:mm"))" required />
+                                    <input type="datetime-local" class="form-control" id="DepartureTime" name="DepartureTime" value="@(Model.DepartureTime > DateTime.MinValue ? Model.DepartureTime.ToString("yyyy-MM-ddTHH:mm") : DateTime.Now.AddHours(2).ToString("yyyy-MM-ddTHH:mm"))" required />
                                 </div>
                                 <span asp-validation-for="DepartureTime" class="form-error"></span>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="SeatsAvailable">Available Seats</label>
+                                <label class="form-label" for="SeatsAvailable">Available Seats <span class="text-danger">*</span></label>
                                 <div class="input-wrapper">
                                     <i data-lucide="users" class="input-icon" aria-hidden="true"></i>
-                                    <input type="number" class="form-control" id="SeatsAvailable" name="SeatsAvailable" min="1" max="8" value="@Model.SeatsAvailable" required />
+                                    <input type="number" class="form-control" id="SeatsAvailable" name="SeatsAvailable" min="1" max="8" value="@(Model.SeatsAvailable > 0 ? Model.SeatsAvailable : 2)" required />
                                 </div>
-                                <span class="form-hint">Number of passenger seats available (1-8)</span>
+                                <span class="form-hint">Number of passenger seats you want to offer (1-8)</span>
                                 <span asp-validation-for="SeatsAvailable" class="form-error"></span>
                             </div>
                         </div>
@@ -388,89 +558,101 @@
 
                     <!-- Vehicle Selection Section -->
                     <fieldset class="form-section">
-                        <legend class="section-title">
-                            <i data-lucide="car" aria-hidden="true"></i>
-                            Select Vehicle
-                        </legend>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <legend class="section-title mb-0">
+                                <i data-lucide="car" aria-hidden="true"></i>
+                                Select Vehicle
+                            </legend>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickAddVehicleModal">
+                                <i data-lucide="plus" class="me-1" style="width:14px;height:14px;"></i>Add Another Vehicle
+                            </button>
+                        </div>
 
-                        @if (Model.Vehicles != null && Model.Vehicles.Any())
-                        {
-                            <div class="vehicle-selection-options" role="radiogroup" aria-label="Select a vehicle">
-                                @foreach (var vehicle in Model.Vehicles)
-                                {
-                                    <label class="vehicle-selection-option">
-                                        <input type="radio" class="vehicle-selection-input" name="VehicleId" value="@vehicle.VehicleId" @(Model.VehicleId == vehicle.VehicleId ? "checked" : "") required />
-                                        <div class="vehicle-selection-card">
-                                            <div class="vehicle-selection-icon" aria-hidden="true">
-                                                <i data-lucide="car" style="width:28px;height:28px;"></i>
-                                            </div>
-                                            <div class="vehicle-selection-info flex-grow-1">
-                                                <div class="vehicle-selection-model">@vehicle.Model (@vehicle.VehicleType)</div>
-                                                <div class="vehicle-selection-details text-muted small d-flex align-items-center gap-2 mt-1">
-                                                    <span><i data-lucide="tag" aria-hidden="true"></i> @vehicle.RegistrationNumber</span>
-                                                    <span><i data-lucide="users" aria-hidden="true"></i> @vehicle.SeatCapacity seats</span>
+                        <div id="vehicleContainer">
+                            @if (Model.Vehicles != null && Model.Vehicles.Any())
+                            {
+                                <div class="vehicle-selection-options" role="radiogroup" aria-label="Select a vehicle" id="vehicleList">
+                                    @foreach (var vehicle in Model.Vehicles)
+                                    {
+                                        <label class="vehicle-selection-option" id="vehicle-card-@vehicle.VehicleId">
+                                            <input type="radio" class="vehicle-selection-input" name="VehicleId" value="@vehicle.VehicleId" @(Model.VehicleId == vehicle.VehicleId || Model.Vehicles.First().VehicleId == vehicle.VehicleId ? "checked" : "") required />
+                                            <div class="vehicle-selection-card">
+                                                <div class="vehicle-selection-icon" aria-hidden="true">
+                                                    <i data-lucide="@(vehicle.VehicleType?.ToLower() == "motorcycle" ? "bike" : "car")" style="width:26px;height:26px;"></i>
                                                 </div>
+                                                <div class="vehicle-selection-info flex-grow-1">
+                                                    <div class="vehicle-selection-model">@vehicle.Model (@vehicle.VehicleType)</div>
+                                                    <div class="vehicle-selection-details text-muted small d-flex align-items-center gap-2 mt-1">
+                                                        <span><i data-lucide="tag" style="width:13px;height:13px;"></i> @vehicle.RegistrationNumber</span>
+                                                        <span><i data-lucide="users" style="width:13px;height:13px;"></i> @vehicle.SeatCapacity seats</span>
+                                                    </div>
+                                                </div>
+                                                <i data-lucide="check-circle" class="vehicle-selection-check text-gold" style="width:22px;height:22px;"></i>
                                             </div>
-                                            <i data-lucide="check-circle" class="vehicle-selection-check text-primary" style="width:24px;height:24px;"></i>
-                                        </div>
-                                    </label>
-                                }
-                            </div>
-                            <span asp-validation-for="VehicleId" class="form-error"></span>
-                        }
-                        else
-                        {
-                            <div class="empty-vehicle-state p-5 text-center">
-                                <i data-lucide="car" class="mb-3" style="width:48px;height:48px;"></i>
-                                <h4 class="mb-2">No Vehicles Registered</h4>
-                                <p class="mb-4">You need to add a vehicle before offering rides.</p>
-                                <a asp-controller="Account" asp-action="Vehicles" class="btn btn-primary">
-                                    <i data-lucide="plus" class="me-2" style="width:16px;height:16px;"></i>Add Vehicle
-                                </a>
-                            </div>
-                        }
+                                        </label>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty-vehicle-state p-5 text-center" id="emptyVehicleBox">
+                                    <i data-lucide="car" class="mb-3 mx-auto" style="width:48px;height:48px; display:block;"></i>
+                                    <h4 class="mb-2 fw-semibold">No Vehicles Registered</h4>
+                                    <p class="text-muted mb-4">You need to register at least one vehicle before offering rides.</p>
+                                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                                        <button type="button" class="btn btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#quickAddVehicleModal">
+                                            <i data-lucide="plus" class="me-2" style="width:16px;height:16px;"></i>+ Quick Add Vehicle
+                                        </button>
+                                        <a asp-controller="Profile" asp-action="AddVehicle" asp-route-returnUrl="/Rides/Offer" class="btn btn-outline-secondary px-4 py-2">
+                                            <i data-lucide="external-link" class="me-2" style="width:16px;height:16px;"></i>Vehicle Form Page
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="VehicleId" class="form-error mt-2"></span>
                     </fieldset>
 
-                    <!-- Pricing Section -->
+                    <!-- Pricing Section (Rupees ₹ & Live Dynamic Calculation) -->
                     <fieldset class="form-section">
                         <legend class="section-title">
                             <i data-lucide="credit-card" aria-hidden="true"></i>
-                            Pricing
+                            Pricing & Earnings
                         </legend>
 
                         <div class="row g-4">
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="PricePerSeat">Price Per Seat ($)</label>
+                                <label class="form-label" for="PricePerSeat">Price Per Seat (₹) <span class="text-danger">*</span></label>
                                 <div class="input-wrapper">
-                                    <span class="input-prefix">$</span>
-                                    <input type="number" class="form-control" id="PricePerSeat" name="PricePerSeat" step="0.01" min="0" value="@Model.PricePerSeat" required />
+                                    <span class="input-prefix">₹</span>
+                                    <input type="number" class="form-control" id="PricePerSeat" name="PricePerSeat" step="1" min="1" max="5000" value="@(Model.PricePerSeat > 0 ? Model.PricePerSeat : 450)" required />
                                 </div>
-                                <span class="form-hint">Set a fair price per passenger seat</span>
+                                <span class="form-hint">Set a fair price in Indian Rupees (₹) per passenger seat</span>
                                 <span asp-validation-for="PricePerSeat" class="form-error"></span>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Estimated Earnings</label>
+                                <label class="form-label">Estimated Earnings (₹)</label>
                                 <div class="input-wrapper">
-                                    <span class="input-prefix">$</span>
-                                    <input type="text" class="form-control" readonly value="@((Model.PricePerSeat * Model.SeatsAvailable).ToString("F2"))" style="background:var(--color-bg-secondary);" />
+                                    <span class="input-prefix">₹</span>
+                                    <input type="text" class="form-control" id="EstimatedEarnings" readonly value="@((Model.PricePerSeat > 0 && Model.SeatsAvailable > 0 ? Model.PricePerSeat * Model.SeatsAvailable : 900).ToString("F2"))" style="background:var(--color-bg-secondary); color:var(--color-brand-primary); font-weight:700; font-size:1.15rem;" />
                                 </div>
-                                <span class="form-hint">Based on @Model.SeatsAvailable seats @@@Model.PricePerSeat each</span>
+                                <span class="form-hint" id="earningsBreakdown">Based on @Model.SeatsAvailable seats @@ ₹@Model.PricePerSeat each</span>
                             </div>
                         </div>
                     </fieldset>
 
                     <!-- Form Actions -->
                     <div class="form-actions d-flex flex-column flex-sm-row gap-3 justify-content-end">
-                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-5 py-3">
                             <i data-lucide="x" class="me-2" aria-hidden="true"></i>Cancel
                         </a>
-                        <button type="submit" class="btn auth-submit">
+                        <button type="submit" class="btn auth-submit px-5 py-3">
                             <span class="btn-text">
                                 <i data-lucide="plus-circle" class="me-2" aria-hidden="true"></i>Publish Ride
                             </span>
                             <span class="btn-loader d-none">
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Publishing...
+                                Publishing Ride...
                             </span>
                         </button>
                     </div>
@@ -480,22 +662,630 @@
     </div>
 </main>
 
+<!-- Quick Add Vehicle Modal (Inline without page refresh) -->
+<div class="modal fade" id="quickAddVehicleModal" tabindex="-1" aria-labelledby="quickAddVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content dark-modal">
+            <div class="modal-header dark-modal-header">
+                <h5 class="modal-title fw-bold" id="quickAddVehicleModalLabel">
+                    <i data-lucide="car" class="me-2 text-gold"></i>Register a Vehicle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="modalAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="modalVehicleType">Vehicle Type</label>
+                    <select class="form-control" id="modalVehicleType" required>
+                        <option value="Car" selected>Car (Sedan / Hatchback)</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Van">Van</option>
+                        <option value="Motorcycle">Motorcycle</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="modalModel">Model Name</label>
+                    <input type="text" class="form-control" id="modalModel" placeholder="e.g. Honda City, Swift, Activa" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="modalRegNumber">Registration Number</label>
+                    <input type="text" class="form-control text-uppercase" id="modalRegNumber" placeholder="e.g. GJ-03-AB-1234" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="modalSeatCapacity">Total Seat Capacity (including driver)</label>
+                    <input type="number" class="form-control" id="modalSeatCapacity" min="1" max="8" value="4" required />
+                    <span class="form-hint">Passenger capacity will be capacity minus 1 for driver</span>
+                </div>
+            </div>
+            <div class="modal-footer dark-modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveVehicleModal">
+                    <span class="btn-text"><i data-lucide="check" class="me-1"></i>Save Vehicle</span>
+                    <span class="btn-loader d-none"><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Google Maps API Key Modal -->
+<div class="modal fade" id="googleApiKeyModal" tabindex="-1" aria-labelledby="googleApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content dark-modal">
+            <div class="modal-header dark-modal-header">
+                <h5 class="modal-title fw-bold" id="googleApiKeyModalLabel">
+                    <i data-lucide="map-pin" class="me-2 text-gold"></i>Google Maps API Settings
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted text-sm mb-3">
+                    Tagalong supports <strong>Google Maps JavaScript API & Places Autocomplete</strong> for real-time traffic and address suggestions.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label" for="inputGoogleApiKey">Google Maps API Key</label>
+                    <input type="text" class="form-control font-monospace" id="inputGoogleApiKey" placeholder="AIzaSy..." value="@defaultGMapKey" />
+                    <span class="form-hint">Leave blank to use the built-in dark vector map engine (no credit card required).</span>
+                </div>
+            </div>
+            <div class="modal-footer dark-modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnSaveGMapKey">
+                    <i data-lucide="save" class="me-1"></i>Apply Key
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Set min datetime for departure time
-            const departureInput = document.querySelector('input[name="DepartureTime"]');
+            // 1. Min datetime for departure
+            const departureInput = document.getElementById('DepartureTime');
             if (departureInput) {
                 const now = new Date();
-                const isoString = now.toISOString().slice(0, 16);
-                departureInput.min = isoString;
+                const pad = n => n.toString().padStart(2, '0');
+                const localIso = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                departureInput.min = localIso;
+            }
+
+            // 2. LIVE DYNAMIC EARNINGS CALCULATOR (IN RUPEES ₹)
+            const priceInput = document.getElementById('PricePerSeat');
+            const seatsInput = document.getElementById('SeatsAvailable');
+            const estOutput = document.getElementById('EstimatedEarnings');
+            const breakdownEl = document.getElementById('earningsBreakdown');
+
+            function updateEarnings() {
+                const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
+                const seats = parseInt(seatsInput ? seatsInput.value : 0, 10) || 0;
+                const total = (price * seats).toFixed(2);
+                if (estOutput) {
+                    estOutput.value = total;
+                }
+                if (breakdownEl) {
+                    breakdownEl.textContent = `Based on ${seats} seat${seats !== 1 ? 's' : ''} @@ ₹${price.toFixed(2)} each = ₹${total} total potential earnings`;
+                }
+            }
+
+            if (priceInput) {
+                priceInput.addEventListener('input', updateEarnings);
+                priceInput.addEventListener('change', updateEarnings);
+                priceInput.addEventListener('keyup', updateEarnings);
+            }
+            if (seatsInput) {
+                seatsInput.addEventListener('input', updateEarnings);
+                seatsInput.addEventListener('change', updateEarnings);
+                seatsInput.addEventListener('keyup', updateEarnings);
+            }
+            updateEarnings();
+
+            // 3. GOOGLE MAPS API + DUAL-ENGINE ARCHITECTURE
+            const startLatInput = document.getElementById('StartLat');
+            const startLngInput = document.getElementById('StartLng');
+            const endLatInput = document.getElementById('EndLat');
+            const endLngInput = document.getElementById('EndLng');
+            const startLocInput = document.getElementById('StartLocation');
+            const endLocInput = document.getElementById('EndLocation');
+            const routeDistChip = document.getElementById('routeDistanceChip');
+            const routeDurChip = document.getElementById('routeDurationChip');
+            const mapEngineName = document.getElementById('mapEngineName');
+
+            let gmapKey = localStorage.getItem('tagalong_gmap_key') || '@defaultGMapKey';
+            const inputGMapKey = document.getElementById('inputGoogleApiKey');
+            if (inputGMapKey && gmapKey) inputGMapKey.value = gmapKey;
+
+            document.getElementById('btnSaveGMapKey')?.addEventListener('click', function() {
+                const val = inputGMapKey.value.trim();
+                if (val) {
+                    localStorage.setItem('tagalong_gmap_key', val);
+                } else {
+                    localStorage.removeItem('tagalong_gmap_key');
+                }
+                location.reload();
+            });
+
+            // Uber / Rapido Custom Dark Theme Style for Google Maps
+            const googleDarkStyle = [
+                { "elementType": "geometry", "stylers": [{ "color": "#121212" }] },
+                { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
+                { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1a1a1a" }] },
+                { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#757575" }] },
+                { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                { "featureType": "road", "elementType": "geometry.fill", "stylers": [{ "color": "#242424" }] },
+                { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#8a8a8a" }] },
+                { "featureType": "road.highway", "elementType": "geometry.fill", "stylers": [{ "color": "#333333" }] },
+                { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#eab308" }, { "weight": 0.5 }] },
+                { "featureType": "transit", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] }
+            ];
+
+            let googleMap = null;
+            let googleDirectionsService = null;
+            let googleDirectionsRenderer = null;
+            let googlePickupMarker = null;
+            let googleDropMarker = null;
+            let leafletMap = null;
+
+            function haversineDistance(c1, c2) {
+                const R = 6371; // km
+                const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+                const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(c1[0] * Math.PI / 180) * Math.cos(c2[0] * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            function tryLoadGoogleMaps(apiKey) {
+                if (!apiKey) {
+                    initLeafletFallback();
+                    return;
+                }
+
+                window.gm_authFailure = function() {
+                    console.warn('[Tagalong] Google Maps authentication failed. Falling back to Dark Tile Engine.');
+                    if (mapEngineName) mapEngineName.textContent = 'Dark Engine (GMap Auth Required)';
+                    initLeafletFallback();
+                };
+
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+                script.async = true;
+                script.defer = true;
+                script.onload = function() {
+                    initGoogleMapsEngine();
+                };
+                script.onerror = function() {
+                    console.warn('[Tagalong] Google Maps script failed to load. Falling back to Dark Tile Engine.');
+                    initLeafletFallback();
+                };
+                document.head.appendChild(script);
+            }
+
+            function initGoogleMapsEngine() {
+                try {
+                    const centerLat = parseFloat(startLatInput?.value) || 22.34;
+                    const centerLng = parseFloat(startLngInput?.value) || 70.79;
+
+                    const mapContainer = document.getElementById('offerMap');
+                    googleMap = new google.maps.Map(mapContainer, {
+                        center: { lat: centerLat, lng: centerLng },
+                        zoom: 12,
+                        styles: googleDarkStyle,
+                        disableDefaultUI: false,
+                        zoomControl: true,
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: false
+                    });
+
+                    googleDirectionsService = new google.maps.DirectionsService();
+                    googleDirectionsRenderer = new google.maps.DirectionsRenderer({
+                        map: googleMap,
+                        suppressMarkers: true,
+                        polylineOptions: {
+                            strokeColor: '#facc15',
+                            strokeWeight: 5,
+                            strokeOpacity: 0.9
+                        }
+                    });
+
+                    if (mapEngineName) mapEngineName.textContent = 'Google Maps Active';
+
+                    // Google Places Autocomplete on Departure
+                    if (startLocInput && google.maps.places) {
+                        const autoStart = new google.maps.places.Autocomplete(startLocInput);
+                        autoStart.bindTo('bounds', googleMap);
+                        autoStart.addListener('place_changed', function() {
+                            const place = autoStart.getPlace();
+                            if (place.geometry && place.geometry.location) {
+                                const lat = place.geometry.location.lat();
+                                const lng = place.geometry.location.lng();
+                                startLatInput.value = lat.toFixed(6);
+                                startLngInput.value = lng.toFixed(6);
+                                updateGoogleRoute();
+                            }
+                        });
+                    }
+
+                    // Google Places Autocomplete on Destination
+                    if (endLocInput && google.maps.places) {
+                        const autoEnd = new google.maps.places.Autocomplete(endLocInput);
+                        autoEnd.bindTo('bounds', googleMap);
+                        autoEnd.addListener('place_changed', function() {
+                            const place = autoEnd.getPlace();
+                            if (place.geometry && place.geometry.location) {
+                                const lat = place.geometry.location.lat();
+                                const lng = place.geometry.location.lng();
+                                endLatInput.value = lat.toFixed(6);
+                                endLngInput.value = lng.toFixed(6);
+                                updateGoogleRoute();
+                            }
+                        });
+                    }
+
+                    // Click on Google Map
+                    let clickToggle = false;
+                    googleMap.addListener('click', function(e) {
+                        const lat = e.latLng.lat();
+                        const lng = e.latLng.lng();
+                        const geocoder = new google.maps.Geocoder();
+
+                        if (!clickToggle) {
+                            startLatInput.value = lat.toFixed(6);
+                            startLngInput.value = lng.toFixed(6);
+                            geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+                                if (status === 'OK' && res[0] && startLocInput) {
+                                    startLocInput.value = res[0].formatted_address.split(',').slice(0, 3).join(',');
+                                }
+                            });
+                            clickToggle = true;
+                        } else {
+                            endLatInput.value = lat.toFixed(6);
+                            endLngInput.value = lng.toFixed(6);
+                            geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+                                if (status === 'OK' && res[0] && endLocInput) {
+                                    endLocInput.value = res[0].formatted_address.split(',').slice(0, 3).join(',');
+                                }
+                            });
+                            clickToggle = false;
+                        }
+                        updateGoogleRoute();
+                    });
+
+                    updateGoogleRoute();
+                } catch(e) {
+                    console.error('[Tagalong] Google Maps init error:', e);
+                    initLeafletFallback();
+                }
+            }
+
+            function updateGoogleRoute() {
+                if (!googleMap || !googleDirectionsService) return;
+
+                const pLat = parseFloat(startLatInput?.value) || 22.3667;
+                const pLng = parseFloat(startLngInput?.value) || 70.7972;
+                const dLat = parseFloat(endLatInput?.value) || 22.3168;
+                const dLng = parseFloat(endLngInput?.value) || 70.7813;
+
+                const origin = { lat: pLat, lng: pLng };
+                const destination = { lat: dLat, lng: dLng };
+
+                // Place custom Google markers
+                if (!googlePickupMarker) {
+                    googlePickupMarker = new google.maps.Marker({
+                        position: origin,
+                        map: googleMap,
+                        title: 'Pickup (Departure)',
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: '#16a34a',
+                            fillOpacity: 1,
+                            strokeColor: '#ffffff',
+                            strokeWeight: 2
+                        }
+                    });
+                } else {
+                    googlePickupMarker.setPosition(origin);
+                }
+
+                if (!googleDropMarker) {
+                    googleDropMarker = new google.maps.Marker({
+                        position: destination,
+                        map: googleMap,
+                        title: 'Destination',
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: '#eab308',
+                            fillOpacity: 1,
+                            strokeColor: '#ffffff',
+                            strokeWeight: 2
+                        }
+                    });
+                } else {
+                    googleDropMarker.setPosition(destination);
+                }
+
+                googleDirectionsService.route({
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, function(result, status) {
+                    if (status === 'OK') {
+                        googleDirectionsRenderer.setDirections(result);
+                        const leg = result.routes[0].legs[0];
+                        if (routeDistChip) routeDistChip.textContent = leg.distance.text;
+                        if (routeDurChip) routeDurChip.textContent = `~${leg.duration.text}`;
+                    } else {
+                        // Fallback straight calculation
+                        const distKm = haversineDistance([pLat, pLng], [dLat, dLng]) * 1.3;
+                        const estMin = Math.round(distKm * 2.2 + 4);
+                        if (routeDistChip) routeDistChip.textContent = `${distKm.toFixed(1)} km`;
+                        if (routeDurChip) routeDurChip.textContent = `~${estMin} mins`;
+                    }
+                });
+            }
+
+            // Bulletproof Leaflet Fallback Engine (when Google key is absent or restricted)
+            function initLeafletFallback() {
+                if (leafletMap) return;
+                const mapEl = document.getElementById('offerMap');
+                if (!mapEl) return;
+
+                if (mapEngineName) mapEngineName.textContent = 'Live GPS Active';
+
+                let pickupCoord = [parseFloat(startLatInput?.value) || 22.3667, parseFloat(startLngInput?.value) || 70.7972];
+                let dropoffCoord = [parseFloat(endLatInput?.value) || 22.3168, parseFloat(endLngInput?.value) || 70.7813];
+
+                leafletMap = L.map('offerMap', {
+                    center: [22.34, 70.79],
+                    zoom: 12,
+                    scrollWheelZoom: false
+                });
+
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+                    maxZoom: 19
+                }).addTo(leafletMap);
+
+                const pickupIcon = L.divIcon({
+                    className: '',
+                    html: '<div class="custom-map-pin pickup"><span class="pulse-ring"></span>🟢</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                const dropoffIcon = L.divIcon({
+                    className: '',
+                    html: '<div class="custom-map-pin dropoff"><span class="pulse-ring"></span>🏁</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                let pickupMarker = L.marker(pickupCoord, { icon: pickupIcon, draggable: true }).addTo(leafletMap);
+                let dropMarker = L.marker(dropoffCoord, { icon: dropoffIcon, draggable: true }).addTo(leafletMap);
+                let routePolyline = null;
+
+                function updateLeafletRoute() {
+                    const p1 = pickupMarker.getLatLng();
+                    const p2 = dropMarker.getLatLng();
+
+                    if (routePolyline) leafletMap.removeLayer(routePolyline);
+
+                    routePolyline = L.polyline([p1, p2], {
+                        color: '#facc15',
+                        weight: 5,
+                        opacity: 0.85,
+                        dashArray: '8, 8',
+                        lineJoin: 'round'
+                    }).addTo(leafletMap);
+
+                    leafletMap.fitBounds(L.latLngBounds([p1, p2]), { padding: [50, 50], maxZoom: 15 });
+
+                    const distKm = haversineDistance([p1.lat, p1.lng], [p2.lat, p2.lng]) * 1.3;
+                    const estMin = Math.round(distKm * 2.2 + 4);
+
+                    if (routeDistChip) routeDistChip.textContent = `${distKm.toFixed(1)} km`;
+                    if (routeDurChip) routeDurChip.textContent = `~${estMin} mins`;
+                }
+
+                pickupMarker.on('dragend', function(e) {
+                    const pos = e.target.getLatLng();
+                    startLatInput.value = pos.lat.toFixed(6);
+                    startLngInput.value = pos.lng.toFixed(6);
+                    reverseGeocode(pos.lat, pos.lng, startLocInput);
+                    updateLeafletRoute();
+                });
+
+                dropMarker.on('dragend', function(e) {
+                    const pos = e.target.getLatLng();
+                    endLatInput.value = pos.lat.toFixed(6);
+                    endLngInput.value = pos.lng.toFixed(6);
+                    reverseGeocode(pos.lat, pos.lng, endLocInput);
+                    updateLeafletRoute();
+                });
+
+                let nextClickIsPickup = false;
+                leafletMap.on('click', function(e) {
+                    if (nextClickIsPickup) {
+                        pickupMarker.setLatLng(e.latlng);
+                        startLatInput.value = e.latlng.lat.toFixed(6);
+                        startLngInput.value = e.latlng.lng.toFixed(6);
+                        reverseGeocode(e.latlng.lat, e.latlng.lng, startLocInput);
+                        nextClickIsPickup = false;
+                    } else {
+                        dropMarker.setLatLng(e.latlng);
+                        endLatInput.value = e.latlng.lat.toFixed(6);
+                        endLngInput.value = e.latlng.lng.toFixed(6);
+                        reverseGeocode(e.latlng.lat, e.latlng.lng, endLocInput);
+                        nextClickIsPickup = true;
+                    }
+                    updateLeafletRoute();
+                });
+
+                updateLeafletRoute();
+            }
+
+            function reverseGeocode(lat, lng, targetInput) {
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.display_name && targetInput) {
+                            const parts = data.display_name.split(',');
+                            targetInput.value = parts.slice(0, 3).join(',').trim();
+                        }
+                    })
+                    .catch(() => {});
+            }
+
+            // Quick chip buttons
+            document.querySelectorAll('.quick-chip').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const name = this.dataset.name;
+                    const lat = parseFloat(this.dataset.lat);
+                    const lng = parseFloat(this.dataset.lng);
+
+                    if (!startLocInput.value || startLocInput.value.trim() === '') {
+                        startLocInput.value = name;
+                        startLatInput.value = lat;
+                        startLngInput.value = lng;
+                    } else {
+                        endLocInput.value = name;
+                        endLatInput.value = lat;
+                        endLngInput.value = lng;
+                    }
+
+                    if (googleMap) {
+                        updateGoogleRoute();
+                    } else if (leafletMap) {
+                        location.reload();
+                    }
+                });
+            });
+
+            // Start Map
+            tryLoadGoogleMaps(gmapKey);
+
+            // 4. QUICK ADD VEHICLE MODAL (AJAX)
+            const btnSaveVehicle = document.getElementById('btnSaveVehicleModal');
+            const modalAlert = document.getElementById('modalAlert');
+
+            if (btnSaveVehicle) {
+                btnSaveVehicle.addEventListener('click', function() {
+                    const vType = document.getElementById('modalVehicleType').value;
+                    const vModel = document.getElementById('modalModel').value.trim();
+                    const vReg = document.getElementById('modalRegNumber').value.trim();
+                    const vSeats = parseInt(document.getElementById('modalSeatCapacity').value, 10);
+
+                    if (!vModel || !vReg || isNaN(vSeats) || vSeats < 1) {
+                        modalAlert.textContent = 'Please fill out all fields with valid information.';
+                        modalAlert.classList.remove('d-none');
+                        return;
+                    }
+
+                    modalAlert.classList.add('d-none');
+                    btnSaveVehicle.disabled = true;
+                    btnSaveVehicle.querySelector('.btn-text').classList.add('d-none');
+                    btnSaveVehicle.querySelector('.btn-loader').classList.remove('d-none');
+
+                    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                    const csrfToken = tokenInput ? tokenInput.value : '';
+
+                    fetch('/Profile/AddVehicleAjax', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            VehicleType: vType,
+                            Model: vModel,
+                            RegistrationNumber: vReg,
+                            SeatCapacity: vSeats
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        btnSaveVehicle.disabled = false;
+                        btnSaveVehicle.querySelector('.btn-text').classList.remove('d-none');
+                        btnSaveVehicle.querySelector('.btn-loader').classList.add('d-none');
+
+                        if (res.success && res.vehicle) {
+                            const v = res.vehicle;
+                            const emptyBox = document.getElementById('emptyVehicleBox');
+                            if (emptyBox) emptyBox.style.display = 'none';
+
+                            let vehicleList = document.getElementById('vehicleList');
+                            if (!vehicleList) {
+                                vehicleList = document.createElement('div');
+                                vehicleList.className = 'vehicle-selection-options';
+                                vehicleList.id = 'vehicleList';
+                                vehicleList.setAttribute('role', 'radiogroup');
+                                document.getElementById('vehicleContainer').appendChild(vehicleList);
+                            }
+
+                            document.querySelectorAll('.vehicle-selection-input').forEach(i => i.checked = false);
+
+                            const newOption = document.createElement('label');
+                            newOption.className = 'vehicle-selection-option';
+                            newOption.id = `vehicle-card-${v.vehicleId}`;
+                            newOption.innerHTML = `
+                                <input type="radio" class="vehicle-selection-input" name="VehicleId" value="${v.vehicleId}" checked required />
+                                <div class="vehicle-selection-card">
+                                    <div class="vehicle-selection-icon" aria-hidden="true">
+                                        <i data-lucide="${v.vehicleType.toLowerCase() === 'motorcycle' ? 'bike' : 'car'}" style="width:26px;height:26px;"></i>
+                                    </div>
+                                    <div class="vehicle-selection-info flex-grow-1">
+                                        <div class="vehicle-selection-model">${v.model} (${v.vehicleType})</div>
+                                        <div class="vehicle-selection-details text-muted small d-flex align-items-center gap-2 mt-1">
+                                            <span><i data-lucide="tag" style="width:13px;height:13px;"></i> ${v.registrationNumber}</span>
+                                            <span><i data-lucide="users" style="width:13px;height:13px;"></i> ${v.seatCapacity} seats</span>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="check-circle" class="vehicle-selection-check text-gold" style="width:22px;height:22px;"></i>
+                                </div>
+                            `;
+                            vehicleList.appendChild(newOption);
+
+                            if (seatsInput) {
+                                seatsInput.max = Math.max(1, v.seatCapacity - 1);
+                                if (parseInt(seatsInput.value, 10) > seatsInput.max) {
+                                    seatsInput.value = seatsInput.max;
+                                    updateEarnings();
+                                }
+                            }
+
+                            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                            const modalEl = document.getElementById('quickAddVehicleModal');
+                            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                            if (modalInstance) modalInstance.hide();
+                        } else {
+                            modalAlert.textContent = res.message || 'Failed to save vehicle.';
+                            modalAlert.classList.remove('d-none');
+                        }
+                    })
+                    .catch(err => {
+                        btnSaveVehicle.disabled = false;
+                        btnSaveVehicle.querySelector('.btn-text').classList.remove('d-none');
+                        btnSaveVehicle.querySelector('.btn-loader').classList.add('d-none');
+                        modalAlert.textContent = 'Network or server error while saving vehicle.';
+                        modalAlert.classList.remove('d-none');
+                    });
+                });
             }
 
             // Form submission loading state
-            const form = document.querySelector('.ride-form');
+            const form = document.getElementById('offerRideForm');
             const submitBtn = document.querySelector('.auth-submit');
-
             if (form && submitBtn) {
                 form.addEventListener('submit', function() {
                     if (form.checkValidity()) {
@@ -506,7 +1296,6 @@
                 });
             }
 
-            // Initialize Lucide icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }

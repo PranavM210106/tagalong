@@ -107,28 +107,91 @@ namespace Tagalong.Controllers
         }
 
         // GET: Profile/AddVehicle
-        [Authorize(Roles = "Driver")]
-        public IActionResult AddVehicle()
+        [Authorize]
+        public IActionResult AddVehicle(string returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             return View(new Vehicle());
         }
 
         // POST: Profile/AddVehicle
         [HttpPost]
-        [Authorize(Roles = "Driver")]
+        [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddVehicle(Vehicle model)
+        public async Task<IActionResult> AddVehicle(Vehicle model, string returnUrl = null)
         {
+            var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null && !await _userManager.IsInRoleAsync(user, "Driver"))
+            {
+                await _userManager.AddToRoleAsync(user, "Driver");
+            }
+
+            model.UserId = userId;
+            ModelState.Remove(nameof(model.UserId));
+            ModelState.Remove(nameof(model.Driver));
+            ModelState.Remove(nameof(model.Rides));
+
             if (ModelState.IsValid)
             {
-                var userId = _userManager.GetUserId(User);
-                model.UserId = userId;
                 _context.Vehicles.Add(model);
                 await _context.SaveChangesAsync();
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
                 return RedirectToAction(nameof(Index));
             }
 
+            ViewData["ReturnUrl"] = returnUrl;
             return View(model);
+        }
+
+        // POST: Profile/AddVehicleAjax (for inline modal in Offer Ride)
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddVehicleAjax([FromBody] Vehicle model)
+        {
+            if (model == null)
+            {
+                return Json(new { success = false, message = "Invalid vehicle data" });
+            }
+
+            var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null && !await _userManager.IsInRoleAsync(user, "Driver"))
+            {
+                await _userManager.AddToRoleAsync(user, "Driver");
+            }
+
+            model.UserId = userId;
+            ModelState.Remove(nameof(model.UserId));
+            ModelState.Remove(nameof(model.Driver));
+            ModelState.Remove(nameof(model.Rides));
+
+            if (ModelState.IsValid)
+            {
+                _context.Vehicles.Add(model);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    vehicle = new
+                    {
+                        vehicleId = model.VehicleId,
+                        model = model.Model,
+                        vehicleType = model.VehicleType,
+                        registrationNumber = model.RegistrationNumber,
+                        seatCapacity = model.SeatCapacity
+                    }
+                });
+            }
+
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return Json(new { success = false, message = string.Join(", ", errors), errors });
         }
 
         // POST: Profile/SubmitRating
@@ -223,6 +286,81 @@ namespace Tagalong.Controllers
                 .ToListAsync();
 
             return View(complaints);
+        }
+
+        // POST: Profile/EditVehicle
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditVehicle(Vehicle model)
+        {
+            var userId = _userManager.GetUserId(User);
+            var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == model.VehicleId && v.UserId == userId);
+            if (vehicle == null)
+            {
+                TempData["ErrorMessage"] = "Vehicle not found or unauthorized.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            vehicle.VehicleType = model.VehicleType ?? "Car";
+            vehicle.Model = model.Model?.Trim() ?? vehicle.Model;
+            vehicle.RegistrationNumber = model.RegistrationNumber?.Trim().ToUpperInvariant() ?? vehicle.RegistrationNumber;
+            vehicle.SeatCapacity = Math.Clamp(model.SeatCapacity, 1, 8);
+
+            _context.Update(vehicle);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Vehicle details updated successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: Profile/DeleteVehicle
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteVehicle(int VehicleId)
+        {
+            var userId = _userManager.GetUserId(User);
+            var vehicle = await _context.Vehicles
+                .Include(v => v.Rides)
+                .FirstOrDefaultAsync(v => v.VehicleId == VehicleId && v.UserId == userId);
+
+            if (vehicle == null)
+            {
+                TempData["ErrorMessage"] = "Vehicle not found or unauthorized.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var hasActiveRides = vehicle.Rides != null && vehicle.Rides.Any(r => r.Status == "Active" && r.DepartureTime > DateTime.Now);
+            if (hasActiveRides)
+            {
+                TempData["ErrorMessage"] = "Cannot delete vehicle with active scheduled rides. Cancel the rides first.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.Vehicles.Remove(vehicle);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Vehicle removed successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Profile/AllRatings
+        [Authorize]
+        public async Task<IActionResult> AllRatings()
+        {
+            var userId = _userManager.GetUserId(User);
+            var user = await _context.Users.FindAsync(userId);
+            var ratings = await _context.Ratings
+                .Include(r => r.Rater)
+                .Include(r => r.Booking)
+                    .ThenInclude(b => b.Ride)
+                .Where(r => r.RatedUserId == userId)
+                .OrderByDescending(r => r.CreatedOn)
+                .ToListAsync();
+
+            ViewData["TargetUserName"] = user?.FullName ?? "Commuter";
+            return View(ratings);
         }
     }
 }

@@ -10,17 +10,8 @@ services:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ConnectionStrings__DefaultConnection
-        fromDatabase:
-          name: tagalong-db
-          property: connectionString
+        value: postgresql://tagalong_db_la01_user:dhdIzeHj5eWvniPSVxxC0ByQsINXbabZ@dpg-dbgh1b4s728c739p6tlg-a.oregon-postgres.render.com/tagalong_db_la01?sslmode=require
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:8080
       - key: PORT
         value: "8080"
-
-databases:
-  - name: tagalong-db
-    databaseName: tagalong
-    user: tagalong
-    plan: free
-    region: oregon

@@ -71,6 +71,8 @@ namespace Tagalong.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Offer(OfferRideViewModel model)
         {
+            ModelState.Remove(nameof(model.Vehicles));
+
             if (ModelState.IsValid)
             {
                 var userId = _userManager.GetUserId(User);
@@ -148,7 +150,7 @@ namespace Tagalong.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RequestToJoin(int rideId)
+        public async Task<IActionResult> RequestToJoin(int rideId, int seatsBooked = 1)
         {
             var userId = _userManager.GetUserId(User);
             
@@ -163,6 +165,13 @@ namespace Tagalong.Controllers
                 return NotFound();
             }
 
+            // Cannot book your own offered ride
+            if (ride.DriverId == userId)
+            {
+                TempData["ErrorMessage"] = "You cannot book your own offered ride.";
+                return RedirectToAction("MyRides", "Bookings");
+            }
+
             // Check if user already has a booking for this ride
             var existingBooking = await _context.Bookings
                 .FirstOrDefaultAsync(b => b.RideId == rideId && b.RiderId == userId);
@@ -173,25 +182,20 @@ namespace Tagalong.Controllers
                 return RedirectToAction("MyRides", "Bookings");
             }
 
-            // Check if there are enough seats available
-            var totalBookedSeats = await _context.Bookings
-                .Where(b => b.RideId == rideId)
-                .SumAsync(b => (int?)b.SeatsBooked) ?? 0;
-
-            if (totalBookedSeats >= ride.SeatsAvailable)
+            if (ride.SeatsAvailable <= 0)
             {
-                ModelState.AddModelError(string.Empty, "Sorry, this ride is fully booked.");
-                return RedirectToAction("Results", new { matchedRides = new List<RideResultViewModel> {
-                    new RideResultViewModel { Ride = ride, Distance = 0, MatchQuality = "Exact Match" }
-                }});
+                TempData["ErrorMessage"] = "Sorry, this ride is already fully booked.";
+                return RedirectToAction("Results", "Rides", new { pickup = ride.StartLocation, dropoff = ride.EndLocation });
             }
+
+            int validSeats = Math.Clamp(seatsBooked, 1, ride.SeatsAvailable);
 
             // Create booking
             var booking = new Booking
             {
                 RideId = rideId,
                 RiderId = userId,
-                SeatsBooked = 1, // Default to 1 seat for simplicity
+                SeatsBooked = validSeats,
                 BookingStatus = "Pending",
                 BookedOn = DateTime.Now
             };
@@ -199,9 +203,10 @@ namespace Tagalong.Controllers
             _context.Bookings.Add(booking);
             
             // Update seats available
-            ride.SeatsAvailable -= booking.SeatsBooked;
+            ride.SeatsAvailable -= validSeats;
             
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Ride requested successfully for {validSeats} seat(s)!";
             return RedirectToAction("MyRides", "Bookings");
         }
     }

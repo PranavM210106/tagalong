@@ -1,425 +1,429 @@
 @model IEnumerable<Tagalong.Models.ViewModels.RideResultViewModel>
 @{
-    ViewData["Title"] = "Matching Rides";
+    ViewData["Title"] = "Matching Rides - Tagalong";
+    var rideList = Model?.ToList() ?? new List<Tagalong.Models.ViewModels.RideResultViewModel>();
 }
 
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Rides" asp-action="Find" class="text-muted">Rides</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Search Results</li>
+            </ol>
+        </nav>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 id="page-title" class="display-5 fw-bold mb-1">Available Rides</h1>
+                <p class="lead text-muted mb-0">Found <strong class="text-white">@rideList.Count</strong> matching @(rideList.Count == 1 ? "ride" : "rides") along your route</p>
+            </div>
+            <div>
+                <a asp-action="Find" class="btn btn-outline-light btn-sm">
+                    <i data-lucide="sliders-horizontal" class="me-1"></i> Modify Search
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Booking Confirmation Modal (Uber & Rapido Grade) -->
+<div class="modal fade" id="bookingConfirmModal" tabindex="-1" aria-labelledby="bookingConfirmTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: #11131a; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px;">
+            <div class="modal-header border-bottom border-white-10 p-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark fw-bold">₹ COMMUTE SHARE</span>
+                    <h5 class="modal-title text-white fw-bold mb-0" id="bookingConfirmTitle">Confirm Your Ride</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Rides" asp-action="RequestToJoin" method="post" id="modalBookingForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="rideId" id="modalRideId" />
+                <div class="modal-body p-4">
+                    <!-- Route -->
+                    <div class="p-3 rounded-3 mb-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                        <div class="text-xs text-muted text-uppercase fw-semibold mb-1">Route Corridor</div>
+                        <div class="text-white fw-bold fs-6" id="modalRoute">—</div>
+                        <div class="text-muted small mt-1" id="modalTime">—</div>
+                    </div>
+
+                    <!-- Driver & Vehicle -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+                        <div>
+                            <div class="text-xs text-muted text-uppercase fw-semibold">Driver</div>
+                            <div class="text-white fw-medium" id="modalDriver">—</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-xs text-muted text-uppercase fw-semibold">Vehicle</div>
+                            <div class="text-white small" id="modalVehicle">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Seats Selector -->
+                    <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-3" style="background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.25);">
+                        <div>
+                            <div class="fw-bold text-white">Seats to Reserve</div>
+                            <div class="text-muted small"><span id="modalMaxSeats">0</span> seats available</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="btnMinusSeat" style="width:32px;height:32px;border-radius:50%;">-</button>
+                            <input type="number" name="seatsBooked" id="modalSeatsCount" value="1" min="1" max="4" readonly style="width:40px; text-align:center; background:transparent; border:none; color:#fff; font-weight:bold; font-size:1.1rem;" />
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="btnPlusSeat" style="width:32px;height:32px;border-radius:50%;">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Price Calculation -->
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top border-white-10">
+                        <span class="text-muted">Total Fare in ₹:</span>
+                        <div class="text-gold fw-bold fs-4" id="modalTotalFare">₹0</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-white-10 p-4">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                        Confirm & Request Ride
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<section class="results-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row g-4">
+            <!-- Sidebar Filters -->
+            <aside class="col-12 col-lg-4 col-xl-3 results-sidebar">
+                <div class="sidebar-card">
+                    <div class="sidebar-header d-flex justify-content-between align-items-center">
+                        <h2 class="h6 fw-bold mb-0 text-uppercase tracking-wider">Filters</h2>
+                        <button type="button" class="btn btn-xs btn-ghost text-gold" id="clearFilters">Reset All</button>
+                    </div>
+                    <div class="sidebar-body">
+                        <!-- Max Price Filter -->
+                        <div class="filter-group">
+                            <label class="filter-title">Price Range (₹)</label>
+                            <div class="row g-2 price-range-inputs">
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="priceMin" placeholder="Min" min="0" />
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="priceMax" placeholder="Max" min="0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seats Filter -->
+                        <div class="filter-group">
+                            <label class="filter-title">Seats Needed</label>
+                            <div class="seats-filter" role="radiogroup">
+                                @for (int s = 1; s <= 4; s++)
+                                {
+                                    <label class="seat-option">
+                                        <input type="radio" name="seatsFilter" class="seat-input" value="@s" @(s == 1 ? "checked" : "") />
+                                        <span class="seat-label">@s+</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Match Quality Filter -->
+                        <div class="filter-group">
+                            <label class="filter-title">Proximity Match</label>
+                            <div class="quality-filter">
+                                <label class="quality-option">
+                                    <input type="checkbox" class="quality-input" value="Excellent Match" checked />
+                                    <span class="quality-label">
+                                        <span class="quality-badge excellent">High</span>
+                                        <span class="quality-desc">Direct route (&lt; 2km)</span>
+                                    </span>
+                                </label>
+                                <label class="quality-option">
+                                    <input type="checkbox" class="quality-input" value="Good Match" checked />
+                                    <span class="quality-label">
+                                        <span class="quality-badge good">Good</span>
+                                        <span class="quality-desc">Minor detour (&lt; 5km)</span>
+                                    </span>
+                                </label>
+                                <label class="quality-option">
+                                    <input type="checkbox" class="quality-input" value="Fair Match" checked />
+                                    <span class="quality-label">
+                                        <span class="quality-badge fair">Fair</span>
+                                        <span class="quality-desc">Within 10km radius</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Results Main Content -->
+            <main class="col-12 col-lg-8 col-xl-9">
+                <!-- Toolbar -->
+                <div class="results-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-xs text-muted text-uppercase fw-semibold">Sort By:</span>
+                        <div class="results-sort">
+                            <select id="sortBy" class="form-select form-select-sm" aria-label="Sort matching rides">
+                                <option value="match" selected>Best Route Match</option>
+                                <option value="price-asc">Price: Low to High</option>
+                                <option value="price-desc">Price: High to Low</option>
+                                <option value="time-asc">Earliest Departure</option>
+                                <option value="rating">Top Rated Drivers</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="results-view-toggle d-none d-sm-flex gap-1" role="group" aria-label="Layout view">
+                        <button type="button" class="btn btn-sm btn-secondary active" data-view="grid" aria-label="Grid layout" aria-pressed="true">
+                            <i data-lucide="grid" style="width: 16px; height: 16px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary" data-view="list" aria-label="List layout" aria-pressed="false">
+                            <i data-lucide="list" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                </div>
+
+                @if (rideList.Any())
+                {
+                    <!-- Grid View Container -->
+                    <div class="ride-results-grid" role="list">
+                        @foreach (var item in rideList)
+                        {
+                            var ride = item.Ride;
+                            var matchQuality = item.MatchQuality ?? "Good Match";
+                            var rating = ride.Driver?.AverageRating ?? 4.8;
+                            var qualityClass = matchQuality.Replace(" ", "-").ToLower();
+
+                            <div class="ride-result-item" role="listitem"
+                                 data-price="@ride.PricePerSeat"
+                                 data-seats="@ride.SeatsAvailable"
+                                 data-departure="@ride.DepartureTime.Ticks"
+                                 data-rating="@rating"
+                                 data-match-quality="@matchQuality">
+                                <article class="ride-card h-100">
+                                    <div class="ride-card-header d-flex justify-content-between align-items-center">
+                                        <span class="match-quality-badge @(qualityClass)">
+                                            @matchQuality
+                                        </span>
+                                        <div class="text-gold fw-bold fs-5">
+                                            ₹@ride.PricePerSeat <span class="text-xs text-muted">/ seat</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="ride-card-body">
+                                        <!-- Route Timeline -->
+                                        <div class="route-badge mb-3 w-100">
+                                            <i data-lucide="map-pin" class="me-1"></i>
+                                            <span class="text-truncate">@ride.StartLocation → @ride.EndLocation</span>
+                                        </div>
+
+                                        <div class="ride-meta">
+                                            <div class="meta-item">
+                                                <i data-lucide="clock" class="meta-icon"></i>
+                                                <span>@ride.DepartureTime.ToString("ddd, MMM dd • h:mm tt")</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i data-lucide="users" class="meta-icon"></i>
+                                                <span class="@(ride.SeatsAvailable <= 1 ? "text-warning fw-semibold" : "")">
+                                                    @ride.SeatsAvailable @(ride.SeatsAvailable == 1 ? "seat" : "seats") left
+                                                </span>
+                                            </div>
+                                            @if (ride.Vehicle != null)
+                                            {
+                                                <div class="meta-item">
+                                                    <i data-lucide="car" class="meta-icon"></i>
+                                                    <span>@ride.Vehicle.Model (@ride.Vehicle.RegistrationNumber)</span>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!-- Driver info -->
+                                        <div class="driver-info d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="driver-avatar">
+                                                    @if (!string.IsNullOrEmpty(ride.Driver?.ProfilePicture))
+                                                    {
+                                                        <img src="@ride.Driver.ProfilePicture" alt="@ride.Driver.FullName" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="avatar-placeholder d-flex align-items-center justify-content-center">
+                                                            <i data-lucide="user" class="avatar-icon text-muted"></i>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div>
+                                                    <div class="driver-name text-sm">@(ride.Driver?.FullName ?? "Verified Driver")</div>
+                                                    <div class="driver-rating d-flex align-items-center gap-1 text-xs">
+                                                        <i data-lucide="star" class="fill text-gold" style="width: 12px; height: 12px;"></i>
+                                                        <span class="text-muted">@rating.ToString("0.0")</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="ride-card-footer">
+                                        <button type="button" class="btn btn-primary w-100 btn-book-trigger"
+                                                data-ride-id="@ride.RideId"
+                                                data-route="@ride.StartLocation → @ride.EndLocation"
+                                                data-driver="@(ride.Driver?.FullName ?? "Driver")"
+                                                data-price="@ride.PricePerSeat"
+                                                data-seats="@ride.SeatsAvailable"
+                                                data-time="@ride.DepartureTime.ToString("MMM dd, hh:mm tt")"
+                                                data-vehicle="@(ride.Vehicle != null ? $"{ride.Vehicle.Model} ({ride.Vehicle.RegistrationNumber})" : "Standard Commute")">
+                                            <i data-lucide="check-circle" class="me-1"></i> Request to Join
+                                        </button>
+                                    </div>
+                                </article>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- List View Container (Initially Hidden) -->
+                    <div class="ride-results-list d-none" role="list">
+                        @foreach (var item in rideList)
+                        {
+                            var ride = item.Ride;
+                            var matchQuality = item.MatchQuality ?? "Good Match";
+                            var rating = ride.Driver?.AverageRating ?? 4.8;
+                            var qualityClass = matchQuality.Replace(" ", "-").ToLower();
+
+                            <div class="ride-result-item" role="listitem"
+                                 data-price="@ride.PricePerSeat"
+                                 data-seats="@ride.SeatsAvailable"
+                                 data-departure="@ride.DepartureTime.Ticks"
+                                 data-rating="@rating"
+                                 data-match-quality="@matchQuality">
+                                <article class="card card-elevated p-3 mb-3">
+                                    <div class="row align-items-center g-3">
+                                        <div class="col-12 col-md-5">
+                                            <span class="match-quality-badge @(qualityClass) mb-2">@matchQuality</span>
+                                            <div class="fw-bold text-white fs-6">@ride.StartLocation → @ride.EndLocation</div>
+                                            <div class="text-muted text-xs mt-1">@ride.DepartureTime.ToString("MMM dd • h:mm tt")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-xs text-muted">Driver</div>
+                                            <div class="text-sm fw-medium">@(ride.Driver?.FullName ?? "Driver")</div>
+                                            <div class="text-xs text-gold">★ @rating.ToString("0.0")</div>
+                                        </div>
+                                        <div class="col-6 col-md-2 text-md-center">
+                                            <div class="text-gold fw-bold fs-5">₹@ride.PricePerSeat</div>
+                                            <div class="text-xs text-muted">@ride.SeatsAvailable left</div>
+                                        </div>
+                                        <div class="col-12 col-md-2">
+                                            <form asp-action="RequestToJoin" asp-route-rideId="@ride.RideId" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                    Join
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </article>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state text-center py-5 p-4">
+                        <div class="avatar avatar-2xl mx-auto mb-3 bg-secondary">
+                            <i data-lucide="map-pin-off" style="width: 36px; height: 36px; color: var(--color-brand-primary);"></i>
+                        </div>
+                        <h3 class="h4 fw-bold mb-2">No Matching Rides Found</h3>
+                        <p class="text-muted small mb-4 max-w-md mx-auto">
+                            No drivers are currently offering rides matching this exact corridor and time.
+                            Try expanding your search distance or offer a ride yourself.
+                        </p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a asp-action="Find" class="btn btn-secondary">Change Locations</a>
+                            <a asp-action="Offer" class="btn btn-primary">Offer This Ride Instead</a>
+                        </div>
+                    </div>
+                }
+            </main>
+        </div>
+    </div>
+</section>
+
+<!-- Mobile Filter Floating Action Button -->
+<button type="button" class="btn btn-primary btn-lg rounded-full sidebar-toggle shadow-xl" aria-label="Open Filters">
+    <i data-lucide="sliders" class="me-1"></i> Filter
+</button>
+
 @section Styles {
-    <style>
-        .page-header {
-            padding: var(--space-12) 0 var(--space-8);
-            border-bottom: 1px solid var(--color-border-default);
-            margin-bottom: var(--space-8);
-        }
-        .breadcrumb {
-            background: transparent;
-            padding: 0;
-        }
-        .breadcrumb-item + .breadcrumb-item::before {
-            content: "/";
-            color: var(--color-text-disabled);
-        }
-        .breadcrumb-item a {
-            text-decoration: none;
-            transition: color var(--transition-fast);
-        }
-        .breadcrumb-item a:hover {
-            color: var(--color-brand-primary);
-        }
-        .results-page {
-            padding: var(--space-8) 0 var(--space-16);
-        }
-
-        /* Sidebar */
-        .results-sidebar {
-            z-index: 10;
-        }
-        .sidebar-card {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-            overflow: hidden;
-        }
-        .sidebar-header {
-            padding: var(--space-5);
-            border-bottom: 1px solid var(--color-border-default);
-        }
-        .sidebar-body {
-            padding: var(--space-5);
-        }
-        .filter-group {
-            margin-bottom: var(--space-5);
-            padding-bottom: var(--space-5);
-            border-bottom: 1px solid var(--color-border-default);
-        }
-        .filter-group:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .filter-title {
-            font-size: var(--font-size-xs);
-            font-weight: var(--font-weight-semibold);
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: var(--space-4);
-            display: block;
-        }
-        .price-range-inputs .form-control {
-            background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border-strong);
-            border-radius: var(--radius-lg);
-            color: var(--color-text-primary);
-            padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-4) + 1rem);
-            font-size: var(--font-size-sm);
-        }
-        .price-range-inputs .form-control:focus {
-            border-color: var(--color-brand-primary);
-            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
-        }
-        .price-range-inputs .input-prefix {
-            left: var(--space-4);
-            font-size: var(--font-size-sm);
-            color: var(--color-text-disabled);
-        }
-        .price-range-inputs .input-prefix + .form-control {
-            padding-left: calc(var(--space-4) + 1rem);
-        }
-
-        /* Seats Filter */
-        .seats-filter {
-            display: flex;
-            gap: var(--space-2);
-            flex-wrap: wrap;
-        }
-        .seat-option {
-            cursor: pointer;
-        }
-        .seat-input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-        .seat-label {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 48px;
-            height: 40px;
-            padding: 0 var(--space-3);
-            background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border-strong);
-            border-radius: var(--radius-lg);
-            color: var(--color-text-secondary);
-            font-size: var(--font-size-sm);
-            font-weight: var(--font-weight-medium);
-            transition: all var(--transition-base);
-        }
-        .seat-option:hover .seat-label {
-            border-color: var(--color-brand-primary);
-        }
-        .seat-input:checked + .seat-label {
-            background: var(--color-brand-primary-light);
-            border-color: var(--color-brand-primary);
-            color: var(--color-brand-primary);
-        }
-        .seat-input:focus-visible + .seat-label {
-            outline: 2px solid var(--color-brand-primary);
-            outline-offset: 2px;
-        }
-
-        /* Quality Filter */
-        .quality-filter {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-        }
-        .quality-option {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            cursor: pointer;
-        }
-        .quality-input {
-            width: 1.125rem;
-            height: 1.125rem;
-            border: 1px solid var(--color-border-strong);
-            border-radius: var(--radius-sm);
-            background: var(--color-bg-tertiary);
-            accent-color: var(--color-brand-primary);
-        }
-        .quality-input:focus {
-            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
-        }
-        .quality-label {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            flex: 1;
-        }
-        .quality-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 72px;
-            height: 28px;
-            padding: 0 var(--space-3);
-            border-radius: var(--radius-md);
-            font-size: var(--font-size-xs);
-            font-weight: var(--font-weight-semibold);
-            text-transform: uppercase;
-        }
-        .quality-badge.excellent { background: var(--color-success-light); color: var(--color-success); }
-        .quality-badge.good { background: var(--color-brand-primary-light); color: var(--color-brand-primary); }
-        .quality-badge.fair { background: var(--color-warning-light); color: var(--color-warning); }
-        .quality-badge.poor { background: var(--color-danger-light); color: var(--color-danger); }
-        .quality-desc {
-            font-size: var(--font-size-sm);
-            color: var(--color-text-muted);
-        }
-
-        /* Results Toolbar */
-        .results-toolbar {
-            padding: var(--space-4) var(--space-5);
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-xl);
-        }
-        .results-sort .form-select {
-            background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border-strong);
-            border-radius: var(--radius-lg);
-            color: var(--color-text-primary);
-            padding: var(--space-2) calc(var(--space-4) + 1rem) var(--space-2) var(--space-3);
-            font-size: var(--font-size-sm);
-        }
-        .results-sort .form-select:focus {
-            border-color: var(--color-brand-primary);
-            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
-        }
-        .results-view-toggle .btn {
-            border-radius: var(--radius-lg);
-            padding: var(--space-2) var(--space-3);
-        }
-        .results-view-toggle .btn.active {
-            background: var(--color-brand-primary);
-            border-color: var(--color-brand-primary);
-            color: var(--color-text-inverse);
-        }
-        .results-view-toggle .btn:not(.active):hover {
-            background: var(--color-bg-tertiary);
-            border-color: var(--color-border-emphasis);
-        }
-
-        /* Ride Cards Grid */
-        .ride-results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: var(--space-5);
-        }
-        .ride-card {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-            overflow: hidden;
-            transition: all var(--transition-base);
-            display: flex;
-            flex-direction: column;
-        }
-        .ride-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-xl);
-            border-color: var(--color-brand-primary);
-        }
-        .ride-card-header {
-            padding: var(--space-5);
-            border-bottom: 1px solid var(--color-border-default);
-        }
-        .route-badge {
-            display: inline-flex;
-            align-items: center;
-            background: var(--color-brand-primary-light);
-            color: var(--color-brand-primary);
-            padding: var(--space-2) var(--space-4);
-            border-radius: var(--radius-full);
-            font-size: var(--font-size-sm);
-            font-weight: var(--font-weight-medium);
-            margin-bottom: var(--space-3);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-        .route-badge i {
-            width: 14px;
-            height: 14px;
-        }
-        .departure-time {
-            color: var(--color-text-muted);
-            font-size: var(--font-size-sm);
-        }
-        .departure-time i {
-            width: 14px;
-            height: 14px;
-        }
-        .match-quality-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: var(--space-1) var(--space-3);
-            border-radius: var(--radius-full);
-            font-size: var(--font-size-xs);
-            font-weight: var(--font-weight-semibold);
-            text-transform: uppercase;
-        }
-        .match-quality-badge.excellent-match { background: var(--color-success-light); color: var(--color-success); }
-        .match-quality-badge.good-match { background: var(--color-brand-primary-light); color: var(--color-brand-primary); }
-        .match-quality-badge.fair-match { background: var(--color-warning-light); color: var(--color-warning); }
-        .match-quality-badge.poor-match { background: var(--color-danger-light); color: var(--color-danger); }
-        .ride-card-body {
-            padding: var(--space-5);
-            flex: 1;
-        }
-        .ride-meta {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-4);
-            margin-bottom: var(--space-5);
-        }
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            color: var(--color-text-secondary);
-            font-size: var(--font-size-base);
-        }
-        .meta-icon {
-            width: 20px;
-            height: 20px;
-            color: var(--color-text-disabled);
-            flex-shrink: 0;
-        }
-        .driver-info {
-            padding-top: var(--space-4);
-            border-top: 1px solid var(--color-border-default);
-        }
-        .driver-avatar {
-            width: 48px;
-            height: 48px;
-            overflow: hidden;
-        }
-        .driver-avatar img,
-        .driver-avatar .avatar-placeholder {
-            width: 100%;
-            height: 100%;
-        }
-        .driver-avatar .avatar-placeholder {
-            background: var(--color-bg-tertiary);
-        }
-        .driver-avatar .avatar-icon {
-            width: 24px;
-            height: 24px;
-            color: var(--color-text-disabled);
-        }
-        .driver-name {
-            color: var(--color-text-primary);
-        }
-        .driver-rating i {
-            width: 14px;
-            height: 14px;
-        }
-        .driver-rating .fill {
-            color: var(--color-brand-primary);
-        }
-        .ride-card-footer {
-            padding: var(--space-5);
-            border-top: 1px solid var(--color-border-default);
-        }
-        .ride-card-footer .btn {
-            border-radius: var(--radius-lg);
-        }
-
-        /* List View */
-        .ride-card-list {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-            overflow: hidden;
-            margin-bottom: var(--space-4);
-            transition: all var(--transition-base);
-        }
-        .ride-card-list:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--color-brand-primary);
-        }
-        .ride-card-list-main {
-            border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
-        }
-        .ride-card-list-action {
-            border-radius: 0 var(--radius-2xl) var(--radius-2xl) 0;
-        }
-        .ride-meta-list {
-            flex-wrap: wrap;
-        }
-
-        /* Empty State */
-        .empty-state {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-        }
-        .empty-icon i {
-            color: var(--color-text-disabled);
-        }
-        .empty-state h3 {
-            color: var(--color-text-primary);
-        }
-        .empty-state p {
-            color: var(--color-text-muted);
-        }
-
-        /* Responsive */
-        @@media (max-width: 991.98px) {
-            .results-sidebar {
-                position: fixed;
-                inset: 0;
-                z-index: 1000;
-                background: rgba(0,0,0,0.5);
-                display: none;
-                padding: var(--space-4);
-                overflow-y: auto;
-            }
-            .results-sidebar.open {
-                display: block;
-            }
-            .sidebar-card {
-                max-width: 360px;
-                margin: 0 auto;
-                max-height: calc(100vh - 2rem);
-                overflow-y: auto;
-            }
-            .sidebar-toggle {
-                display: flex !important;
-            }
-        }
-        @@media (min-width: 992px) {
-            .sidebar-toggle {
-                display: none !important;
-            }
-        }
-        .sidebar-toggle {
-            display: none;
-            position: fixed;
-            bottom: var(--space-6);
-            right: var(--space-6);
-            z-index: 999;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/pages/rides.css" asp-append-version="true" />
 }
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
+        // Booking Modal Interactivity
+        let currentPricePerSeat = 0;
+        let currentAvailableSeats = 1;
+
+        function updateModalTotal() {
+            const countInput = document.getElementById('modalSeatsCount');
+            const totalEl = document.getElementById('modalTotalFare');
+            const count = parseInt(countInput.value) || 1;
+            totalEl.textContent = '₹' + (count * currentPricePerSeat);
+        }
+
+        document.querySelectorAll('.btn-book-trigger').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const rideId = this.getAttribute('data-ride-id');
+                const route = this.getAttribute('data-route');
+                const driver = this.getAttribute('data-driver');
+                const price = parseFloat(this.getAttribute('data-price')) || 0;
+                const seats = parseInt(this.getAttribute('data-seats')) || 1;
+                const time = this.getAttribute('data-time');
+                const vehicle = this.getAttribute('data-vehicle');
+
+                currentPricePerSeat = price;
+                currentAvailableSeats = seats;
+
+                document.getElementById('modalRideId').value = rideId;
+                document.getElementById('modalRoute').textContent = route;
+                document.getElementById('modalDriver').textContent = driver;
+                document.getElementById('modalTime').textContent = time;
+                document.getElementById('modalVehicle').textContent = vehicle;
+                document.getElementById('modalMaxSeats').textContent = seats;
+                document.getElementById('modalSeatsCount').value = 1;
+
+                updateModalTotal();
+
+                const modal = new bootstrap.Modal(document.getElementById('bookingConfirmModal'));
+                modal.show();
+            });
+        });
+
+        const btnMinus = document.getElementById('btnMinusSeat');
+        const btnPlus = document.getElementById('btnPlusSeat');
+        if (btnMinus) {
+            btnMinus.addEventListener('click', function() {
+                const countInput = document.getElementById('modalSeatsCount');
+                let count = parseInt(countInput.value) || 1;
+                if (count > 1) {
+                    countInput.value = count - 1;
+                    updateModalTotal();
+                }
+            });
+        }
+        if (btnPlus) {
+            btnPlus.addEventListener('click', function() {
+                const countInput = document.getElementById('modalSeatsCount');
+                let count = parseInt(countInput.value) || 1;
+                if (count < currentAvailableSeats) {
+                    countInput.value = count + 1;
+                    updateModalTotal();
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const gridView = document.querySelector('.ride-results-grid');
             const listView = document.querySelector('.ride-results-list');
@@ -430,9 +434,11 @@
             const seatInputs = document.querySelectorAll('.seat-input');
             const qualityInputs = document.querySelectorAll('.quality-input');
             const clearFiltersBtn = document.getElementById('clearFilters');
-            const rideItems = document.querySelectorAll('.ride-result-item, .ride-results-list [role="listitem"]');
+            const rideItems = document.querySelectorAll('.ride-result-item');
+            const sidebar = document.querySelector('.results-sidebar');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
 
-            // View toggle
+            // View toggle (Grid / List)
             viewButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const view = this.dataset.view;
@@ -452,13 +458,14 @@
                 });
             });
 
-            // Sort function
+            // Sorting
             function sortItems() {
+                if (!sortSelect) return;
                 const sortBy = sortSelect.value;
                 const containers = [gridView, listView].filter(c => c);
 
                 containers.forEach(container => {
-                    const items = Array.from(container.querySelectorAll('[role="listitem"]'));
+                    const items = Array.from(container.querySelectorAll('.ride-result-item'));
                     items.sort((a, b) => {
                         switch (sortBy) {
                             case 'price-asc':
@@ -467,8 +474,6 @@
                                 return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
                             case 'time-asc':
                                 return parseInt(a.dataset.departure) - parseInt(b.dataset.departure);
-                            case 'time-desc':
-                                return parseInt(b.dataset.departure) - parseInt(a.dataset.departure);
                             case 'rating':
                                 return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
                             case 'match':
@@ -481,12 +486,14 @@
                 });
             }
 
-            sortSelect.addEventListener('change', sortItems);
+            if (sortSelect) {
+                sortSelect.addEventListener('change', sortItems);
+            }
 
-            // Filter function
+            // Filtering
             function applyFilters() {
-                const minPrice = priceMin.value ? parseFloat(priceMin.value) : 0;
-                const maxPrice = priceMax.value ? parseFloat(priceMax.value) : Infinity;
+                const minPrice = priceMin?.value ? parseFloat(priceMin.value) : 0;
+                const maxPrice = priceMax?.value ? parseFloat(priceMax.value) : Infinity;
                 const minSeats = parseInt(document.querySelector('.seat-input:checked')?.value || '1');
                 const selectedQualities = Array.from(qualityInputs)
                     .filter(i => i.checked)
@@ -510,7 +517,7 @@
             }
 
             [priceMin, priceMax].forEach(input => {
-                input.addEventListener('input', applyFilters);
+                if (input) input.addEventListener('input', applyFilters);
             });
             seatInputs.forEach(input => {
                 input.addEventListener('change', applyFilters);
@@ -519,26 +526,32 @@
                 input.addEventListener('change', applyFilters);
             });
 
-            // Clear filters
-            clearFiltersBtn.addEventListener('click', function() {
-                priceMin.value = '';
-                priceMax.value = '';
-                seatInputs[0].checked = true;
-                seatInputs.forEach((input, i) => input.checked = i === 0);
-                qualityInputs.forEach((input, i) => input.checked = i < 3);
-                applyFilters();
-            });
+            // Reset filters
+            if (clearFiltersBtn) {
+                clearFiltersBtn.addEventListener('click', function() {
+                    if (priceMin) priceMin.value = '';
+                    if (priceMax) priceMax.value = '';
+                    if (seatInputs.length > 0) seatInputs[0].checked = true;
+                    qualityInputs.forEach(input => input.checked = true);
+                    applyFilters();
+                });
+            }
 
-            // Initialize Lucide icons
+            // Mobile sidebar toggle
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('open');
+                });
+                sidebar.addEventListener('click', function(e) {
+                    if (e.target === sidebar) {
+                        sidebar.classList.remove('open');
+                    }
+                });
+            }
+
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         });
-
-        @functions {
-            string GetMatchQualityClass(string matchQuality) {
-                return matchQuality?.Replace(" ", "-").ToLower() + "-match";
-            }
-        }
     </script>
 }

@@ -20,6 +20,20 @@
 
 <section class="profile-page">
     <div class="container-fluid px-md-4 px-lg-5">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success d-flex align-items-center gap-2 mb-4" role="alert">
+                <i data-lucide="check-circle" style="width:18px;height:18px;"></i>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+                <i data-lucide="alert-circle" style="width:18px;height:18px;"></i>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        }
         <div class="row g-4">
             <!-- Sidebar -->
             <aside class="col-12 col-lg-3 col-xl-3 profile-sidebar">
@@ -116,7 +130,7 @@
                                     My Complaints
                                 </a>
                             }
-                            <a asp-controller="Account" asp-action="Manage" class="btn btn-outline-secondary">
+                            <a asp-controller="Profile" asp-action="Edit" class="btn btn-outline-secondary">
                                 <i data-lucide="settings" class="me-2" aria-hidden="true"></i>
                                 Account Settings
                             </a>
@@ -167,7 +181,12 @@
                                         </div>
                                         <div class="vehicle-card-footer">
                                             <div class="btn-group w-100" role="group">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editVehicleModal" data-vehicle-id="@vehicle.VehicleId">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editVehicleModal" 
+                                                        data-vehicle-id="@vehicle.VehicleId"
+                                                        data-model="@vehicle.Model"
+                                                        data-reg="@vehicle.RegistrationNumber"
+                                                        data-seats="@vehicle.SeatCapacity"
+                                                        data-type="@vehicle.VehicleType">
                                                     <i data-lucide="edit" class="me-1" aria-hidden="true"></i>
                                                     Edit
                                                 </button>
@@ -279,7 +298,7 @@
                 <div class="modal-body p-4">
                     <div class="form-group mb-3">
                         <label class="form-label">Vehicle Type</label>
-                        <select name="VehicleType" class="form-control" required>
+                        <select name="VehicleType" id="editVehicleType" class="form-control" required>
                             <option value="Car">Car</option>
                             <option value="SUV">SUV</option>
                             <option value="Van">Van</option>
@@ -288,15 +307,15 @@
                     </div>
                     <div class="form-group mb-3">
                         <label class="form-label">Model</label>
-                        <input type="text" name="Model" class="form-control" required />
+                        <input type="text" name="Model" id="editModel" class="form-control" required />
                     </div>
                     <div class="form-group mb-3">
                         <label class="form-label">Registration Number</label>
-                        <input type="text" name="RegistrationNumber" class="form-control" required />
+                        <input type="text" name="RegistrationNumber" id="editRegNumber" class="form-control" required />
                     </div>
                     <div class="form-group mb-3">
                         <label class="form-label">Seat Capacity</label>
-                        <input type="number" name="SeatCapacity" class="form-control" min="1" max="8" required />
+                        <input type="number" name="SeatCapacity" id="editSeatCapacity" class="form-control" min="1" max="8" required />
                     </div>
                 </div>
                 <div class="modal-footer" style="border-color: var(--color-border-default); padding: var(--space-4) var(--space-5);">
@@ -546,8 +565,13 @@
             if (editModal) {
                 editModal.addEventListener('show.bs.modal', function(event) {
                     const button = event.relatedTarget;
-                    const vehicleId = button.getAttribute('data-vehicle-id');
-                    document.getElementById('editVehicleId').value = vehicleId;
+                    document.getElementById('editVehicleId').value = button.getAttribute('data-vehicle-id') || '';
+                    document.getElementById('editModel').value = button.getAttribute('data-model') || '';
+                    document.getElementById('editRegNumber').value = button.getAttribute('data-reg') || '';
+                    document.getElementById('editSeatCapacity').value = button.getAttribute('data-seats') || '4';
+                    const vType = button.getAttribute('data-type') || 'Car';
+                    const select = document.getElementById('editVehicleType');
+                    if (select) select.value = vType;
                 });
             }
 

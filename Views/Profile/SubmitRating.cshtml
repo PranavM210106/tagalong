@@ -1,523 +1,183 @@
 @model Tagalong.Models.Entities.Rating
 @{
-    ViewData["Title"] = "Submit Rating";
-    var bookingId = ViewData["BookingId"] as int?;
+    ViewData["Title"] = "Rate Your Ride Experience";
 }
 
-@if (!bookingId.HasValue)
-{
-    <section class="page-header" aria-labelledby="page-title">
-        <div class="container-fluid px-md-4 px-lg-5">
-            <nav aria-label="Breadcrumb" class="mb-4">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
-                    <li class="breadcrumb-item"><a asp-controller="Bookings" asp-action="MyRides" class="text-muted">My Rides</a></li>
-                    <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Submit Rating</li>
-                </ol>
-            </nav>
-            <header>
-                <h1 id="page-title" class="display-5 fw-bold mb-1">Submit Rating</h1>
-                <p class="lead text-muted mb-0">Rate your ride experience</p>
-            </header>
-        </div>
-    </section>
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Profile" asp-action="Index" class="text-muted">Profile</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Rate Ride</li>
+            </ol>
+        </nav>
+        <header>
+            <h1 id="page-title" class="display-5 fw-bold mb-1">Rate Your Ride</h1>
+            <p class="lead text-muted mb-0">Help keep our community safe and trustworthy by leaving honest feedback</p>
+        </header>
+    </div>
+</section>
 
-    <section class="form-page">
-        <div class="container-fluid px-md-4 px-lg-5">
-            <div class="row justify-content-center">
-                <div class="col-12 col-xl-5">
-                    <div class="error-state text-center py-5" role="alert">
-                        <div class="error-icon mb-4">
-                            <i data-lucide="alert-circle" class="mx-auto text-danger" style="width: 80px; height: 80px;" aria-hidden="true"></i>
+<section class="rating-page py-5">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="card card-elevated p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="avatar avatar-xl mx-auto mb-3">
+                            <i data-lucide="star" style="width: 36px; height: 36px; color: var(--color-text-inverse);"></i>
                         </div>
-                        <h3 class="h4 fw-bold mb-2">Invalid Booking Reference</h3>
-                        <p class="text-muted mb-4">Unable to find the booking to rate. Please go back to your rides and try again.</p>
-                        <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-primary">
-                            <i data-lucide="arrow-left" class="me-2" aria-hidden="true"></i>
-                            Back to My Rides
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-}
-else
-{
-    <section class="page-header" aria-labelledby="page-title">
-        <div class="container-fluid px-md-4 px-lg-5">
-            <nav aria-label="Breadcrumb" class="mb-4">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
-                    <li class="breadcrumb-item"><a asp-controller="Bookings" asp-action="MyRides" class="text-muted">My Rides</a></li>
-                    <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Submit Rating</li>
-                </ol>
-            </nav>
-            <header>
-                <h1 id="page-title" class="display-5 fw-bold mb-1">Submit Rating</h1>
-                <p class="lead text-muted mb-0">How was your ride with <strong>@ViewData["RatedUserName"]</strong>?</p>
-            </header>
-        </div>
-    </section>
-
-    <section class="form-page">
-        <div class="container-fluid px-md-4 px-lg-5">
-            <div class="row justify-content-center">
-                <div class="col-12 col-xl-6">
-                    <!-- Ride Context Card -->
-                    <div class="context-card mb-5">
-                        <div class="context-header">
-                            <i data-lucide="car" class="text-gold" aria-hidden="true" style="width: 32px; height: 32px;"></i>
-                        </div>
-                        <div class="context-body">
-                            <h3 class="h5 fw-bold mb-2">@ViewData["RideStart"] → @ViewData["RideEnd"]</h3>
-                            <div class="context-meta d-flex flex-wrap gap-3 text-sm text-muted">
-                                <span><i data-lucide="calendar" class="me-1" aria-hidden="true"></i>@ViewData["RideDate"]</span>
-                                <span><i data-lucide="user" class="me-1" aria-hidden="true"></i>@ViewData["RatedUserName"]</span>
-                                <span><i data-lucide="shield-check" class="me-1" aria-hidden="true"></i>@ViewData["UserRole"]</span>
-                            </div>
-                        </div>
+                        <h2 class="h3 fw-bold mb-2">How was your trip?</h2>
+                        <p class="text-muted small">Your feedback helps riders and drivers make great travel choices.</p>
                     </div>
 
-                    <!-- Rating Form -->
-                    <form asp-action="SubmitRating" method="post" class="ride-form" novalidate>
+                    <form asp-action="SubmitRating" method="post" id="ratingForm" novalidate>
                         @Html.AntiForgeryToken()
-                        <input type="hidden" name="BookingId" value="@bookingId" />
-                        <input type="hidden" name="RatedUserId" value="@ViewData["RatedUserId"]" />
-                        <div asp-validation-summary="ModelOnly" class="text-danger validation-summary mb-4" role="alert" aria-live="polite"></div>
+                        <input type="hidden" asp-for="BookingId" />
+                        <input type="hidden" asp-for="RatedUserId" />
+                        <input type="hidden" asp-for="Stars" id="selectedStars" value="5" />
 
-                        <!-- Stars Rating -->
-                        <fieldset class="form-section mb-5">
-                            <legend class="section-title">
-                                <i data-lucide="star" class="me-2" aria-hidden="true"></i>
-                                Your Rating
-                            </legend>
-                            <div class="rating-input-group" role="radiogroup" aria-label="Select rating" aria-required="true">
-                                @for (int i = 5; i >= 1; i--)
+                        <div asp-validation-summary="ModelOnly" class="validation-summary mb-4" role="alert"></div>
+
+                        <!-- Star Rating Selector -->
+                        <div class="text-center mb-4">
+                            <label class="form-label d-block text-center mb-3">Tap to Rate</label>
+                            <div class="star-rating-container d-inline-flex gap-2 justify-content-center" role="radiogroup" aria-label="Star Rating">
+                                @for (int i = 1; i <= 5; i++)
                                 {
-                                    <label class="star-option" for="star-@i" title="@i star@(i > 1 ? "s" : "")">
-                                        <input type="radio" id="star-@i" name="Stars" value="@i" class="star-input" @(Model.Stars == i ? "checked" : "") required />
-                                        <span class="star-label" aria-hidden="true">
-                                            <i data-lucide="star" class="@(i <= (Model.Stars > 0 ? Model.Stars : 0) ? "fill" : "") star-icon" aria-hidden="true"></i>
-                                        </span>
-                                    </label>
+                                    <button type="button" class="star-btn active" data-value="@i" aria-label="@i stars">
+                                        <i data-lucide="star" class="star-icon"></i>
+                                    </button>
                                 }
                             </div>
-                            <div class="rating-feedback text-center mt-3" aria-live="polite">
-                                <p class="mb-0 text-muted" id="ratingText">Tap a star to rate</p>
-                            </div>
+                            <div class="rating-feedback-text mt-2 fw-semibold text-gold" id="ratingLabel">Excellent (5 Stars)</div>
                             <span asp-validation-for="Stars" class="form-error"></span>
-                        </fieldset>
+                        </div>
 
-                        <!-- Comment -->
-                        <fieldset class="form-section mb-5">
-                            <legend class="section-title">
-                                <i data-lucide="message-square" class="me-2" aria-hidden="true"></i>
-                                Your Feedback (Optional)
-                            </legend>
-                            <div class="form-group">
-                                <label asp-for="Comment" class="form-label">Share your experience</label>
-                                <textarea asp-for="Comment" class="form-control" rows="4" placeholder="What did you like? Anything that could be improved?" aria-describedby="comment-hint"></textarea>
-                                <div class="form-hint" id="comment-hint">Your feedback helps the community. Be honest and constructive.</div>
-                                <span asp-validation-for="Comment" class="form-error"></span>
+                        <!-- Comment Area -->
+                        <div class="form-group mb-4">
+                            <label asp-for="Comment" class="form-label">Feedback / Notes (Optional)</label>
+                            <textarea asp-for="Comment" class="form-control" rows="4" maxlength="500" placeholder="Tell us about the vehicle condition, punctuality, or conversation..."></textarea>
+                            <span asp-validation-for="Comment" class="form-error"></span>
+                        </div>
+
+                        <!-- Quick Tags -->
+                        <div class="quick-tags mb-4">
+                            <label class="form-label d-block mb-2">What stood out?</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="badge-tag btn btn-xs btn-outline-secondary">⚡ On Time</button>
+                                <button type="button" class="badge-tag btn btn-xs btn-outline-secondary">🚗 Clean Vehicle</button>
+                                <button type="button" class="badge-tag btn btn-xs btn-outline-secondary">🛡️ Safe Driving</button>
+                                <button type="button" class="badge-tag btn btn-xs btn-outline-secondary">💬 Great Conversation</button>
+                                <button type="button" class="badge-tag btn btn-xs btn-outline-secondary">🎵 Good Music</button>
                             </div>
-                        </fieldset>
+                        </div>
 
-                        <!-- Form Actions -->
-                        <div class="form-actions sticky-bottom d-flex flex-column flex-md-row gap-3 justify-content-end">
-                            <a asp-controller="Bookings" asp-action="MyRides" class="btn btn-outline-secondary btn-lg py-3 px-5 order-md-1 order-2">
-                                <i data-lucide="x" class="me-2" aria-hidden="true"></i>
-                                Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg py-3 px-5 order-md-2 order-1 auth-submit" data-loading-text="Submitting...">
-                                <span class="btn-text">
-                                    <i data-lucide="send" class="me-2" aria-hidden="true"></i>
-                                    Submit Rating
-                                </span>
-                                <span class="btn-loader d-none">
-                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    Submitting...
-                                </span>
+                        <div class="d-flex gap-3 mt-4">
+                            <a asp-action="Index" class="btn btn-secondary flex-grow-1">Cancel</a>
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i data-lucide="check" class="me-1"></i> Submit Review
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    </section>
-}
+    </div>
+</section>
 
 @section Styles {
     <style>
-        .page-header {
-            padding: var(--space-12) 0 var(--space-8);
-            border-bottom: 1px solid var(--color-border-default);
-            margin-bottom: var(--space-8);
+        .star-rating-container {
+            font-size: 2rem;
         }
-        .breadcrumb {
+        .star-btn {
             background: transparent;
-            padding: 0;
-        }
-        .breadcrumb-item + .breadcrumb-item::before {
-            content: "/";
-            color: var(--color-text-disabled);
-        }
-        .breadcrumb-item a {
-            text-decoration: none;
-            transition: color var(--transition-fast);
-        }
-        .breadcrumb-item a:hover {
-            color: var(--color-brand-primary);
-        }
-        .form-page {
-            padding: var(--space-8) 0 var(--space-16);
-        }
-        .ride-form {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-            padding: var(--space-8);
-        }
-        .form-section {
-            padding-bottom: var(--space-5);
-            border-bottom: 1px solid var(--color-border-default);
-        }
-        .form-section:last-of-type {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-        .section-title {
-            display: inline-flex;
-            align-items: center;
-            font-size: var(--font-size-lg);
-            font-weight: var(--font-weight-semibold);
-            color: var(--color-text-primary);
-            margin-bottom: var(--space-5);
-            padding-bottom: var(--space-3);
-            border-bottom: 2px solid var(--color-brand-primary);
-        }
-        .section-title i {
-            width: 20px;
-            height: 20px;
-        }
-        .form-label {
-            display: block;
-            font-size: var(--font-size-xs);
-            font-weight: var(--font-weight-semibold);
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: var(--space-2);
-        }
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .input-wrapper .form-control {
-            padding-left: 3rem;
-        }
-        .input-wrapper .input-prefix {
-            position: absolute;
-            left: 1rem;
-            color: var(--color-text-disabled);
-            font-weight: var(--font-weight-medium);
-            z-index: 2;
-        }
-        .input-wrapper .input-prefix + .form-control {
-            padding-left: 2.5rem;
-        }
-        .input-icon {
-            position: absolute;
-            left: var(--space-4);
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            color: var(--color-text-disabled);
-            pointer-events: none;
-            transition: color var(--transition-fast);
-            z-index: 2;
-        }
-        .input-wrapper:has(.input-prefix) .input-icon {
-            left: calc(var(--space-4) + 1.25rem);
-        }
-        .form-control:focus + .input-icon,
-        .form-control:focus ~ .input-icon {
-            color: var(--color-brand-primary);
-        }
-        .form-control {
-            background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border-strong);
-            border-radius: var(--radius-lg);
-            color: var(--color-text-primary);
-            padding: var(--space-3) var(--space-4);
-            font-size: var(--font-size-base);
-            transition: all var(--transition-base);
-            height: auto;
-        }
-        .form-control::placeholder {
-            color: var(--color-text-disabled);
-        }
-        .form-control:focus {
-            background: var(--color-bg-tertiary);
-            border-color: var(--color-brand-primary);
-            box-shadow: 0 0 0 3px var(--color-brand-primary-light);
-            color: var(--color-text-primary);
-        }
-        .form-control.is-invalid,
-        .form-control:invalid {
-            border-color: var(--color-danger);
-        }
-        .form-control.is-invalid:focus,
-        .form-control:invalid:focus {
-            box-shadow: 0 0 0 3px var(--color-danger-light);
-        }
-        .form-error {
-            display: block;
-            color: var(--color-danger);
-            font-size: var(--font-size-xs);
-            margin-top: var(--space-1);
-        }
-        .validation-summary {
-            background: var(--color-danger-light);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            color: var(--color-danger);
-        }
-        .form-hint {
-            display: block;
-            color: var(--color-text-disabled);
-            font-size: var(--font-size-xs);
-            margin-top: var(--space-1);
-        }
-
-        /* Form Actions */
-        .form-actions {
-            padding-top: var(--space-5);
-            margin-top: var(--space-5);
-            border-top: 1px solid var(--color-border-default);
-        }
-        .form-actions.sticky-bottom {
-            position: sticky;
-            bottom: 0;
-            background: linear-gradient(to top, var(--color-bg-card), transparent);
-            z-index: 10;
-        }
-        .auth-submit {
-            border-radius: var(--radius-lg);
-            background: var(--gradient-primary);
             border: none;
-            transition: all var(--transition-base);
-            min-width: 200px;
-        }
-        .auth-submit:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-glow);
-        }
-        .auth-submit:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        .auth-submit:disabled {
-            opacity: 0.7;
-        }
-        .btn-outline-secondary {
-            border-radius: var(--radius-lg);
-            border-color: var(--color-border-strong);
-            color: var(--color-text-secondary);
-            min-width: 200px;
-        }
-        .btn-outline-secondary:hover {
-            background: var(--color-bg-tertiary);
-            border-color: var(--color-border-emphasis);
-            color: var(--color-text-primary);
-        }
-        .btn-outline-secondary i {
-            width: 18px;
-            height: 18px;
-        }
-
-        /* Context Card */
-        .context-card {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-            overflow: hidden;
-        }
-        .context-header {
-            padding: var(--space-5);
-            background: var(--color-brand-primary-light);
-        }
-        .context-body {
-            padding: var(--space-5);
-        }
-        .context-meta i {
-            width: 16px;
-            height: 16px;
-        }
-
-        /* Star Rating */
-        .rating-input-group {
-            display: flex;
-            justify-content: center;
-            gap: var(--space-2);
-            direction: rtl;
-            unicode-bidi: bidi-override;
-        }
-        .star-option {
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: var(--space-2);
+            color: var(--color-gray-600);
+            transition: transform var(--transition-fast), color var(--transition-fast);
         }
-        .star-input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-        .star-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 56px;
-            height: 56px;
-            transition: transform var(--transition-base);
-        }
-        .star-icon {
-            width: 32px;
-            height: 32px;
-            color: var(--color-text-disabled);
-            transition: all var(--transition-base);
-        }
-        .star-icon.fill {
-            color: var(--color-brand-primary);
-        }
-        .star-option:hover .star-icon {
+        .star-btn:hover {
             transform: scale(1.2);
         }
-        .star-option:hover .star-icon:not(.fill) {
+        .star-btn.active, .star-btn.hover {
             color: var(--color-brand-primary);
         }
-        .star-input:checked ~ .star-label .star-icon {
+        .star-btn .star-icon {
+            width: 36px;
+            height: 36px;
+            fill: currentColor;
+        }
+        .badge-tag.selected {
+            background: var(--color-brand-primary-light);
+            border-color: var(--color-brand-primary);
             color: var(--color-brand-primary);
-        }
-        .star-input:focus-visible + .star-label {
-            outline: 2px solid var(--color-brand-primary);
-            outline-offset: 4px;
-            border-radius: var(--radius-md);
-        }
-
-        /* Rating Feedback Text */
-        .rating-feedback #ratingText {
-            font-size: var(--font-size-base);
-            font-weight: var(--font-weight-medium);
-            transition: color var(--transition-base);
-        }
-
-        /* Error State */
-        .error-state {
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border-default);
-            border-radius: var(--radius-2xl);
-        }
-        .error-icon i {
-            color: var(--color-danger);
-        }
-        .error-state h3 {
-            color: var(--color-text-primary);
-        }
-        .error-state p {
-            color: var(--color-text-muted);
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 120px;
         }
     </style>
 }
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Star rating interaction
-            const starInputs = document.querySelectorAll('.star-input');
-            const ratingText = document.getElementById('ratingText');
-
-            const ratingTexts = {
-                1: 'Terrible experience',
-                2: 'Poor experience',
-                3: 'Okay experience',
-                4: 'Good experience',
-                5: 'Excellent experience!'
+            const starButtons = document.querySelectorAll('.star-btn');
+            const hiddenStarsInput = document.getElementById('selectedStars');
+            const ratingLabel = document.getElementById('ratingLabel');
+            const labels = {
+                1: 'Poor (1 Star)',
+                2: 'Fair (2 Stars)',
+                3: 'Good (3 Stars)',
+                4: 'Very Good (4 Stars)',
+                5: 'Excellent (5 Stars)'
             };
 
-            starInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    const value = parseInt(this.value);
-                    if (ratingText) {
-                        ratingText.textContent = ratingTexts[value] || 'Tap a star to rate';
-                        ratingText.style.color = value >= 4 ? 'var(--color-success)' : value === 3 ? 'var(--color-warning)' : 'var(--color-danger)';
+            function updateStars(val) {
+                hiddenStarsInput.value = val;
+                ratingLabel.textContent = labels[val] || `${val} Stars`;
+                starButtons.forEach(btn => {
+                    const btnVal = parseInt(btn.dataset.value);
+                    if (btnVal <= val) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
                     }
+                });
+            }
 
-                    // Update visual state for all stars
-                    starInputs.forEach(i => {
-                        const label = i.nextElementSibling;
-                        const icon = label?.querySelector('.star-icon');
-                        if (icon) {
-                            if (parseInt(i.value) <= value) {
-                                icon.classList.add('fill');
-                            } else {
-                                icon.classList.remove('fill');
-                            }
+            starButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    updateStars(parseInt(this.dataset.value));
+                });
+                btn.addEventListener('mouseenter', function() {
+                    const val = parseInt(this.dataset.value);
+                    starButtons.forEach(b => {
+                        if (parseInt(b.dataset.value) <= val) {
+                            b.classList.add('hover');
+                        } else {
+                            b.classList.remove('hover');
                         }
                     });
                 });
-
-                // Hover preview
-                input.addEventListener('mouseenter', function() {
-                    const value = parseInt(this.value);
-                    starInputs.forEach(i => {
-                        const label = i.nextElementSibling;
-                        const icon = label?.querySelector('.star-icon');
-                        if (icon && parseInt(i.value) <= value) {
-                            icon.classList.add('fill');
-                        }
-                    });
-                });
-
-                input.addEventListener('mouseleave', function() {
-                    const checkedValue = parseInt(document.querySelector('.star-input:checked')?.value || '0');
-                    starInputs.forEach(i => {
-                        const label = i.nextElementSibling;
-                        const icon = label?.querySelector('.star-icon');
-                        if (icon && parseInt(i.value) > checkedValue) {
-                            icon.classList.remove('fill');
-                        }
-                    });
+                btn.addEventListener('mouseleave', function() {
+                    starButtons.forEach(b => b.classList.remove('hover'));
                 });
             });
 
-            // Form submission loading state
-            const form = document.querySelector('.ride-form');
-            const submitBtn = document.querySelector('.auth-submit');
-
-            if (form && submitBtn) {
-                form.addEventListener('submit', function() {
-                    if (form.checkValidity()) {
-                        submitBtn.disabled = true;
-                        submitBtn.querySelector('.btn-text').classList.add('d-none');
-                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+            // Quick tag toggle
+            document.querySelectorAll('.badge-tag').forEach(tag => {
+                tag.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                    const commentBox = document.querySelector('textarea[name="Comment"]');
+                    const text = this.textContent.trim().replace(/^[^a-zA-Z0-9]+/, '');
+                    if (this.classList.contains('selected')) {
+                        commentBox.value = commentBox.value ? `${commentBox.value}, ${text}` : text;
                     }
                 });
-            }
-
-            // Initialize Lucide icons
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            });
         });
     </script>
 }
+

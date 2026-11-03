@@ -3,69 +3,100 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav align-items-center">
-    @if (SignInManager.IsSignedIn(User))
+@{
+    var isSignedIn = SignInManager.IsSignedIn(User);
+    var rawName = User.Identity?.Name ?? "Commuter";
+    var displayName = rawName.Contains("@") ? rawName.Split('@')[0] : rawName;
+    if (displayName.Length > 0)
+    {
+        displayName = char.ToUpperInvariant(displayName[0]) + (displayName.Length > 1 ? displayName.Substring(1) : "");
+    }
+    var initial = char.ToUpperInvariant(displayName.Length > 0 ? displayName[0] : 'U');
+    var isDriver = User.IsInRole("Driver");
+    var isAdmin = User.IsInRole("Admin");
+}
+
+<ul class="navbar-nav align-items-center gap-2 mb-0">
+    @if (isSignedIn)
     {
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 py-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
-                <div class="avatar avatar-sm">
-                    @if (!string.IsNullOrEmpty(UserManager.GetUserAsync(User).Result?.ProfilePicture))
-                    {
-                        <img src="@UserManager.GetUserAsync(User).Result.ProfilePicture" alt="" class="rounded-circle" />
-                    }
-                    else
-                    {
-                        <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
-                            <i data-lucide="user" class="avatar-icon" aria-hidden="true"></i>
-                        </div>
-                    }
+            <a class="nav-link profile-pill dropdown-toggle d-flex align-items-center gap-2 py-1 px-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User account menu">
+                <div class="user-avatar-badge">
+                    <span class="avatar-initial">@initial</span>
                 </div>
-                <span class="d-none d-md-inline fw-medium">@UserManager.GetUserName(User)</span>
+                <div class="user-info-meta d-none d-lg-flex flex-column align-items-start">
+                    <span class="user-name-text">@displayName</span>
+                    <span class="user-role-chip @(isDriver ? "role-driver" : isAdmin ? "role-admin" : "role-rider")">
+                        @(isDriver ? "Driver" : isAdmin ? "Admin" : "Rider")
+                    </span>
+                </div>
+                <i data-lucide="chevron-down" class="dropdown-chevron ms-1" aria-hidden="true"></i>
             </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <li>
-                    <h6 class="dropdown-header">Account</h6>
+            <ul class="dropdown-menu dropdown-menu-end profile-glass-menu" aria-labelledby="userDropdown">
+                <li class="dropdown-user-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="user-avatar-badge-lg">
+                            <span class="avatar-initial-lg">@initial</span>
+                        </div>
+                        <div class="d-flex flex-column overflow-hidden">
+                            <span class="fw-bold text-white text-truncate">@displayName</span>
+                            <span class="text-muted small text-truncate">@rawName</span>
+                            <div class="mt-1 d-flex align-items-center gap-1">
+                                <span class="badge-status-dot"></span>
+                                <span class="role-status-text small fw-medium">
+                                    @(isDriver ? "Verified Driver" : isAdmin ? "Administrator" : "Verified Rider")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </li>
+                <li><hr class="dropdown-divider" /></li>
                 <li>
                     <a class="dropdown-item d-flex align-items-center gap-2" asp-area="" asp-controller="Profile" asp-action="Index">
                         <i data-lucide="user" class="dropdown-icon" aria-hidden="true"></i>
-                        Profile
+                        <span>Profile & Settings</span>
                     </a>
                 </li>
-                @if (User.IsInRole("Driver"))
+                @if (isDriver || isAdmin)
                 {
                     <li>
                         <a class="dropdown-item d-flex align-items-center gap-2" asp-area="" asp-controller="Profile" asp-action="AddVehicle">
                             <i data-lucide="car" class="dropdown-icon" aria-hidden="true"></i>
-                            My Vehicles
+                            <span>My Vehicles</span>
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 text-warning-glow" asp-area="" asp-controller="Profile" asp-action="AddVehicle">
+                            <i data-lucide="plus-circle" class="dropdown-icon" aria-hidden="true"></i>
+                            <span>Register Vehicle</span>
                         </a>
                     </li>
                 }
                 <li>
                     <a class="dropdown-item d-flex align-items-center gap-2" asp-area="" asp-controller="Bookings" asp-action="MyRides">
                         <i data-lucide="calendar" class="dropdown-icon" aria-hidden="true"></i>
-                        My Rides
+                        <span>My Trips & History</span>
                     </a>
                 </li>
-                @if (User.IsInRole("Admin"))
+                @if (isAdmin)
                 {
                     <li><hr class="dropdown-divider" /></li>
                     <li>
-                        <h6 class="dropdown-header">Admin</h6>
-                    </li>
-                    <li>
                         <a class="dropdown-item d-flex align-items-center gap-2" asp-area="" asp-controller="Admin" asp-action="Index">
                             <i data-lucide="layout-dashboard" class="dropdown-icon" aria-hidden="true"></i>
-                            Dashboard
+                            <span>Admin Console</span>
                         </a>
                     </li>
                 }
                 <li><hr class="dropdown-divider" /></li>
                 <li>
-                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
-                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" class="m-0 p-0">
+                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger w-100 border-0 bg-transparent">
                             <i data-lucide="log-out" class="dropdown-icon" aria-hidden="true"></i>
-                            Logout
+                            <span>Sign Out</span>
                         </button>
                     </form>
                 </li>
@@ -75,15 +106,15 @@
     else
     {
         <li class="nav-item">
-            <a class="nav-link btn btn-outline-primary btn-sm ms-2" asp-area="" asp-controller="Account" asp-action="Login">
-                <i data-lucide="log-in" class="nav-icon me-1" aria-hidden="true"></i>
-                <span>Login</span>
+            <a class="btn btn-nav-login" asp-area="" asp-controller="Account" asp-action="Login">
+                <i data-lucide="log-in" class="nav-icon-sm" aria-hidden="true"></i>
+                <span>Log in</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link btn btn-primary btn-sm ms-2" asp-area="" asp-controller="Account" asp-action="Register">
-                <i data-lucide="user-plus" class="nav-icon me-1" aria-hidden="true"></i>
-                <span>Register</span>
+            <a class="btn btn-nav-signup" asp-area="" asp-controller="Account" asp-action="Register">
+                <i data-lucide="user-plus" class="nav-icon-sm" aria-hidden="true"></i>
+                <span>Sign up</span>
             </a>
         </li>
     }

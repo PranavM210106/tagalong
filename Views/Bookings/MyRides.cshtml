@@ -1,0 +1,361 @@
+@model Tagalong.Models.ViewModels.MyRidesViewModel
+@{
+    ViewData["Title"] = "My Rides & Bookings";
+}
+
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">My Rides</li>
+            </ol>
+        </nav>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 id="page-title" class="display-5 fw-bold mb-1">My Rides & Bookings</h1>
+                <p class="lead text-muted mb-0">Manage your offered rides and booked journeys</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary">
+                    <i data-lucide="plus" class="me-1" aria-hidden="true"></i> Offer a Ride
+                </a>
+                <a asp-controller="Rides" asp-action="Find" class="btn btn-outline-light">
+                    <i data-lucide="search" class="me-1" aria-hidden="true"></i> Find a Ride
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="my-rides-page py-4">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs nav-fill mb-4" id="ridesTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active d-flex align-items-center justify-content-center gap-2 py-3" id="rider-tab" data-bs-toggle="tab" data-bs-target="#rider-pane" type="button" role="tab" aria-controls="rider-pane" aria-selected="true">
+                    <i data-lucide="user-check" style="width: 18px; height: 18px;"></i>
+                    <span>As Rider (@(Model.AsRider?.Count() ?? 0))</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link d-flex align-items-center justify-content-center gap-2 py-3" id="driver-tab" data-bs-toggle="tab" data-bs-target="#driver-pane" type="button" role="tab" aria-controls="driver-pane" aria-selected="false">
+                    <i data-lucide="car" style="width: 18px; height: 18px;"></i>
+                    <span>As Driver (@(Model.AsDriver?.Count() ?? 0))</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="ridesTabContent">
+            <!-- Rider Pane -->
+            <div class="tab-pane fade show active" id="rider-pane" role="tabpanel" aria-labelledby="rider-tab">
+                @if (Model.AsRider != null && Model.AsRider.Any())
+                {
+                    <div class="row g-4">
+                        @foreach (var booking in Model.AsRider)
+                        {
+                            var totalCost = booking.Ride != null ? (booking.SeatsBooked * booking.Ride.PricePerSeat) : 0m;
+                            <div class="col-12 col-lg-6">
+                                <article class="card card-elevated h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge @(booking.BookingStatus == "Confirmed" ? "badge-success" : booking.BookingStatus == "Pending" ? "badge-warning" : "badge-secondary")">
+                                                @booking.BookingStatus
+                                            </span>
+                                            <span class="text-xs text-muted">ID: #@booking.BookingId (@booking.SeatsBooked @(booking.SeatsBooked == 1 ? "seat" : "seats"))</span>
+                                        </div>
+                                        <div class="text-gold fw-bold fs-5">
+                                            ₹@totalCost
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Commute Progress Stepper -->
+                                        <div class="commute-stepper d-flex align-items-center justify-content-between mb-4 px-1">
+                                            <div class="stepper-item completed">
+                                                <div class="stepper-bubble"><i data-lucide="check" style="width:12px;height:12px;"></i></div>
+                                                <span class="stepper-text">Requested</span>
+                                            </div>
+                                            <div class="stepper-bar @(booking.BookingStatus == "Confirmed" || booking.BookingStatus == "Completed" ? "active" : "")"></div>
+                                            <div class="stepper-item @(booking.BookingStatus == "Confirmed" || booking.BookingStatus == "Completed" ? "completed" : booking.BookingStatus == "Pending" ? "active" : "")">
+                                                <div class="stepper-bubble">@(booking.BookingStatus == "Confirmed" || booking.BookingStatus == "Completed" ? "✓" : "2")</div>
+                                                <span class="stepper-text">Confirmed</span>
+                                            </div>
+                                            <div class="stepper-bar @(booking.BookingStatus == "Completed" ? "active" : "")"></div>
+                                            <div class="stepper-item @(booking.BookingStatus == "Completed" ? "completed" : "")">
+                                                <div class="stepper-bubble">@(booking.BookingStatus == "Completed" ? "✓" : "3")</div>
+                                                <span class="stepper-text">Completed</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Route timeline -->
+                                        <div class="route-timeline mb-4">
+                                            <div class="route-stop d-flex align-items-start gap-3 mb-2">
+                                                <div class="route-dot bg-success mt-1"></div>
+                                                <div>
+                                                    <div class="text-xs text-muted text-uppercase fw-semibold">Pickup</div>
+                                                    <div class="fw-medium text-white">@booking.Ride?.StartLocation</div>
+                                                </div>
+                                            </div>
+                                            <div class="route-connector ms-2"></div>
+                                            <div class="route-stop d-flex align-items-start gap-3">
+                                                <div class="route-dot bg-danger mt-1"></div>
+                                                <div>
+                                                    <div class="text-xs text-muted text-uppercase fw-semibold">Drop-off</div>
+                                                    <div class="fw-medium text-white">@booking.Ride?.EndLocation</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Ride Specs -->
+                                        <div class="row g-2 pt-3 border-top border-secondary text-sm">
+                                            <div class="col-6 col-sm-4">
+                                                <div class="text-muted text-xs">Departure</div>
+                                                <div class="fw-medium">@booking.Ride?.DepartureTime.ToString("MMM dd, h:mm tt")</div>
+                                            </div>
+                                            <div class="col-6 col-sm-4">
+                                                <div class="text-muted text-xs">Driver</div>
+                                                <div class="fw-medium">@(booking.Ride?.Driver?.FullName ?? "Assigned Driver")</div>
+                                            </div>
+                                            <div class="col-12 col-sm-4">
+                                                <div class="text-muted text-xs">Vehicle</div>
+                                                <div class="fw-medium">@(booking.Ride?.Vehicle != null ? $"{booking.Ride.Vehicle.Model} ({booking.Ride.Vehicle.RegistrationNumber})" : "Confirmed Vehicle")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                                        <a asp-controller="Chat" asp-action="Thread" asp-route-id="@booking.BookingId" class="btn btn-sm btn-outline-primary">
+                                            <i data-lucide="message-square" style="width: 15px; height: 15px;"></i> Chat Driver
+                                        </a>
+                                        <div class="d-flex gap-2">
+                                            @if (booking.BookingStatus != "Cancelled")
+                                            {
+                                                <form asp-controller="Bookings" asp-action="Cancel" asp-route-id="@booking.BookingId" method="post" onsubmit="return confirm('Cancel this ride booking?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Cancel Booking</button>
+                                                </form>
+                                            }
+                                            <a asp-controller="Profile" asp-action="FileComplaint" asp-route-bookingId="@booking.BookingId" class="btn btn-sm btn-ghost text-muted">
+                                                Report Issue
+                                            </a>
+                                        </div>
+                                    </div>
+                                </article>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="card card-elevated text-center py-5">
+                        <div class="avatar avatar-xl mx-auto mb-3 bg-secondary">
+                            <i data-lucide="compass" style="width: 32px; height: 32px; color: var(--color-brand-primary);"></i>
+                        </div>
+                        <h3 class="h4 fw-bold">No Booked Rides Yet</h3>
+                        <p class="text-muted small mb-4">Find a ride heading in your direction and travel affordably.</p>
+                        <div>
+                            <a asp-controller="Rides" asp-action="Find" class="btn btn-primary">
+                                <i data-lucide="search" class="me-1"></i> Find Rides Now
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Driver Pane -->
+            <div class="tab-pane fade" id="driver-pane" role="tabpanel" aria-labelledby="driver-tab">
+                @if (Model.AsDriver != null && Model.AsDriver.Any())
+                {
+                    <div class="row g-4">
+                        @foreach (var ride in Model.AsDriver)
+                        {
+                            <div class="col-12 col-lg-6">
+                                <article class="card card-elevated h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge @(ride.Status == "Active" ? "badge-success" : "badge-secondary")">
+                                                @ride.Status
+                                            </span>
+                                            <span class="text-xs text-muted">Seats: @ride.SeatsAvailable Available</span>
+                                        </div>
+                                        <div class="text-gold fw-bold fs-5">
+                                            ₹@ride.PricePerSeat <span class="text-xs text-muted">/seat</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Driver Operational Stepper -->
+                                        <div class="commute-stepper d-flex align-items-center justify-content-between mb-4 px-1">
+                                            <div class="stepper-item completed">
+                                                <div class="stepper-bubble"><i data-lucide="check" style="width:12px;height:12px;"></i></div>
+                                                <span class="stepper-text">Offered</span>
+                                            </div>
+                                            <div class="stepper-bar @(ride.Status == "Active" || ride.Status == "Completed" ? "active" : "")"></div>
+                                            <div class="stepper-item @(ride.Status == "Active" || ride.Status == "Completed" ? "completed" : "")">
+                                                <div class="stepper-bubble">✓</div>
+                                                <span class="stepper-text">@(ride.Status == "Active" ? "Booking Open" : "Active")</span>
+                                            </div>
+                                            <div class="stepper-bar @(ride.Status == "Completed" ? "active" : "")"></div>
+                                            <div class="stepper-item @(ride.Status == "Completed" ? "completed" : "")">
+                                                <div class="stepper-bubble">@(ride.Status == "Completed" ? "✓" : "3")</div>
+                                                <span class="stepper-text">Finished</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Route -->
+                                        <div class="route-timeline mb-4">
+                                            <div class="route-stop d-flex align-items-start gap-3 mb-2">
+                                                <div class="route-dot bg-success mt-1"></div>
+                                                <div>
+                                                    <div class="text-xs text-muted text-uppercase fw-semibold">From</div>
+                                                    <div class="fw-medium text-white">@ride.StartLocation</div>
+                                                </div>
+                                            </div>
+                                            <div class="route-connector ms-2"></div>
+                                            <div class="route-stop d-flex align-items-start gap-3">
+                                                <div class="route-dot bg-danger mt-1"></div>
+                                                <div>
+                                                    <div class="text-xs text-muted text-uppercase fw-semibold">To</div>
+                                                    <div class="fw-medium text-white">@ride.EndLocation</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-2 pt-3 border-top border-secondary text-sm">
+                                            <div class="col-6">
+                                                <div class="text-muted text-xs">Departure Time</div>
+                                                <div class="fw-medium">@ride.DepartureTime.ToString("MMM dd, yyyy h:mm tt")</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-muted text-xs">Vehicle Assigned</div>
+                                                <div class="fw-medium">@(ride.Vehicle != null ? $"{ride.Vehicle.Model} ({ride.Vehicle.RegistrationNumber})" : "Registered Vehicle")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer d-flex justify-content-between align-items-center">
+                                        <span class="text-xs text-muted">Departure in @Math.Max(0, (int)(ride.DepartureTime - DateTime.Now).TotalHours) hrs</span>
+                                        <a asp-controller="Rides" asp-action="Results" asp-route-pickup="@ride.StartLocation" asp-route-dropoff="@ride.EndLocation" class="btn btn-sm btn-outline-light">
+                                            View in Search
+                                        </a>
+                                    </div>
+                                </article>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="card card-elevated text-center py-5">
+                        <div class="avatar avatar-xl mx-auto mb-3 bg-secondary">
+                            <i data-lucide="car" style="width: 32px; height: 32px; color: var(--color-brand-primary);"></i>
+                        </div>
+                        <h3 class="h4 fw-bold">You Haven't Offered Any Rides</h3>
+                        <p class="text-muted small mb-4">Offset your fuel costs and meet co-travelers by offering spare seats.</p>
+                        <div>
+                            <a asp-controller="Rides" asp-action="Offer" class="btn btn-primary">
+                                <i data-lucide="plus" class="me-1"></i> Offer a Ride
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <style>
+        .nav-tabs {
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .nav-tabs .nav-link {
+            color: var(--color-text-muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-weight: var(--font-weight-medium);
+            background: transparent;
+            transition: all var(--transition-fast);
+        }
+        .nav-tabs .nav-link:hover {
+            color: var(--color-text-primary);
+            border-color: var(--color-border-strong);
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--color-brand-primary);
+            border-bottom: 2px solid var(--color-brand-primary);
+            background: rgba(234, 179, 8, 0.05);
+        }
+        .route-timeline {
+            position: relative;
+        }
+        .route-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .route-connector {
+            width: 2px;
+            height: 18px;
+            background: var(--color-border-strong);
+            margin: -4px 0 -4px 4px;
+        }
+    
+        /* Commute Progress Stepper (Rapido & Uber Style) */
+        .commute-stepper {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-lg);
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .stepper-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            z-index: 2;
+        }
+        .stepper-bubble {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .stepper-item.active .stepper-bubble {
+            background: rgba(234, 179, 8, 0.2);
+            color: var(--color-brand-primary);
+            border: 1px solid var(--color-brand-primary);
+        }
+        .stepper-item.completed .stepper-bubble {
+            background: var(--color-brand-primary);
+            color: #000;
+        }
+        .stepper-text {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            letter-spacing: 0.04em;
+        }
+        .stepper-item.completed .stepper-text,
+        .stepper-item.active .stepper-text {
+            color: #fff;
+        }
+        .stepper-bar {
+            flex: 1;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: -14px 8px 0;
+            z-index: 1;
+        }
+        .stepper-bar.active {
+            background: var(--color-brand-primary);
+        }
+
+    </style>
+}

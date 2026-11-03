@@ -15,9 +15,9 @@ namespace Tagalong.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Id = table.Column<string>(maxLength: 450, nullable: false),
+                    Name = table.Column<string>(maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -29,19 +29,19 @@ namespace Tagalong.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    ProfilePicture = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Id = table.Column<string>(maxLength: 450, nullable: false),
+                    FullName = table.Column<string>(maxLength: 100, nullable: false),
+                    ProfilePicture = table.Column<string>(maxLength: 200, nullable: false),
                     IsVerified = table.Column<bool>(nullable: false, defaultValue: false),
-                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    UserName = table.Column<string>(maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(maxLength: 256, nullable: true),
+                    Email = table.Column<string>(maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(maxLength: 256, nullable: true),
                     EmailConfirmed = table.Column<bool>(nullable: false),
                     PasswordHash = table.Column<string>(nullable: true),
                     SecurityStamp = table.Column<string>(nullable: true),
                     ConcurrencyStamp = table.Column<string>(nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    PhoneNumber = table.Column<string>(maxLength: 15, nullable: true),
                     PhoneNumberConfirmed = table.Column<bool>(nullable: false),
                     TwoFactorEnabled = table.Column<bool>(nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(nullable: true),
@@ -59,7 +59,7 @@ namespace Tagalong.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<string>(maxLength: 450, nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
                     ClaimValue = table.Column<string>(nullable: true)
                 },
@@ -80,7 +80,7 @@ namespace Tagalong.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(maxLength: 450, nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
                     ClaimValue = table.Column<string>(nullable: true)
                 },
@@ -99,10 +99,10 @@ namespace Tagalong.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(maxLength: 450, nullable: false),
+                    ProviderKey = table.Column<string>(maxLength: 450, nullable: false),
                     ProviderDisplayName = table.Column<string>(nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(maxLength: 450, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -119,8 +119,8 @@ namespace Tagalong.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(maxLength: 450, nullable: false),
+                    RoleId = table.Column<string>(maxLength: 450, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -143,9 +143,9 @@ namespace Tagalong.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(maxLength: 450, nullable: false),
+                    LoginProvider = table.Column<string>(maxLength: 450, nullable: false),
+                    Name = table.Column<string>(maxLength: 450, nullable: false),
                     Value = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -165,15 +165,15 @@ namespace Tagalong.Migrations
                 {
                     RequestId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RiderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    PickupLocation = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    RiderId = table.Column<string>(maxLength: 450, nullable: false),
+                    PickupLocation = table.Column<string>(maxLength: 200, nullable: false),
                     PickupLat = table.Column<double>(type: "float", nullable: false),
                     PickupLng = table.Column<double>(type: "float", nullable: false),
-                    DropLocation = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    DropLocation = table.Column<string>(maxLength: 200, nullable: false),
                     DropLat = table.Column<double>(type: "float", nullable: false),
                     DropLng = table.Column<double>(type: "float", nullable: false),
                     PreferredTime = table.Column<DateTime>(nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    Status = table.Column<string>(maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -192,11 +192,11 @@ namespace Tagalong.Migrations
                 {
                     VehicleId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    VehicleType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    RegistrationNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    UserId = table.Column<string>(maxLength: 450, nullable: false),
+                    VehicleType = table.Column<string>(maxLength: 50, nullable: false),
+                    RegistrationNumber = table.Column<string>(maxLength: 20, nullable: false),
                     SeatCapacity = table.Column<int>(type: "int", nullable: false),
-                    Model = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    Model = table.Column<string>(maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -215,18 +215,18 @@ namespace Tagalong.Migrations
                 {
                     RideId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    DriverId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DriverId = table.Column<string>(maxLength: 450, nullable: false),
                     VehicleId = table.Column<int>(type: "int", nullable: false),
-                    StartLocation = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    StartLocation = table.Column<string>(maxLength: 200, nullable: false),
                     StartLat = table.Column<double>(type: "float", nullable: false),
                     StartLng = table.Column<double>(type: "float", nullable: false),
-                    EndLocation = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    EndLocation = table.Column<string>(maxLength: 200, nullable: false),
                     EndLat = table.Column<double>(type: "float", nullable: false),
                     EndLng = table.Column<double>(type: "float", nullable: false),
                     DepartureTime = table.Column<DateTime>(nullable: false),
                     SeatsAvailable = table.Column<int>(type: "int", nullable: false),
                     PricePerSeat = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    Status = table.Column<string>(maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -252,9 +252,9 @@ namespace Tagalong.Migrations
                     BookingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RideId = table.Column<int>(type: "int", nullable: false),
-                    RiderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RiderId = table.Column<string>(maxLength: 450, nullable: false),
                     SeatsBooked = table.Column<int>(type: "int", nullable: false),
-                    BookingStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    BookingStatus = table.Column<string>(maxLength: 20, nullable: false),
                     BookedOn = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
@@ -280,11 +280,11 @@ namespace Tagalong.Migrations
                 {
                     ComplaintId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(maxLength: 450, nullable: false),
                     BookingId = table.Column<int>(type: "int", nullable: true),
-                    Subject = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Subject = table.Column<string>(maxLength: 200, nullable: false),
+                    Description = table.Column<string>(maxLength: 1000, nullable: false),
+                    Status = table.Column<string>(maxLength: 20, nullable: false),
                     CreatedOn = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
@@ -310,8 +310,8 @@ namespace Tagalong.Migrations
                 {
                     MessageId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SenderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ReceiverId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    SenderId = table.Column<string>(maxLength: 450, nullable: false),
+                    ReceiverId = table.Column<string>(maxLength: 450, nullable: false),
                     Content = table.Column<string>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     BookingId = table.Column<int>(type: "int", nullable: false)
@@ -346,10 +346,10 @@ namespace Tagalong.Migrations
                     RatingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BookingId = table.Column<int>(type: "int", nullable: false),
-                    RatedBy = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    RatedUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RatedBy = table.Column<string>(maxLength: 450, nullable: false),
+                    RatedUserId = table.Column<string>(maxLength: 450, nullable: false),
                     Stars = table.Column<decimal>(type: "decimal(2,1)", nullable: false),
-                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                    Comment = table.Column<string>(maxLength: 500, nullable: false)
                 },
                 constraints: table =>
                 {

@@ -135,8 +135,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // Configure Identity cookie for Render/Vercel proxy (HTTPS at edge, HTTP to container)
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = isLinux ? SameSiteMode.None : SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = isLinux ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
 });
@@ -144,8 +144,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Configure cookie policy for cross-site cookies
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.MinimumSameSitePolicy = SameSiteMode.None;
-    options.Secure = CookieSecurePolicy.Always;
+    options.MinimumSameSitePolicy = isLinux ? SameSiteMode.None : SameSiteMode.Lax;
+    options.Secure = isLinux ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
 });
 
 // Add application services

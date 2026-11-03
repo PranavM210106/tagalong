@@ -1,0 +1,317 @@
+/* ==========================================================================
+   Tagalong Authentication Pages (Login & Register) - Uber/Rapido Aesthetic
+   ========================================================================== */
+
+.auth-page {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8) var(--space-4);
+}
+
+.auth-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+}
+
+.auth-gradient {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(234, 179, 8, 0.18) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(250, 204, 21, 0.09) 0%, transparent 60%),
+                var(--color-bg-primary);
+}
+
+.auth-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23eab308' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    animation: patternMove 30s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-pattern {
+        animation: none;
+    }
+}
+
+@keyframes patternMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+}
+
+.auth-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp var(--transition-slow) var(--transition-smooth);
+}
+
+.auth-brand {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.auth-brand:hover .brand-text {
+    color: var(--color-brand-primary);
+}
+
+.auth-brand .brand-icon {
+    background: var(--gradient-primary);
+}
+
+.auth-header h1 {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--space-2);
+}
+
+.auth-header p {
+    color: var(--color-text-muted);
+}
+
+.auth-form .form-group {
+    margin-bottom: var(--space-5);
+}
+
+.auth-form .form-label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--space-2);
+}
+
+.auth-form .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.auth-form .input-wrapper .form-control {
+    padding-left: 3rem;
+}
+
+.auth-form .input-icon {
+    position: absolute;
+    left: var(--space-4);
+    width: 20px;
+    height: 20px;
+    color: var(--color-text-disabled);
+    pointer-events: none;
+    transition: color var(--transition-fast);
+    z-index: 2;
+}
+
+.auth-form .form-control:focus + .input-icon {
+    color: var(--color-brand-primary);
+}
+
+.auth-form .password-toggle {
+    position: absolute;
+    right: var(--space-3);
+    background: transparent;
+    border: none;
+    color: var(--color-text-disabled);
+    cursor: pointer;
+    padding: var(--space-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    transition: color var(--transition-fast);
+}
+
+.auth-form .password-toggle:hover {
+    color: var(--color-text-primary);
+}
+
+.auth-form .password-toggle i {
+    width: 18px;
+    height: 18px;
+}
+
+.auth-form .form-control {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-primary);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-base);
+    transition: all var(--transition-base);
+    width: 100%;
+}
+
+.auth-form .form-control:focus {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-brand-primary);
+    box-shadow: 0 0 0 3px var(--color-brand-primary-light);
+    outline: none;
+}
+
+.auth-form .form-error {
+    display: block;
+    color: var(--color-danger);
+    font-size: var(--font-size-xs);
+    margin-top: var(--space-1);
+}
+
+.auth-form .validation-summary {
+    background: var(--color-danger-light);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    color: var(--color-danger);
+    margin-bottom: var(--space-5);
+    font-size: var(--font-size-sm);
+}
+
+/* Role Selector Cards for Register */
+.role-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.role-card {
+    background: var(--color-bg-tertiary);
+    border: 2px solid var(--color-border-strong);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--transition-base);
+}
+
+.role-card:hover {
+    border-color: var(--color-brand-primary);
+    background: var(--color-bg-elevated);
+    transform: translateY(-2px);
+}
+
+.role-card.selected {
+    border-color: var(--color-brand-primary);
+    background: var(--color-brand-primary-light);
+}
+
+.role-card i {
+    width: 28px;
+    height: 28px;
+    color: var(--color-brand-primary);
+    margin-bottom: var(--space-2);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: var(--space-6) 0;
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-border-default);
+}
+
+.auth-divider span {
+    padding: 0 var(--space-4);
+}
+
+.auth-footer p {
+    color: var(--color-text-muted);
+}
+
+.auth-footer a {
+    color: var(--color-brand-primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+
+/* --- Role Selection Options for Register --- */
+.role-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+.role-option {
+    display: block;
+    cursor: pointer;
+}
+.role-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.role-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-xl);
+    transition: all var(--transition-base);
+}
+.role-option:hover .role-card {
+    border-color: var(--color-brand-primary);
+}
+.role-input:checked + .role-card {
+    border-color: var(--color-brand-primary);
+    background: var(--color-brand-primary-light);
+}
+.role-input:focus-visible + .role-card {
+    outline: 2px solid var(--color-brand-primary);
+    outline-offset: 2px;
+}
+.role-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.role-icon i {
+    width: 24px;
+    height: 24px;
+    color: var(--color-text-inverse);
+}
+.role-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.role-title {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-base);
+}
+.role-desc {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}

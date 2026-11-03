@@ -76,6 +76,21 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="RideId" value="@rideId" />
                         <input type="hidden" name="RecipientId" value="@ViewData["OtherUserId"]" />
+                                                <!-- Quick Commute Action Chips (Rapido & Uber Style) -->
+                        <div class="chat-quick-chips d-flex flex-wrap gap-2 mb-3">
+                            <button type="button" class="btn-chat-chip" onclick="insertQuickMessage('I am waiting at the pickup point 📍')">
+                                📍 At pickup point
+                            </button>
+                            <button type="button" class="btn-chat-chip" onclick="insertQuickMessage('Running 5 mins late, please wait! ⏱️')">
+                                ⏱️ 5 mins late
+                            </button>
+                            <button type="button" class="btn-chat-chip" onclick="insertQuickMessage('Which vehicle model and color? 🚗')">
+                                🚗 Vehicle color?
+                            </button>
+                            <button type="button" class="btn-chat-chip" onclick="insertQuickMessage('Reached safely, thank you! 👍')">
+                                👍 Reached safely
+                            </button>
+                        </div>
                         <div class="input-row">
                             <div class="input-wrapper flex-grow-1">
                                 <input type="text" name="Content" class="form-control" placeholder="Type a message..." autocomplete="off" aria-label="Message" required maxlength="2000" />
@@ -561,6 +576,19 @@
                 return div.innerHTML;
             }
 
+            
+        window.insertQuickMessage = function(text) {
+            const input = document.querySelector('input[name="Content"]');
+            const sendBtn = document.querySelector('.send-btn');
+            if (input) {
+                input.value = text;
+                input.focus();
+                if (sendBtn) sendBtn.disabled = false;
+                const charCount = document.getElementById('charCount');
+                if (charCount) charCount.textContent = text.length;
+            }
+        };
+
             // Initial scroll to bottom
             scrollToBottom();
 
@@ -571,6 +599,25 @@
         });
     </script>
     <style>
+        
+        .btn-chat-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--color-text-secondary);
+            border-radius: var(--radius-full);
+            padding: 5px 12px;
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .btn-chat-chip:hover {
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+            border-color: rgba(234, 179, 8, 0.4);
+            transform: translateY(-1px);
+        }
+
         .toast-alert {
             position: fixed;
             bottom: var(--space-8);

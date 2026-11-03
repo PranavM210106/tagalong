@@ -41,3 +41,11 @@ Thumbs.db
 # User secrets
 **/appsettings.Development.json
 **/secrets.json
+
+# Scratch and test files
+test_*.py
+debug_*.py
+cookies.txt
+*.html
+.court/
+.agents/

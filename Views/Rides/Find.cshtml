@@ -1,181 +1,36 @@
 @model Tagalong.Models.ViewModels.FindRideViewModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
 @{
     ViewData["Title"] = "Find a Ride";
+    var defaultGMapKey = Configuration["GoogleMaps:ApiKey"] ?? "";
 }
 
-<section class="page-header" aria-labelledby="page-title">
-    <div class="container-fluid px-md-4 px-lg-5">
-        <nav aria-label="Breadcrumb" class="mb-4">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
-                <li class="breadcrumb-item"><a asp-controller="Rides" asp-action="Index" class="text-muted">Rides</a></li>
-                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Find a Ride</li>
-            </ol>
-        </nav>
-        <header>
-            <h1 id="page-title" class="display-5 fw-bold mb-1">Find a Ride</h1>
-            <p class="lead text-muted mb-0">Search for rides matching your route and schedule</p>
-        </header>
-    </div>
-</section>
-
-<section class="form-page">
-    <div class="container-fluid px-md-4 px-lg-5">
-        <div class="row justify-content-center">
-            <div class="col-12 col-xl-7">
-                <form asp-action="Find" method="post" class="ride-form find-ride-form" novalidate>
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="text-danger validation-summary mb-4" role="alert" aria-live="polite"></div>
-
-                    <!-- Section 1: Route -->
-                    <fieldset class="form-section mb-5">
-                        <legend class="section-title">
-                            <i data-lucide="map-pin" class="me-2" aria-hidden="true"></i>
-                            Your Route
-                        </legend>
-                        <div class="row g-4">
-                            <div class="col-12 col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="PickupLocation" class="form-label">Pickup Location <span class="text-danger" aria-hidden="true">*</span></label>
-                                    <div class="input-wrapper">
-                                        <input asp-for="PickupLocation" class="form-control" placeholder="Enter pickup address" autocomplete="address-line1" aria-describedby="pickupLocation-error" />
-                                        <i data-lucide="map-pin" class="input-icon" aria-hidden="true"></i>
-                                        <button type="button" class="location-btn" aria-label="Use current location for pickup">
-                                            <i data-lucide="navigation" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="PickupLocation" class="form-error" id="pickupLocation-error"></span>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="DropLocation" class="form-label">Drop-off Location <span class="text-danger" aria-hidden="true">*</span></label>
-                                    <div class="input-wrapper">
-                                        <input asp-for="DropLocation" class="form-control" placeholder="Enter drop-off address" autocomplete="address-line2" aria-describedby="dropLocation-error" />
-                                        <i data-lucide="map-pin" class="input-icon" aria-hidden="true"></i>
-                                        <button type="button" class="location-btn" aria-label="Use current location for drop-off">
-                                            <i data-lucide="navigation" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="DropLocation" class="form-error" id="dropLocation-error"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Hidden lat/lng fields -->
-                        <div class="row g-4 d-none">
-                            <div class="col-12 col-md-6">
-                                <input asp-for="PickupLat" type="hidden" />
-                                <span asp-validation-for="PickupLat" class="form-error"></span>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <input asp-for="PickupLng" type="hidden" />
-                                <span asp-validation-for="PickupLng" class="form-error"></span>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <input asp-for="DropLat" type="hidden" />
-                                <span asp-validation-for="DropLat" class="form-error"></span>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <input asp-for="DropLng" type="hidden" />
-                                <span asp-validation-for="DropLng" class="form-error"></span>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <!-- Section 2: Date & Time -->
-                    <fieldset class="form-section mb-5">
-                        <legend class="section-title">
-                            <i data-lucide="calendar" class="me-2" aria-hidden="true"></i>
-                            When to Travel
-                        </legend>
-                        <div class="row g-4">
-                            <div class="col-12 col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="PreferredTime" class="form-label">Preferred Date & Time <span class="text-danger" aria-hidden="true">*</span></label>
-                                    <div class="input-wrapper">
-                                        <input asp-for="PreferredTime" class="form-control" type="datetime-local" aria-describedby="preferredTime-error" />
-                                        <i data-lucide="clock" class="input-icon" aria-hidden="true"></i>
-                                    </div>
-                                    <span asp-validation-for="PreferredTime" class="form-error" id="preferredTime-error"></span>
-                                    <div class="form-hint">We'll find rides departing within 2 hours of this time</div>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <!-- Search Filters -->
-                    <fieldset class="form-section mb-5">
-                        <legend class="section-title">
-                            <i data-lucide="sliders-horizontal" class="me-2" aria-hidden="true"></i>
-                            Filters (Optional)
-                        </legend>
-                        <div class="row g-4">
-                            <div class="col-12 col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Max Price per Seat ($)</label>
-                                    <div class="input-wrapper">
-                                        <span class="input-prefix">$</span>
-                                        <input type="number" id="maxPrice" class="form-control" step="0.01" min="0" placeholder="Any price" />
-                                        <i data-lucide="dollar-sign" class="input-icon" aria-hidden="true"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Minimum Seats Needed</label>
-                                    <div class="input-wrapper">
-                                        <select id="minSeats" class="form-control" aria-describedby="minSeats-hint">
-                                            <option value="1" selected>1 seat</option>
-                                            <option value="2">2 seats</option>
-                                            <option value="3">3 seats</option>
-                                            <option value="4">4 seats</option>
-                                        </select>
-                                        <i data-lucide="users" class="input-icon" aria-hidden="true"></i>
-                                    </div>
-                                    <div class="form-hint" id="minSeats-hint">Select how many seats you need</div>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <!-- Form Actions -->
-                    <div class="form-actions sticky-bottom d-flex flex-column flex-md-row gap-3 justify-content-end">
-                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg py-3 px-5 order-md-1 order-2">
-                            <i data-lucide="x" class="me-2" aria-hidden="true"></i>
-                            Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary btn-lg py-3 px-5 order-md-2 order-1 auth-submit" data-loading-text="Searching rides...">
-                            <span class="btn-text">
-                                <i data-lucide="search" class="me-2" aria-hidden="true"></i>
-                                Find Rides
-                            </span>
-                            <span class="btn-loader d-none">
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Searching...
-                            </span>
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Quick Tips -->
-                <div class="quick-tips mt-5 p-4 rounded-3" style="background: var(--color-brand-primary-light); border: 1px solid var(--color-brand-primary);">
-                    <h3 class="h6 fw-bold mb-3 d-flex align-items-center gap-2">
-                        <i data-lucide="lightbulb" class="text-gold" aria-hidden="true"></i>
-                        Search Tips
-                    </h3>
-                    <ul class="mb-0 text-sm text-muted">
-                        <li class="mb-2">Use nearby landmarks or intersections for better matching</li>
-                        <li class="mb-2">Broader time windows return more results</li>
-                        <li class="mb-2">Check back later — new rides are added frequently</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 @section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        .leaflet-container {
+            background: #090a0f !important;
+        }
+        #findMap .leaflet-tile {
+            filter: brightness(0.65) invert(1) contrast(2.6) hue-rotate(205deg) saturate(0.35) brightness(0.85) !important;
+        }
+        .leaflet-control-zoom a {
+            background: #18181b !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        .leaflet-control-zoom a:hover {
+            color: #facc15 !important;
+        }
+        .leaflet-control-attribution {
+            background: rgba(9, 10, 15, 0.85) !important;
+            color: rgba(255, 255, 255, 0.5) !important;
+            font-size: 10px !important;
+        }
+        .leaflet-control-attribution a {
+            color: #eab308 !important;
+        }
         .page-header {
             padding: var(--space-12) 0 var(--space-8);
             border-bottom: 1px solid var(--color-border-default);
@@ -206,11 +61,13 @@
             padding: var(--space-8);
         }
         .form-section {
-            padding-bottom: var(--space-5);
+            padding-bottom: var(--space-6);
             border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-6);
         }
         .form-section:last-of-type {
             border-bottom: none;
+            margin-bottom: 0;
             padding-bottom: 0;
         }
         .section-title {
@@ -247,12 +104,13 @@
         .input-wrapper .input-prefix {
             position: absolute;
             left: 1rem;
-            color: var(--color-text-disabled);
-            font-weight: var(--font-weight-medium);
+            color: var(--color-brand-primary);
+            font-weight: var(--font-weight-bold);
+            font-size: 1.1rem;
             z-index: 2;
         }
         .input-wrapper .input-prefix + .form-control {
-            padding-left: 2.5rem;
+            padding-left: 2.75rem;
         }
         .input-icon {
             position: absolute;
@@ -265,13 +123,6 @@
             pointer-events: none;
             transition: color var(--transition-fast);
             z-index: 2;
-        }
-        .input-wrapper:has(.input-prefix) .input-icon {
-            left: calc(var(--space-4) + 1.25rem);
-        }
-        .form-control:focus + .input-icon,
-        .form-control:focus ~ .input-icon {
-            color: var(--color-brand-primary);
         }
         .location-btn {
             position: absolute;
@@ -288,14 +139,11 @@
             justify-content: center;
             border-radius: var(--radius-md);
             transition: all var(--transition-fast);
+            z-index: 2;
         }
         .location-btn:hover {
             background: var(--color-brand-primary-light);
             color: var(--color-brand-primary);
-        }
-        .location-btn i {
-            width: 20px;
-            height: 20px;
         }
         .form-control {
             background: var(--color-bg-tertiary);
@@ -316,121 +164,710 @@
             box-shadow: 0 0 0 3px var(--color-brand-primary-light);
             color: var(--color-text-primary);
         }
-        .form-control.is-invalid,
-        .form-control:invalid {
-            border-color: var(--color-danger);
-        }
-        .form-control.is-invalid:focus,
-        .form-control:invalid:focus {
-            box-shadow: 0 0 0 3px var(--color-danger-light);
-        }
         .form-error {
             display: block;
             color: var(--color-danger);
             font-size: var(--font-size-xs);
             margin-top: var(--space-1);
         }
-        .validation-summary {
-            background: var(--color-danger-light);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            color: var(--color-danger);
+
+        /* Map styling */
+        .route-map-wrapper {
+            margin-top: var(--space-5);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            background: #111;
+            box-shadow: var(--shadow-md);
         }
-        .form-hint {
-            display: block;
-            color: var(--color-text-disabled);
+        .map-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-bg-tertiary);
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .map-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-size: var(--font-size-xs);
-            margin-top: var(--space-1);
+            font-weight: var(--font-weight-medium);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--color-text-secondary);
+        }
+        .map-badge.highlight {
+            background: var(--color-brand-primary-light);
+            color: var(--color-brand-primary);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+        #findMap {
+            height: 330px;
+            width: 100%;
+            z-index: 1;
+            background: #121212;
+        }
+        .leaflet-container {
+            background: #121212 !important;
+            font-family: inherit;
         }
 
-        /* Form Actions */
-        .form-actions {
-            padding-top: var(--space-5);
-            margin-top: var(--space-5);
-            border-top: 1px solid var(--color-border-default);
+        /* Custom Map Pins */
+        .custom-map-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(0,0,0,0.8);
+            font-size: 16px;
+            position: relative;
         }
-        .form-actions.sticky-bottom {
-            position: sticky;
-            bottom: 0;
-            background: linear-gradient(to top, var(--color-bg-card), transparent);
-            z-index: 10;
+        .custom-map-pin.pickup {
+            background: #16a34a;
+            border: 2px solid #ffffff;
+            color: #fff;
         }
+        .custom-map-pin.dropoff {
+            background: #eab308;
+            border: 2px solid #ffffff;
+            color: #000;
+        }
+        .pulse-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid rgba(234, 179, 8, 0.6);
+            animation: mapPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+        }
+        @@keyframes mapPulse {
+            0% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        /* Quick Location Chips */
+        .quick-locations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-top: var(--space-3);
+        }
+        .quick-chip {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-default);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-xs);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .quick-chip:hover {
+            border-color: var(--color-brand-primary);
+            color: var(--color-brand-primary);
+            background: var(--color-brand-primary-light);
+        }
+
         .auth-submit {
             border-radius: var(--radius-lg);
             background: var(--gradient-primary);
             border: none;
+            color: #030303;
+            font-weight: var(--font-weight-bold);
             transition: all var(--transition-base);
             min-width: 200px;
         }
         .auth-submit:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: var(--shadow-glow);
-        }
-        .auth-submit:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        .auth-submit:disabled {
-            opacity: 0.7;
-        }
-        .btn-outline-secondary {
-            border-radius: var(--radius-lg);
-            border-color: var(--color-border-strong);
-            color: var(--color-text-secondary);
-            min-width: 200px;
-        }
-        .btn-outline-secondary:hover {
-            background: var(--color-bg-tertiary);
-            border-color: var(--color-border-emphasis);
-            color: var(--color-text-primary);
-        }
-        .btn-outline-secondary i {
-            width: 18px;
-            height: 18px;
-        }
-        .btn-primary i,
-        .btn-outline-primary i {
-            width: 18px;
-            height: 18px;
+            color: #000;
         }
 
-        /* Quick Tips */
-        .quick-tips li::marker {
-            color: var(--color-brand-primary);
+        .modal-content.dark-modal {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-strong);
+            border-radius: var(--radius-2xl);
+            color: var(--color-text-primary);
         }
-        .text-sm {
-            font-size: var(--font-size-sm);
+        .modal-header.dark-modal-header {
+            border-bottom: 1px solid var(--color-border-default);
+            padding: var(--space-5) var(--space-6);
+        }
+        .modal-footer.dark-modal-footer {
+            border-top: 1px solid var(--color-border-default);
+            padding: var(--space-4) var(--space-6);
+        }
+        .btn-close-white {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        .pac-container {
+            background-color: #1a1a1a;
+            border: 1px solid rgba(234, 179, 8, 0.4);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            font-family: inherit;
+            z-index: 99999;
+        }
+        .pac-item {
+            color: #f5f5f5;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .pac-item:hover, .pac-item-selected {
+            background-color: rgba(234, 179, 8, 0.15);
+        }
+        .pac-item-query {
+            color: #facc15;
+            font-size: 14px;
+        }
+        .pac-matched {
+            font-weight: bold;
+            color: #ffffff;
         }
     </style>
 }
 
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Rides" asp-action="Find" class="text-muted">Rides</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Find a Ride</li>
+            </ol>
+        </nav>
+        <header>
+            <h1 id="page-title" class="display-5 fw-bold mb-1">Find a Ride</h1>
+            <p class="lead text-muted mb-0">Search for carpooling matches with live GPS route visualization</p>
+        </header>
+    </div>
+</section>
+
+<section class="form-page">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-8">
+                <form asp-action="Find" method="post" class="ride-form find-ride-form" novalidate id="findRideForm">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger validation-summary mb-4" role="alert" aria-live="polite"></div>
+
+                    <!-- Hidden lat/lng fields -->
+                    <input asp-for="PickupLat" type="hidden" id="PickupLat" value="@(Model?.PickupLat != 0 ? Model?.PickupLat : 22.3667)" />
+                    <input asp-for="PickupLng" type="hidden" id="PickupLng" value="@(Model?.PickupLng != 0 ? Model?.PickupLng : 70.7972)" />
+                    <input asp-for="DropLat" type="hidden" id="DropLat" value="@(Model?.DropLat != 0 ? Model?.DropLat : 22.3168)" />
+                    <input asp-for="DropLng" type="hidden" id="DropLng" value="@(Model?.DropLng != 0 ? Model?.DropLng : 70.7813)" />
+
+                    <!-- Section 1: Route -->
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i data-lucide="map-pin" class="me-2" aria-hidden="true"></i>
+                            Your Commute Route
+                        </legend>
+                        <div class="row g-4">
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="PickupLocation" class="form-label">Pickup Location <span class="text-danger">*</span></label>
+                                    <div class="input-wrapper">
+                                        <input asp-for="PickupLocation" class="form-control" id="PickupLocation" placeholder="Enter pickup address or landmark" autocomplete="off" required />
+                                        <i data-lucide="map-pin" class="input-icon" aria-hidden="true"></i>
+                                        <button type="button" class="location-btn" id="btnFindCurrentLocation" title="Use current GPS location" aria-label="Use current location for pickup">
+                                            <i data-lucide="crosshair" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="PickupLocation" class="form-error"></span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="DropLocation" class="form-label">Drop-off Location <span class="text-danger">*</span></label>
+                                    <div class="input-wrapper">
+                                        <input asp-for="DropLocation" class="form-control" id="DropLocation" placeholder="Enter drop-off destination" autocomplete="off" required />
+                                        <i data-lucide="flag" class="input-icon" aria-hidden="true"></i>
+                                    </div>
+                                    <span asp-validation-for="DropLocation" class="form-error"></span>
+                                </div>
+                            </div>
+
+                            <!-- Quick stops chips -->
+                            <div class="col-12">
+                                <div class="small text-muted mb-1 d-flex align-items-center gap-1">
+                                    <i data-lucide="zap" style="width:14px;height:14px;" class="text-warning"></i>
+                                    <span>Popular Landmarks:</span>
+                                </div>
+                                <div class="quick-locations">
+                                    <button type="button" class="quick-chip" data-name="Marwadi University" data-lat="22.3667" data-lng="70.7972">📍 Marwadi University</button>
+                                    <button type="button" class="quick-chip" data-name="Madhapar Chowk" data-lat="22.3168" data-lng="70.7813">📍 Madhapar Chowk</button>
+                                    <button type="button" class="quick-chip" data-name="Rajkot Junction" data-lat="22.3115" data-lng="70.8021">🚆 Rajkot Junction</button>
+                                    <button type="button" class="quick-chip" data-name="Kalawad Road" data-lat="22.2835" data-lng="70.7712">🛣️ Kalawad Road</button>
+                                    <button type="button" class="quick-chip" data-name="Crystal Mall" data-lat="22.2858" data-lng="70.7735">🛍️ Crystal Mall</button>
+                                    <button type="button" class="quick-chip" data-name="Rajkot Airport" data-lat="22.3092" data-lng="70.7794">✈️ Airport</button>
+                                </div>
+                            </div>
+
+                            <!-- Live Route Map (Google Maps API + Resilient Dark Engine) -->
+                            <div class="col-12">
+                                <div class="route-map-wrapper">
+                                    <div class="map-header-bar">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="map-badge highlight">
+                                                <i data-lucide="navigation" style="width:14px;height:14px;"></i>
+                                                <span id="findDistanceChip">Direct Route</span>
+                                            </span>
+                                            <span class="map-badge" id="findDurationBadge">
+                                                <i data-lucide="clock" style="width:14px;height:14px;"></i>
+                                                <span id="findDurationChip">~18 mins</span>
+                                            </span>
+                                            <span class="map-badge" id="findMapEngineBadge">
+                                                <i data-lucide="map" style="width:14px;height:14px;" class="text-gold"></i>
+                                                <span id="findMapEngineName">Live GPS Active</span>
+                                            </span>
+                                        </div>
+                                        <div class="text-muted small d-none d-sm-block">
+                                            <span>💡 Click on map to drop Pickup 🟢 or Destination 🏁 pins</span>
+                                        </div>
+                                    </div>
+                                    <div id="findMap"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Section 2: Date & Time -->
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i data-lucide="calendar" class="me-2" aria-hidden="true"></i>
+                            When to Travel
+                        </legend>
+                        <div class="row g-4">
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="PreferredTime" class="form-label">Preferred Date & Time <span class="text-danger">*</span></label>
+                                    <div class="input-wrapper">
+                                        <input asp-for="PreferredTime" class="form-control" id="PreferredTime" type="datetime-local" value="@(Model?.PreferredTime > DateTime.MinValue ? Model.PreferredTime.ToString("yyyy-MM-ddTHH:mm") : DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm"))" required />
+                                        <i data-lucide="clock" class="input-icon" aria-hidden="true"></i>
+                                    </div>
+                                    <span asp-validation-for="PreferredTime" class="form-error"></span>
+                                    <div class="form-hint">Matches rides departing within 2 hours of this time</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Max Price per Seat (₹)</label>
+                                    <div class="input-wrapper">
+                                        <span class="input-prefix">₹</span>
+                                        <input type="number" id="maxPrice" name="MaxPrice" class="form-control" step="10" min="0" placeholder="Any price" />
+                                    </div>
+                                    <div class="form-hint">Optional filter in Rupees (₹)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions d-flex flex-column flex-md-row gap-3 justify-content-end">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg py-3 px-5 order-md-1 order-2">
+                            <i data-lucide="x" class="me-2" aria-hidden="true"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn auth-submit btn-lg py-3 px-5 order-md-2 order-1" data-loading-text="Searching rides...">
+                            <span class="btn-text">
+                                <i data-lucide="search" class="me-2" aria-hidden="true"></i>Find Matching Rides
+                            </span>
+                            <span class="btn-loader d-none">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Searching...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="quick-tips mt-4 p-4 rounded-3" style="background: var(--color-brand-primary-light); border: 1px solid var(--color-brand-primary);">
+                    <h3 class="h6 fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i data-lucide="lightbulb" class="text-gold" aria-hidden="true"></i>
+                        Ride Booking Tips
+                    </h3>
+                    <ul class="mb-0 text-sm text-muted">
+                        <li class="mb-2">Click anywhere on the map or pick a landmark chip to set your exact route</li>
+                        <li class="mb-2">Prices are transparent and set by drivers in Indian Rupees (₹)</li>
+                        <li class="mb-0">All drivers are verified community members with ratings and vehicle details</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Google Maps API Key Modal -->
+<div class="modal fade" id="googleApiKeyModal" tabindex="-1" aria-labelledby="googleApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content dark-modal">
+            <div class="modal-header dark-modal-header">
+                <h5 class="modal-title fw-bold" id="googleApiKeyModalLabel">
+                    <i data-lucide="map-pin" class="me-2 text-gold"></i>Google Maps API Settings
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted text-sm mb-3">
+                    Tagalong supports <strong>Google Maps JavaScript API & Places Autocomplete</strong> for real-time traffic and address suggestions.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label" for="findInputGoogleApiKey">Google Maps API Key</label>
+                    <input type="text" class="form-control font-monospace" id="findInputGoogleApiKey" placeholder="AIzaSy..." value="@defaultGMapKey" />
+                    <span class="form-hint">Leave blank to use the built-in dark vector map engine.</span>
+                </div>
+            </div>
+            <div class="modal-footer dark-modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnSaveFindGMapKey">
+                    <i data-lucide="save" class="me-1"></i>Apply Key
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Set min datetime for preferred time
-            const preferredInput = document.querySelector('input[name="PreferredTime"]');
-            if (preferredInput) {
-                const now = new Date();
-                const isoString = now.toISOString().slice(0, 16);
-                preferredInput.min = isoString;
+            const pickupLatInput = document.getElementById('PickupLat');
+            const pickupLngInput = document.getElementById('PickupLng');
+            const dropLatInput = document.getElementById('DropLat');
+            const dropLngInput = document.getElementById('DropLng');
+            const pickupLocInput = document.getElementById('PickupLocation');
+            const dropLocInput = document.getElementById('DropLocation');
+            const distChip = document.getElementById('findDistanceChip');
+            const durChip = document.getElementById('findDurationChip');
+            const engineName = document.getElementById('findMapEngineName');
+
+            let gmapKey = localStorage.getItem('tagalong_gmap_key') || '@defaultGMapKey';
+            const inputKey = document.getElementById('findInputGoogleApiKey');
+            if (inputKey && gmapKey) inputKey.value = gmapKey;
+
+            document.getElementById('btnSaveFindGMapKey')?.addEventListener('click', function() {
+                const val = inputKey.value.trim();
+                if (val) {
+                    localStorage.setItem('tagalong_gmap_key', val);
+                } else {
+                    localStorage.removeItem('tagalong_gmap_key');
+                }
+                location.reload();
+            });
+
+            // Google Dark Theme style
+            const googleDarkStyle = [
+                { "elementType": "geometry", "stylers": [{ "color": "#121212" }] },
+                { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
+                { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1a1a1a" }] },
+                { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#757575" }] },
+                { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                { "featureType": "road", "elementType": "geometry.fill", "stylers": [{ "color": "#242424" }] },
+                { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#8a8a8a" }] },
+                { "featureType": "road.highway", "elementType": "geometry.fill", "stylers": [{ "color": "#333333" }] },
+                { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#eab308" }, { "weight": 0.5 }] },
+                { "featureType": "transit", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] }
+            ];
+
+            let googleMap = null;
+            let googleDirectionsService = null;
+            let googleDirectionsRenderer = null;
+            let googlePickupMarker = null;
+            let googleDropMarker = null;
+            let leafletMap = null;
+
+            function haversineDistance(c1, c2) {
+                const R = 6371;
+                const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+                const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(c1[0] * Math.PI / 180) * Math.cos(c2[0] * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
             }
 
-            // Form submission loading state
-            const form = document.querySelector('.find-ride-form');
-            const submitBtn = document.querySelector('.auth-submit');
+            function tryLoadGoogleMaps(apiKey) {
+                if (!apiKey) {
+                    initLeafletFallback();
+                    return;
+                }
 
-            if (form && submitBtn) {
-                form.addEventListener('submit', function() {
-                    if (form.checkValidity()) {
-                        submitBtn.disabled = true;
-                        submitBtn.querySelector('.btn-text').classList.add('d-none');
-                        submitBtn.querySelector('.btn-loader').classList.remove('d-none');
+                window.gm_authFailure = function() {
+                    console.warn('[Tagalong] Google Maps auth failure. Using Dark Tile Engine.');
+                    if (engineName) engineName.textContent = 'Dark Engine Active';
+                    initLeafletFallback();
+                };
+
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+                script.async = true;
+                script.defer = true;
+                script.onload = () => initGoogleMapsEngine();
+                script.onerror = () => initLeafletFallback();
+                document.head.appendChild(script);
+            }
+
+            function initGoogleMapsEngine() {
+                try {
+                    const centerLat = parseFloat(pickupLatInput?.value) || 22.34;
+                    const centerLng = parseFloat(pickupLngInput?.value) || 70.79;
+
+                    googleMap = new google.maps.Map(document.getElementById('findMap'), {
+                        center: { lat: centerLat, lng: centerLng },
+                        zoom: 12,
+                        styles: googleDarkStyle,
+                        disableDefaultUI: false,
+                        zoomControl: true,
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: false
+                    });
+
+                    googleDirectionsService = new google.maps.DirectionsService();
+                    googleDirectionsRenderer = new google.maps.DirectionsRenderer({
+                        map: googleMap,
+                        suppressMarkers: true,
+                        polylineOptions: { strokeColor: '#facc15', strokeWeight: 5, strokeOpacity: 0.9 }
+                    });
+
+                    if (engineName) engineName.textContent = 'Google Maps Active';
+
+                    if (pickupLocInput && google.maps.places) {
+                        const autoPickup = new google.maps.places.Autocomplete(pickupLocInput);
+                        autoPickup.bindTo('bounds', googleMap);
+                        autoPickup.addListener('place_changed', function() {
+                            const place = autoPickup.getPlace();
+                            if (place.geometry && place.geometry.location) {
+                                pickupLatInput.value = place.geometry.location.lat().toFixed(6);
+                                pickupLngInput.value = place.geometry.location.lng().toFixed(6);
+                                updateGoogleRoute();
+                            }
+                        });
+                    }
+
+                    if (dropLocInput && google.maps.places) {
+                        const autoDrop = new google.maps.places.Autocomplete(dropLocInput);
+                        autoDrop.bindTo('bounds', googleMap);
+                        autoDrop.addListener('place_changed', function() {
+                            const place = autoDrop.getPlace();
+                            if (place.geometry && place.geometry.location) {
+                                dropLatInput.value = place.geometry.location.lat().toFixed(6);
+                                dropLngInput.value = place.geometry.location.lng().toFixed(6);
+                                updateGoogleRoute();
+                            }
+                        });
+                    }
+
+                    let toggleClick = false;
+                    googleMap.addListener('click', function(e) {
+                        const lat = e.latLng.lat();
+                        const lng = e.latLng.lng();
+                        const geocoder = new google.maps.Geocoder();
+
+                        if (!toggleClick) {
+                            pickupLatInput.value = lat.toFixed(6);
+                            pickupLngInput.value = lng.toFixed(6);
+                            geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+                                if (status === 'OK' && res[0] && pickupLocInput) {
+                                    pickupLocInput.value = res[0].formatted_address.split(',').slice(0, 3).join(',');
+                                }
+                            });
+                            toggleClick = true;
+                        } else {
+                            dropLatInput.value = lat.toFixed(6);
+                            dropLngInput.value = lng.toFixed(6);
+                            geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+                                if (status === 'OK' && res[0] && dropLocInput) {
+                                    dropLocInput.value = res[0].formatted_address.split(',').slice(0, 3).join(',');
+                                }
+                            });
+                            toggleClick = false;
+                        }
+                        updateGoogleRoute();
+                    });
+
+                    updateGoogleRoute();
+                } catch(e) {
+                    initLeafletFallback();
+                }
+            }
+
+            function updateGoogleRoute() {
+                if (!googleMap || !googleDirectionsService) return;
+
+                const pLat = parseFloat(pickupLatInput?.value) || 22.3667;
+                const pLng = parseFloat(pickupLngInput?.value) || 70.7972;
+                const dLat = parseFloat(dropLatInput?.value) || 22.3168;
+                const dLng = parseFloat(dropLngInput?.value) || 70.7813;
+
+                const origin = { lat: pLat, lng: pLng };
+                const destination = { lat: dLat, lng: dLng };
+
+                if (!googlePickupMarker) {
+                    googlePickupMarker = new google.maps.Marker({
+                        position: origin,
+                        map: googleMap,
+                        title: 'Pickup Location',
+                        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#16a34a', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 }
+                    });
+                } else {
+                    googlePickupMarker.setPosition(origin);
+                }
+
+                if (!googleDropMarker) {
+                    googleDropMarker = new google.maps.Marker({
+                        position: destination,
+                        map: googleMap,
+                        title: 'Destination',
+                        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#eab308', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 }
+                    });
+                } else {
+                    googleDropMarker.setPosition(destination);
+                }
+
+                googleDirectionsService.route({
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, function(result, status) {
+                    if (status === 'OK') {
+                        googleDirectionsRenderer.setDirections(result);
+                        const leg = result.routes[0].legs[0];
+                        if (distChip) distChip.textContent = leg.distance.text;
+                        if (durChip) durChip.textContent = `~${leg.duration.text}`;
+                    } else {
+                        const distKm = haversineDistance([pLat, pLng], [dLat, dLng]) * 1.3;
+                        const estMin = Math.round(distKm * 2.2 + 4);
+                        if (distChip) distChip.textContent = `${distKm.toFixed(1)} km`;
+                        if (durChip) durChip.textContent = `~${estMin} mins`;
                     }
                 });
             }
 
-            // Initialize Lucide icons
+            function initLeafletFallback() {
+                if (leafletMap) return;
+                if (engineName) engineName.textContent = 'Live GPS Active';
+
+                let pCoord = [parseFloat(pickupLatInput?.value) || 22.3667, parseFloat(pickupLngInput?.value) || 70.7972];
+                let dCoord = [parseFloat(dropLatInput?.value) || 22.3168, parseFloat(dropLngInput?.value) || 70.7813];
+
+                leafletMap = L.map('findMap', { center: [22.34, 70.79], zoom: 12, scrollWheelZoom: false });
+
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+                    maxZoom: 19
+                }).addTo(leafletMap);
+
+                const pickupIcon = L.divIcon({ className: '', html: '<div class="custom-map-pin pickup"><span class="pulse-ring"></span>🟢</div>', iconSize: [32, 32], iconAnchor: [16, 16] });
+                const dropoffIcon = L.divIcon({ className: '', html: '<div class="custom-map-pin dropoff"><span class="pulse-ring"></span>🏁</div>', iconSize: [32, 32], iconAnchor: [16, 16] });
+
+                let pickupMarker = L.marker(pCoord, { icon: pickupIcon, draggable: true }).addTo(leafletMap);
+                let dropMarker = L.marker(dCoord, { icon: dropoffIcon, draggable: true }).addTo(leafletMap);
+                let routeLine = null;
+
+                function updateRoute() {
+                    const p1 = pickupMarker.getLatLng();
+                    const p2 = dropMarker.getLatLng();
+
+                    if (routeLine) leafletMap.removeLayer(routeLine);
+
+                    routeLine = L.polyline([p1, p2], { color: '#facc15', weight: 5, opacity: 0.85, dashArray: '8, 8', lineJoin: 'round' }).addTo(leafletMap);
+                    leafletMap.fitBounds(L.latLngBounds([p1, p2]), { padding: [50, 50], maxZoom: 15 });
+
+                    const distKm = haversineDistance([p1.lat, p1.lng], [p2.lat, p2.lng]) * 1.3;
+                    const estMin = Math.round(distKm * 2.2 + 4);
+
+                    if (distChip) distChip.textContent = `${distKm.toFixed(1)} km`;
+                    if (durChip) durChip.textContent = `~${estMin} mins`;
+                }
+
+                pickupMarker.on('dragend', function(e) {
+                    const pos = e.target.getLatLng();
+                    pickupLatInput.value = pos.lat.toFixed(6);
+                    pickupLngInput.value = pos.lng.toFixed(6);
+                    reverseGeocode(pos.lat, pos.lng, pickupLocInput);
+                    updateRoute();
+                });
+
+                dropMarker.on('dragend', function(e) {
+                    const pos = e.target.getLatLng();
+                    dropLatInput.value = pos.lat.toFixed(6);
+                    dropLngInput.value = pos.lng.toFixed(6);
+                    reverseGeocode(pos.lat, pos.lng, dropLocInput);
+                    updateRoute();
+                });
+
+                let togglePickup = false;
+                leafletMap.on('click', function(e) {
+                    if (togglePickup) {
+                        pickupMarker.setLatLng(e.latlng);
+                        pickupLatInput.value = e.latlng.lat.toFixed(6);
+                        pickupLngInput.value = e.latlng.lng.toFixed(6);
+                        reverseGeocode(e.latlng.lat, e.latlng.lng, pickupLocInput);
+                        togglePickup = false;
+                    } else {
+                        dropMarker.setLatLng(e.latlng);
+                        dropLatInput.value = e.latlng.lat.toFixed(6);
+                        dropLngInput.value = e.latlng.lng.toFixed(6);
+                        reverseGeocode(e.latlng.lat, e.latlng.lng, dropLocInput);
+                        togglePickup = true;
+                    }
+                    updateRoute();
+                });
+
+                updateRoute();
+            }
+
+            function reverseGeocode(lat, lng, targetInput) {
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.display_name && targetInput) {
+                            const parts = data.display_name.split(',');
+                            targetInput.value = parts.slice(0, 3).join(',').trim();
+                        }
+                    })
+                    .catch(() => {});
+            }
+
+            document.querySelectorAll('.quick-chip').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const name = this.dataset.name;
+                    const lat = parseFloat(this.dataset.lat);
+                    const lng = parseFloat(this.dataset.lng);
+
+                    if (!pickupLocInput.value || pickupLocInput.value.trim() === '') {
+                        pickupLocInput.value = name;
+                        pickupLatInput.value = lat;
+                        pickupLngInput.value = lng;
+                    } else {
+                        dropLocInput.value = name;
+                        dropLatInput.value = lat;
+                        dropLngInput.value = lng;
+                    }
+
+                    if (googleMap) {
+                        updateGoogleRoute();
+                    } else {
+                        location.reload();
+                    }
+                });
+            });
+
+            tryLoadGoogleMaps(gmapKey);
+
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }

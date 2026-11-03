@@ -1,0 +1,144 @@
+@model Tagalong.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <nav aria-label="Breadcrumb" class="mb-4">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-muted">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Profile" asp-action="Index" class="text-muted">Profile</a></li>
+                <li class="breadcrumb-item text-gold fw-medium" aria-current="page">Edit Profile</li>
+            </ol>
+        </nav>
+        <header>
+            <h1 id="page-title" class="display-5 fw-bold mb-1">Profile & Settings</h1>
+            <p class="lead text-muted mb-0">Update your commuter profile details, contact info, and preferences</p>
+        </header>
+    </div>
+</section>
+
+<section class="form-page py-4">
+    <div class="container-fluid px-md-4 px-lg-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-7">
+                <form asp-action="Edit" method="post" class="ride-form" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger validation-summary mb-4" role="alert" aria-live="polite"></div>
+
+                    <!-- Personal Information -->
+                    <fieldset class="form-section mb-4">
+                        <legend class="section-title">
+                            <i data-lucide="user" class="me-2" aria-hidden="true"></i>
+                            Personal Information
+                        </legend>
+
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label asp-for="FullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="user" class="input-icon" aria-hidden="true"></i>
+                                    <input asp-for="FullName" class="form-control" placeholder="Enter your full name" required />
+                                </div>
+                                <span asp-validation-for="FullName" class="form-error"></span>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="mail" class="input-icon" aria-hidden="true"></i>
+                                    <input asp-for="Email" class="form-control" type="email" placeholder="you@example.com" required />
+                                </div>
+                                <span asp-validation-for="Email" class="form-error"></span>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label asp-for="PhoneNumber" class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="phone" class="input-icon" aria-hidden="true"></i>
+                                    <input asp-for="PhoneNumber" class="form-control" placeholder="+91 98765 43210" required />
+                                </div>
+                                <span asp-validation-for="PhoneNumber" class="form-error"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="ProfilePicture" class="form-label">Profile Avatar URL</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="image" class="input-icon" aria-hidden="true"></i>
+                                    <input asp-for="ProfilePicture" class="form-control" placeholder="https://example.com/your-avatar.jpg" />
+                                </div>
+                                <span class="form-hint text-muted small">Provide an image URL for your profile picture</span>
+                                <span asp-validation-for="ProfilePicture" class="form-error"></span>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Trust & Community Safety Info -->
+                    <div class="p-4 rounded-3 mb-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--color-border-default);">
+                        <div class="d-flex align-items-center gap-3">
+                            <i data-lucide="shield-check" class="text-gold" style="width: 28px; height: 28px;"></i>
+                            <div>
+                                <h6 class="mb-1 text-white fw-bold">Verified Commuter Protection</h6>
+                                <p class="text-muted small mb-0">Your phone number is only shared with confirmed co-travelers on booked rides for safety and pickup coordination.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex flex-column flex-md-row gap-3 justify-content-end">
+                        <a asp-action="Index" class="btn btn-outline-secondary px-4 py-2">
+                            <i data-lucide="x" class="me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary px-5 py-2 fw-semibold">
+                            <i data-lucide="save" class="me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <style>
+        .page-header {
+            padding: var(--space-8) 0 var(--space-4);
+            border-bottom: 1px solid var(--color-border-default);
+            margin-bottom: var(--space-4);
+        }
+        .ride-form {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8);
+        }
+        .section-title {
+            display: inline-flex;
+            align-items: center;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-2);
+            border-bottom: 2px solid var(--color-brand-primary);
+        }
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-wrapper .input-icon {
+            position: absolute;
+            left: 1rem;
+            width: 18px;
+            height: 18px;
+            color: var(--color-text-muted);
+            pointer-events: none;
+        }
+        .input-wrapper .form-control {
+            padding-left: 2.75rem;
+        }
+    </style>
+}
+
