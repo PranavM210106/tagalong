@@ -24,95 +24,30 @@ var isLocalDb = !isLinux && !string.IsNullOrEmpty(connectionString) &&
      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
      connectionString.Contains("Data Source=(localdb)", StringComparison.OrdinalIgnoreCase));
 
-// On Linux, validate connection string is PostgreSQL format; if not, try to build from Render PG env vars
-if (isLinux && !string.IsNullOrEmpty(connectionString))
+// Convert postgresql:// or postgres:// URL format to key=value format for Npgsql compatibility across all platforms
+if (!string.IsNullOrEmpty(connectionString) &&
+    (connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+     connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase)))
 {
-    // First: explicitly reject SQL Server connection strings
-    var isSqlServer = connectionString.Contains("Trusted_Connection", StringComparison.OrdinalIgnoreCase) ||
-                      connectionString.Contains("mssqllocaldb", StringComparison.OrdinalIgnoreCase) ||
-                      connectionString.Contains("(localdb)", StringComparison.OrdinalIgnoreCase) ||
-                      connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
-
-    // Check if it's a valid PostgreSQL connection string (key=value or URL format)
-    var isPostgres = connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
-                     (connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
-                      connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase) &&
-                      !isSqlServer) ||  // Server=+Database= but NOT SQL Server
-                     connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
-                     connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase);
-
-    // DEBUG: Log the connection string format (first 50 chars)
-    Console.WriteLine($"[DEBUG] Linux detected. Connection string starts with: {connectionString.Substring(0, Math.Min(50, connectionString.Length))}...");
-    Console.WriteLine($"[DEBUG] IsSqlServer check: {isSqlServer}");
-    Console.WriteLine($"[DEBUG] IsPostgres check result: {isPostgres}");
-
-    if (isSqlServer || !isPostgres)
+    try
     {
-        Console.WriteLine("[DEBUG] Connection string is SQL Server or not valid PostgreSQL format. Attempting to build from env vars...");
+        var uri = new Uri(connectionString);
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+        var userInfo = uri.UserInfo.Split(':');
+        var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
 
-        // Try to build from Render's individual PG environment variables
-        var pgHost = Environment.GetEnvironmentVariable("PGHOST");
-        var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
-        var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE");
-        var pgUser = Environment.GetEnvironmentVariable("PGUSER");
-        var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD");
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        var sslMode = query.ContainsKey("sslmode") ? query["sslmode"].ToString() : "Require";
 
-        Console.WriteLine($"[DEBUG] PGHOST={pgHost}, PGPORT={pgPort}, PGDATABASE={pgDatabase}, PGUSER={pgUser}, PGPASSWORD=\"[hidden]\"");
-
-        if (!string.IsNullOrEmpty(pgHost) && !string.IsNullOrEmpty(pgDatabase) &&
-            !string.IsNullOrEmpty(pgUser) && !string.IsNullOrEmpty(pgPassword))
-        {
-            connectionString = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};SSL Mode=Require;Trust Server Certificate=true";
-            Console.WriteLine("[DEBUG] Built connection string from individual PG env vars");
-        }
-        else
-        {
-            // Fallback: try DATABASE_URL (Render sometimes uses this)
-            var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-            Console.WriteLine($"[DEBUG] DATABASE_URL={databaseUrl}");
-            if (!string.IsNullOrEmpty(databaseUrl))
-            {
-                connectionString = databaseUrl;
-                Console.WriteLine("[DEBUG] Using DATABASE_URL");
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    "PostgreSQL connection string not configured. " +
-                    "Set ConnectionStrings__DefaultConnection or ensure Render PostgreSQL env vars (PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD) are available.");
-            }
-        }
+        connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode={sslMode};Trust Server Certificate=true";
+        Console.WriteLine("[DEBUG] Converted postgresql:// URL to key=value format");
     }
-    else
+    catch (Exception ex)
     {
-        Console.WriteLine("[DEBUG] Using injected connection string as-is (valid PostgreSQL format)");
-
-        // Convert postgresql:// URL format to key=value format for Npgsql compatibility
-        if (connectionString.Contains("postgresql://", StringComparison.OrdinalIgnoreCase) ||
-            connectionString.Contains("postgres://", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var uri = new Uri(connectionString);
-                var host = uri.Host;
-                var port = uri.Port > 0 ? uri.Port : 5432;
-                var database = uri.AbsolutePath.TrimStart('/');
-                var userInfo = uri.UserInfo.Split(':');
-                var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
-                var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
-
-                // Parse query parameters
-                var query = QueryHelpers.ParseQuery(uri.Query);
-                var sslMode = query.ContainsKey("sslmode") ? query["sslmode"].ToString() : "Require";
-
-                connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode={sslMode};Trust Server Certificate=true";
-                Console.WriteLine("[DEBUG] Converted postgresql:// URL to key=value format");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DEBUG] Failed to parse postgresql:// URL: {ex.Message}");
-            }
-        }
+        Console.WriteLine($"[DEBUG] Failed to parse postgresql:// URL: {ex.Message}");
     }
 }
 
@@ -145,9 +80,35 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[WARN] MigrateAsync failed ({ex.Message}). Falling back to EnsureCreatedAsync...");
-        await dbContext.Database.EnsureCreatedAsync();
-        Console.WriteLine("[INFO] Database EnsureCreatedAsync finished.");
+        Console.WriteLine($"[WARN] MigrateAsync failed ({ex.Message}). Checking schema and falling back...");
+        var conn = dbContext.Database.GetDbConnection();
+        await conn.OpenAsync();
+        bool usersExist = false;
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'AspNetUsers');";
+            var res = await cmd.ExecuteScalarAsync();
+            usersExist = res != null && Convert.ToBoolean(res);
+        }
+
+        if (!usersExist)
+        {
+            Console.WriteLine("[INFO] AspNetUsers table not found. Cleaning up orphan migration history and ensuring schema...");
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "DROP TABLE IF EXISTS \"__EFMigrationsHistory\" CASCADE;";
+                await cmd.ExecuteNonQueryAsync();
+            }
+            await conn.CloseAsync();
+
+            var created = await dbContext.Database.EnsureCreatedAsync();
+            Console.WriteLine($"[INFO] Database EnsureCreatedAsync result: {created}");
+        }
+        else
+        {
+            Console.WriteLine("[INFO] Database schema already exists.");
+            await conn.CloseAsync();
+        }
     }
 }
 

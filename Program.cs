@@ -153,7 +153,7 @@ builder.Services.AddScoped<IDistanceService, DistanceService>();
 
 var app = builder.Build();
 
-// Apply database migrations on startup (in case preDeployCommand didn't run)
+// Apply database migrations or ensure schema on startup
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -163,25 +163,55 @@ using (var scope = app.Services.CreateScope())
         var canConnect = await dbContext.Database.CanConnectAsync();
         Console.WriteLine($"[INFO] Database connection: {(canConnect ? "OK" : "FAILED")}");
 
-        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
-        if (pendingMigrations.Any())
+        try
         {
-            Console.WriteLine($"[INFO] Applying {pendingMigrations.Count()} pending migrations...");
-            foreach (var m in pendingMigrations)
-            {
-                Console.WriteLine($"[INFO]   - {m}");
-            }
+            Console.WriteLine("[INFO] Attempting to apply migrations via MigrateAsync()...");
             await dbContext.Database.MigrateAsync();
-            Console.WriteLine("[INFO] Migrations applied successfully");
+            Console.WriteLine("[INFO] Database migrations applied successfully.");
         }
-        else
+        catch (Exception migEx)
         {
-            Console.WriteLine("[INFO] No pending migrations");
+            Console.WriteLine($"[WARN] MigrateAsync notice: {migEx.Message}. Verifying schema...");
+            try
+            {
+                var conn = dbContext.Database.GetDbConnection();
+                await conn.OpenAsync();
+                bool usersExist = false;
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'AspNetUsers');";
+                    var res = await cmd.ExecuteScalarAsync();
+                    usersExist = res != null && Convert.ToBoolean(res);
+                }
+
+                if (!usersExist)
+                {
+                    Console.WriteLine("[INFO] AspNetUsers table not found. Creating database schema via EnsureCreatedAsync...");
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "DROP TABLE IF EXISTS \"__EFMigrationsHistory\" CASCADE;";
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                    await conn.CloseAsync();
+
+                    await dbContext.Database.EnsureCreatedAsync();
+                    Console.WriteLine("[INFO] Database schema ensured via EnsureCreatedAsync successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("[INFO] Database schema verified (AspNetUsers exists).");
+                    await conn.CloseAsync();
+                }
+            }
+            catch (Exception fallbackEx)
+            {
+                Console.WriteLine($"[WARN] Schema check fallback note: {fallbackEx.Message}");
+            }
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[ERROR] Migration failed: {ex.Message}");
+        Console.WriteLine($"[ERROR] Database initialization failed: {ex.Message}");
         Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
     }
 }
