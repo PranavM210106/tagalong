@@ -14,11 +14,13 @@ namespace Tagalong.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public ProfileController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public ProfileController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         // GET: Profile/Index
@@ -111,31 +113,34 @@ namespace Tagalong.Controllers
         public IActionResult AddVehicle(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            return View(new Vehicle());
+            return View(new Vehicle { VehicleType = "Car", SeatCapacity = 4 });
         }
 
         // POST: Profile/AddVehicle
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddVehicle(Vehicle model, string returnUrl = null)
+        public async Task<IActionResult> AddVehicle(Vehicle vehicle, string returnUrl = null)
         {
             var userId = _userManager.GetUserId(User);
             var user = await _userManager.FindByIdAsync(userId);
             if (user != null && !await _userManager.IsInRoleAsync(user, "Driver"))
             {
                 await _userManager.AddToRoleAsync(user, "Driver");
+                await _signInManager.RefreshSignInAsync(user);
             }
 
-            model.UserId = userId;
-            ModelState.Remove(nameof(model.UserId));
-            ModelState.Remove(nameof(model.Driver));
-            ModelState.Remove(nameof(model.Rides));
+            vehicle.UserId = userId;
+            ModelState.Remove(nameof(vehicle.UserId));
+            ModelState.Remove(nameof(vehicle.Driver));
+            ModelState.Remove(nameof(vehicle.Rides));
 
             if (ModelState.IsValid)
             {
-                _context.Vehicles.Add(model);
+                _context.Vehicles.Add(vehicle);
                 await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Vehicle registered successfully! You are now ready to offer rides.";
 
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
@@ -145,16 +150,16 @@ namespace Tagalong.Controllers
             }
 
             ViewData["ReturnUrl"] = returnUrl;
-            return View(model);
+            return View(vehicle);
         }
 
         // POST: Profile/AddVehicleAjax (for inline modal in Offer Ride)
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddVehicleAjax([FromBody] Vehicle model)
+        public async Task<IActionResult> AddVehicleAjax([FromBody] Vehicle vehicle)
         {
-            if (model == null)
+            if (vehicle == null)
             {
                 return Json(new { success = false, message = "Invalid vehicle data" });
             }
@@ -164,16 +169,17 @@ namespace Tagalong.Controllers
             if (user != null && !await _userManager.IsInRoleAsync(user, "Driver"))
             {
                 await _userManager.AddToRoleAsync(user, "Driver");
+                await _signInManager.RefreshSignInAsync(user);
             }
 
-            model.UserId = userId;
-            ModelState.Remove(nameof(model.UserId));
-            ModelState.Remove(nameof(model.Driver));
-            ModelState.Remove(nameof(model.Rides));
+            vehicle.UserId = userId;
+            ModelState.Remove(nameof(vehicle.UserId));
+            ModelState.Remove(nameof(vehicle.Driver));
+            ModelState.Remove(nameof(vehicle.Rides));
 
             if (ModelState.IsValid)
             {
-                _context.Vehicles.Add(model);
+                _context.Vehicles.Add(vehicle);
                 await _context.SaveChangesAsync();
 
                 return Json(new
@@ -181,11 +187,11 @@ namespace Tagalong.Controllers
                     success = true,
                     vehicle = new
                     {
-                        vehicleId = model.VehicleId,
-                        model = model.Model,
-                        vehicleType = model.VehicleType,
-                        registrationNumber = model.RegistrationNumber,
-                        seatCapacity = model.SeatCapacity
+                        vehicleId = vehicle.VehicleId,
+                        model = vehicle.Model,
+                        vehicleType = vehicle.VehicleType,
+                        registrationNumber = vehicle.RegistrationNumber,
+                        seatCapacity = vehicle.SeatCapacity
                     }
                 });
             }
@@ -292,22 +298,22 @@ namespace Tagalong.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditVehicle(Vehicle model)
+        public async Task<IActionResult> EditVehicle(Vehicle vehicle)
         {
             var userId = _userManager.GetUserId(User);
-            var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == model.VehicleId && v.UserId == userId);
-            if (vehicle == null)
+            var existing = await _context.Vehicles.FirstOrDefaultAsync(v => v.VehicleId == vehicle.VehicleId && v.UserId == userId);
+            if (existing == null)
             {
                 TempData["ErrorMessage"] = "Vehicle not found or unauthorized.";
                 return RedirectToAction(nameof(Index));
             }
 
-            vehicle.VehicleType = model.VehicleType ?? "Car";
-            vehicle.Model = model.Model?.Trim() ?? vehicle.Model;
-            vehicle.RegistrationNumber = model.RegistrationNumber?.Trim().ToUpperInvariant() ?? vehicle.RegistrationNumber;
-            vehicle.SeatCapacity = Math.Clamp(model.SeatCapacity, 1, 8);
+            existing.VehicleType = vehicle.VehicleType ?? "Car";
+            existing.Model = vehicle.Model?.Trim() ?? existing.Model;
+            existing.RegistrationNumber = vehicle.RegistrationNumber?.Trim().ToUpperInvariant() ?? existing.RegistrationNumber;
+            existing.SeatCapacity = Math.Clamp(vehicle.SeatCapacity, 1, 8);
 
-            _context.Update(vehicle);
+            _context.Update(existing);
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Vehicle details updated successfully.";

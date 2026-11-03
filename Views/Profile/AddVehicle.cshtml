@@ -46,7 +46,7 @@
                             @foreach (var type in types)
                             {
                                 <label class="vehicle-type-option" for="type-@type.Value.ToLower()">
-                                    <input type="radio" id="type-@type.Value.ToLower()" name="VehicleType" value="@type.Value" @((Model.VehicleType ?? "") == type.Value ? "checked" : "") class="vehicle-type-input" />
+                                    <input type="radio" id="type-@type.Value.ToLower()" name="VehicleType" value="@type.Value" @((string.IsNullOrEmpty(Model.VehicleType) && type.Value == "Car") || Model.VehicleType == type.Value ? "checked" : "") class="vehicle-type-input" />
                                     <div class="vehicle-type-card">
                                         <div class="vehicle-type-icon">
                                             <i data-lucide="@type.Icon" aria-hidden="true"></i>
