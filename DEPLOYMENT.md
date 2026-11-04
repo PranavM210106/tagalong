@@ -43,12 +43,11 @@ vercel --prod
 
 ## Render Deployment (Web Service + PostgreSQL)
 
-### Connecting to Your Existing Render PostgreSQL Database
-Your shared database credentials:
-- **Database Name:** `tagalong_db_la01`
-- **Region:** `oregon`
-- **External Connection URL:**
-  `postgresql://tagalong_db_la01_user:dhdIzeHj5eWvniPSVxxC0ByQsINXbabZ@dpg-dbgh1b4s728c739p6tlg-a.oregon-postgres.render.com/tagalong_db_la01?sslmode=require`
+### Connecting to Your Render PostgreSQL Database
+Set the PostgreSQL connection URL in your Render environment variables:
+- **Format:** `postgresql://<db_user>:<db_password>@<db_host>/<db_name>?sslmode=require`
+
+> **SECURITY NOTE:** Never commit raw database passwords or credentials directly into Git. Use Render's Environment Variables dashboard to inject secrets securely.
 
 ---
 
@@ -60,14 +59,14 @@ Your shared database credentials:
 3. Select **Build and deploy from a Git repository** and connect `tagalong`.
 4. Configure the settings:
    * **Name:** `tagalong` (or any name you choose)
-   * **Region:** `Oregon (US West)` *(matches your database)*
+   * **Region:** `Oregon (US West)` *(or your database's region)*
    * **Runtime / Environment:** `Docker` *(Render auto-detects `Dockerfile`)*
    * **Instance Type:** `Free`
 5. Scroll down to **Environment Variables** and add:
    | Key | Value |
    | :--- | :--- |
    | `ASPNETCORE_ENVIRONMENT` | `Production` |
-   | `ConnectionStrings__DefaultConnection` | `postgresql://tagalong_db_la01_user:dhdIzeHj5eWvniPSVxxC0ByQsINXbabZ@dpg-dbgh1b4s728c739p6tlg-a.oregon-postgres.render.com/tagalong_db_la01?sslmode=require` |
+   | `ConnectionStrings__DefaultConnection` | `postgresql://<db_user>:<db_password>@<db_host>/<db_name>?sslmode=require` |
    | `PORT` | `8080` |
    | `ASPNETCORE_URLS` | `http://0.0.0.0:8080` |
 6. Click **Create Web Service**.
@@ -75,7 +74,7 @@ Your shared database credentials:
 #### Method 2: Blueprint (`render.yaml`)
 1. In Render Dashboard, click **New +** ➔ **Blueprint**.
 2. Connect your `tagalong` Git repository.
-3. Render reads `render.yaml` which automatically configures the web service and the connection string.
+3. Render reads `render.yaml` which automatically configures the web service and requests the `ConnectionStrings__DefaultConnection` securely without storing it in Git.
 4. Click **Apply**.
 
 ---

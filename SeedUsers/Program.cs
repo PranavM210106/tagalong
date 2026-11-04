@@ -131,9 +131,9 @@ using (var scope = app.Services.CreateScope())
     // Create test users
     var testUsers = new[]
     {
-        new { Email = "rider@test.com", Password = "Test123!", FullName = "Test Rider", Role = "Rider" },
-        new { Email = "driver@test.com", Password = "Test123!", FullName = "Test Driver", Role = "Driver" },
-        new { Email = "admin@test.com", Password = "Test123!", FullName = "Test Admin", Role = "Admin" }
+        new { Email = "rider@test.com", Password = Environment.GetEnvironmentVariable("DEFAULT_TEST_PASSWORD") ?? "Test123!", FullName = "Test Rider", Role = "Rider" },
+        new { Email = "driver@test.com", Password = Environment.GetEnvironmentVariable("DEFAULT_TEST_PASSWORD") ?? "Test123!", FullName = "Test Driver", Role = "Driver" },
+        new { Email = "admin@test.com", Password = Environment.GetEnvironmentVariable("DEFAULT_TEST_PASSWORD") ?? "Test123!", FullName = "Test Admin", Role = "Admin" }
     };
 
     foreach (var u in testUsers)
